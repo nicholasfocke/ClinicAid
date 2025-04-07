@@ -1,0 +1,158 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.header {
+  background-color: #f5b856;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* Estilos da navegação */
+.nav {
+  display: flex;
+  gap: 20px;
+  margin-left: auto;
+  align-items: center;
+  transition: all 0.3s ease-in-out;
+}
+
+.headerLinks {
+  font-size: 1.2em;
+  padding: 10px 20px;
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+}
+
+/* Ícone de menu (hambúrguer) */
+.menuIcon {
+  display: none;
+  cursor: pointer;
+  color: #333;
+}
+
+/* Estilos da navegação quando o menu está aberto em telas pequenas */
+.navOpen {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 250px;
+  height: 100%;
+  background-color: #f5b856;
+  z-index: 1000;
+  padding-top: 50px;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Esconder logout no desktop em telas pequenas */
+.logoutDesktop {
+  display: flex;
+  align-items: center;
+}
+
+/* Estilos para telas menores (até 1024px) */
+@media (max-width: 1024px) {
+  .headerLinks {
+    font-size: 1em;
+    /* Diminui um pouco o tamanho da fonte */
+  }
+
+  .nav {
+    margin-left: 10%;
+    /* Diminui a margem em telas menores */
+  }
+}
+
+/* Estilos para telas menores (até 768px) */
+@media (max-width: 768px) {
+  .nav {
+    display: none;
+    /* Esconde a navegação em telas menores */
+  }
+
+  /* Exibir o ícone de menu (hambúrguer) */
+  .menuIcon {
+    display: block;
+  }
+
+  .logoutDesktop {
+    display: none;
+    /* Esconde o logout no header para telas pequenas */
+  }
+
+  /* Estilos da navegação quando o menu estiver aberto em telas pequenas */
+  .navOpen {
+    display: flex;
+  }
+
+  /* Exibir o ícone de fechar menu quando o menu estiver aberto */
+  .closeMenuIcon {
+    display: block;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: #333;
+    cursor: pointer;
+  }
+}
+
+/* Estilos do footer */
+.footer {
+  background-color: #f5b856;
+  padding: 20px;
+  text-align: center;
+  color: #333;
+}
+
+.footerContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.contactInfo {
+  margin-bottom: 10px;
+}
+
+.contactButton {
+  color: rgb(255, 255, 255);
+  background-color: #0070f3;
+  padding: 10px 20px;
+  text-decoration: none;
+  margin: none;
+  border-radius: 5px;
+  border: none;
+}
+
+.contactButton a {
+  color: rgb(255, 255, 255);
+  background-color: #0070f3;
+  padding: 10px 20px;
+  text-decoration: none;
+}
+
+.socialMedia {
+  margin-top: 10px;
+}
+
+.socialMedia a {
+  color: white;
+}
+
+.logoutButton:hover {
+  cursor: pointer;
+}

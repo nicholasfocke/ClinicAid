@@ -1,0 +1,312 @@
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70vh;
+  padding: 10px;
+}
+
+.formContainer {
+  background-color: #f1f1f1f3;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 700px;
+  width: 100%;
+  border: 1px solid #ddd;
+}
+
+.title {
+  text-align: center;
+  font-size: 30px;
+  color: #000000;
+  margin-bottom: 20px;
+  font-family: 'Patrick Hand', cursive;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.inputoption {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.inputoption:focus {
+  border-color: #0070f3;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 112, 243, 0.5);
+}
+
+.inputnome {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  width: 100%;
+  max-width: 275px;
+}
+
+.inputnome:focus {
+  border-color: #0070f3;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 112, 243, 0.5);
+}
+
+.button {
+  padding: 12px;
+  border: none;
+  background-color: #0070f3;
+  color: white;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 100%;
+  max-width: 150px;
+}
+
+.button:hover {
+  background-color: #005bb5;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  z-index: 1000;
+}
+
+.modalContent {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 50vw; /* Mantém largura fixa */
+  max-width: 500px; /* Define um limite de largura */
+  min-width: 350px;
+  max-height: 90vh; /* Garante que o modal não ultrapasse a tela */
+  overflow-y: auto; /* Adiciona rolagem interna quando necessário */
+  outline: none;
+  z-index: 1001;
+}
+
+
+.modalFooter {
+  display: flex;
+  justify-content: center; /* Centraliza botões no mobile */
+  flex-wrap: wrap; /* Permite que os botões quebrem de linha se necessário */
+  margin-top: 20px;
+  gap: 15px;
+  width: 100%;
+}
+
+
+.buttonSecondary {
+  background-color: #ccc;
+  color: black;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.buttonSecondary:hover {
+  background-color: #aaa;
+}
+
+.reactCalendar {
+  width: 100% !important;
+  max-width: 700px !important;
+  background-color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+  font-family: 'Patrick Hand', cursive !important;
+  padding: 20px !important;
+  margin-top: 10px !important;
+}
+
+.react-calendar__tile {
+  padding: 10px !important;
+  background-color: #f9f9f9 !important;
+  border-radius: 4px !important;
+  text-align: center !important;
+  cursor: pointer !important;
+}
+
+.react-calendar__tile:hover {
+  background-color: #d1476e !important;
+  color: white !important;
+}
+
+.react-calendar__tile--active {
+  background-color: #007bff !important;
+  color: white !important;
+}
+
+.react-calendar__tile--disabled {
+  background-color: #eee !important;
+  color: #ccc !important;
+  cursor: not-allowed !important;
+}
+
+.times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px; /* Ajuste o espaçamento entre os botões */
+  justify-content: center;
+}
+
+.timeButton {
+  padding: 7px 15px; /* Ajuste o padding para diminuir o tamanho dos botões */
+  border: 1px solid #ddd;
+  background-color: white;
+  color: #333;
+  border-radius: 5px;
+  font-size: 15px; /* Ajuste o tamanho da fonte */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 70px; /* Ajuste a largura dos botões */
+}
+
+.timeButton:hover {
+  background-color: #f0f0f0;
+  border-color: #bbb;
+}
+
+.activeTime {
+  background-color: #007bff !important;
+  color: white !important;
+  border-color: #0056b3 !important;
+}
+
+.blockedTime {
+  background-color: #ffcccc !important;
+  color: #ff0000 !important;
+  cursor: not-allowed !important;
+}
+
+@media (max-width: 768px) {
+  .formContainer {
+    padding: 20px;
+    max-width: 90%;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .button {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .reactCalendar {
+    max-width: 100% !important;
+  }
+
+  .inputoption, .inputnome {
+    width: 100%;
+  }
+
+  .timeButton {
+    width: 50px; /* Ajuste a largura dos botões para dispositivos móveis */
+    font-size: 30px; /* Ajuste o tamanho da fonte para dispositivos móveis */
+  }
+
+  .modalContent {
+    max-width: 90%;
+    padding: 20px;
+  }
+
+  .modalFooter {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .buttonSecondary {
+    padding: 8px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalContent {
+    max-width: 95%;
+    padding: 15px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .button {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .inputoption, .inputnome {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .timeButton {
+    width: 50px; /* Ajuste a largura dos botões para dispositivos móveis */
+    font-size: 12px; /* Ajuste o tamanho da fonte para dispositivos móveis */
+  }
+
+  .modalFooter {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .buttonSecondary {
+    padding: 6px 10px;
+  }
+}
+
+.blockButton {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.blockButton:hover {
+  background-color: #ff1a1a;
+}
+
+.blockedDay {
+  background-color: #ffcccc !important;
+  color: #ff0000 !important;
+}
