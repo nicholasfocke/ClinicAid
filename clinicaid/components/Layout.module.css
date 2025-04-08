@@ -2,10 +2,11 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  font-family: 'Inter', sans-serif;
 }
 
 .header {
-  background-color: #f5b856;
+  background-color: #2d3748;
   padding: 10px 20px;
   display: flex;
   justify-content: space-between;
@@ -14,48 +15,63 @@
 
 .headerContent {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
 }
 
-/* Estilos da navegação */
+/* Logo à esquerda, navegação à direita */
 .nav {
   display: flex;
-  gap: 20px;
+  gap: 40px; /* espaçamento entre botões */
   margin-left: auto;
   align-items: center;
   transition: all 0.3s ease-in-out;
 }
 
 .headerLinks {
-  font-size: 1.2em;
-  padding: 10px 20px;
+  font-size: 1.1rem;
+  padding: 8px 16px;
   text-decoration: none;
-  color: #333;
-  font-weight: bold;
+  color: #ffffff;
+  font-weight: 600;
+  transition: color 0.3s ease-in-out;
+}
+
+.headerLinks:hover {
+  color: #63b3ed;
+}
+
+/* Botão moderno de logout */
+.logoutButton {
+  margin-left: 20px;
+  display: flex;
+  align-items: center;
+  background-color: #e53e3e;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.3s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.logoutButton:hover {
+  background-color: #c53030;
+  cursor: pointer;
+}
+
+.logoutButton svg {
+  margin-right: 8px;
 }
 
 /* Ícone de menu (hambúrguer) */
 .menuIcon {
   display: none;
   cursor: pointer;
-  color: #333;
-}
-
-/* Estilos da navegação quando o menu está aberto em telas pequenas */
-.navOpen {
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 250px;
-  height: 100%;
-  background-color: #f5b856;
-  z-index: 1000;
-  padding-top: 50px;
-  transition: transform 0.3s ease-in-out;
+  color: #fff;
 }
 
 /* Esconder logout no desktop em telas pequenas */
@@ -64,58 +80,64 @@
   align-items: center;
 }
 
-/* Estilos para telas menores (até 1024px) */
+/* Menu lateral em telas pequenas */
+.navOpen {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 250px;
+  height: 100%;
+  background-color: #2d3748;
+  z-index: 1000;
+  padding-top: 50px;
+  transition: transform 0.3s ease-in-out;
+}
+
 @media (max-width: 1024px) {
   .headerLinks {
     font-size: 1em;
-    /* Diminui um pouco o tamanho da fonte */
   }
 
   .nav {
     margin-left: 10%;
-    /* Diminui a margem em telas menores */
   }
 }
 
-/* Estilos para telas menores (até 768px) */
 @media (max-width: 768px) {
   .nav {
     display: none;
-    /* Esconde a navegação em telas menores */
   }
 
-  /* Exibir o ícone de menu (hambúrguer) */
   .menuIcon {
     display: block;
   }
 
   .logoutDesktop {
     display: none;
-    /* Esconde o logout no header para telas pequenas */
   }
 
-  /* Estilos da navegação quando o menu estiver aberto em telas pequenas */
   .navOpen {
     display: flex;
   }
 
-  /* Exibir o ícone de fechar menu quando o menu estiver aberto */
   .closeMenuIcon {
     display: block;
     position: absolute;
     top: 10px;
     right: 10px;
-    color: #333;
+    color: #fff;
     cursor: pointer;
   }
 }
 
-/* Estilos do footer */
+/* Footer */
 .footer {
-  background-color: #f5b856;
+  background-color: #2d3748;
   padding: 20px;
   text-align: center;
-  color: #333;
+  color: white;
 }
 
 .footerContent {
@@ -124,24 +146,32 @@
   align-items: center;
 }
 
+.footerText {
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
+
 .contactInfo {
   margin-bottom: 10px;
 }
 
 .contactButton {
-  color: rgb(255, 255, 255);
-  background-color: #0070f3;
+  color: white;
+  background-color: #3182ce;
   padding: 10px 20px;
   text-decoration: none;
-  margin: none;
   border-radius: 5px;
   border: none;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.contactButton:hover {
+  background-color: #2b6cb0;
 }
 
 .contactButton a {
-  color: rgb(255, 255, 255);
-  background-color: #0070f3;
-  padding: 10px 20px;
+  color: white;
   text-decoration: none;
 }
 
@@ -151,8 +181,9 @@
 
 .socialMedia a {
   color: white;
+  transition: color 0.3s;
 }
 
-.logoutButton:hover {
-  cursor: pointer;
+.socialMedia a:hover {
+  color: #63b3ed;
 }
