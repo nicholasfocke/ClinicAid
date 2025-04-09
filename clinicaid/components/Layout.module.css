@@ -1,3 +1,4 @@
+
 .layout {
   display: flex;
   flex-direction: column;
@@ -6,8 +7,8 @@
 }
 
 .header {
-  background-color: #2d3748;
-  padding: 10px 20px;
+  background-color: #ffffff;
+  padding: 30px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -33,7 +34,7 @@
   font-size: 1.1rem;
   padding: 8px 16px;
   text-decoration: none;
-  color: #ffffff;
+  color: #0a2d4a;
   font-weight: 600;
   transition: color 0.3s ease-in-out;
 }
@@ -134,7 +135,7 @@
 
 /* Footer */
 .footer {
-  background-color: #2d3748;
+  background-color: #0a2d4a;
   padding: 20px;
   text-align: center;
   color: white;

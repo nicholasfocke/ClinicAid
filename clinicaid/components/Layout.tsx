@@ -81,12 +81,10 @@ const Layout = ({ children }: LayoutProps) => {
       {!noHeaderRoutes.includes(router.pathname) && (
         <header className={styles.header}>
           <div className={styles.headerContent}>
-            <Image
-              src="/images/logo.png"
-              alt="Logo Frida Kids"
-              width={150}
-              height={150}
-            />
+            <Image src="/images/ClinicAidLogoAjustado.png" 
+              alt="Logo clinicaid"
+              width={255}
+              height={72} />
 
             <div className={styles.menuIcon} onClick={toggleMenu}>
               {menuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
@@ -99,14 +97,14 @@ const Layout = ({ children }: LayoutProps) => {
                 </div>
               )}
 
-              <Link className={styles.headerLinks} href="/" onClick={closeMenu}>Agendamento</Link>
+              <Link className={styles.headerLinks} href="/" onClick={closeMenu}>Home</Link>
               <Link className={styles.headerLinks} href="/Agendamentos" onClick={closeMenu}>Meus Agendamentos</Link>
               <Link className={styles.headerLinks} href="/profile" onClick={closeMenu}>Meu Perfil</Link>
 
               {/* Botão de administrador visível apenas para admin */}
               {isAdmin && (
                 <Link className={styles.headerLinks} href="/admin" onClick={closeMenu}>
-                  Painel do Administrador
+                  Agendamentos
                 </Link>
               )}
 

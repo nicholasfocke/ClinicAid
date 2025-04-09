@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import Calendar from 'react-calendar';
 import Modal from 'react-modal';
 import 'react-calendar/dist/Calendar.css';
-import { collection, query, where, getDocs, setDoc, doc, writeBatch, runTransaction } from 'firebase/firestore';
+import { collection, query, where, getDocs, setDoc, doc, writeBatch, runTransaction, orderBy } from 'firebase/firestore';
 import { auth, firestore } from '../firebase/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import styles from "@/styles/Home.module.css";
@@ -37,6 +37,7 @@ const Index = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [blockedDays, setBlockedDays] = useState<string[]>([]);
   const [blockedTimes, setBlockedTimes] = useState<{ date: string, time: string, funcionaria: string }[]>([]);
+  const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
 
   const standardTimes = [
     '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -49,6 +50,22 @@ const Index = () => {
   ];
 
   const router = useRouter();
+
+  const fetchTodayAppointments = async () => {
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const appointmentsQuery = query(
+        collection(firestore, 'agendamentos'),
+        where('data', '==', today),
+        orderBy('hora', 'asc') // Ordena por horário
+      );
+      const appointmentsSnapshot = await getDocs(appointmentsQuery);
+      const appointments = appointmentsSnapshot.docs.map((doc) => doc.data());
+      setTodayAppointments(appointments);
+    } catch (error) {
+      console.error('Erro ao buscar agendamentos do dia:', error);
+    }
+  };
 
   const fetchAvailableTimes = async (date: Date | null, funcionaria: string) => {
     if (!date || !funcionaria) return;
@@ -185,7 +202,7 @@ const Index = () => {
             where('__name__', '==', currentUser.uid),
           );
           const userSnapshot = await getDocs(userQuery);
-
+  
           if (!userSnapshot.empty) {
             const userData = userSnapshot.docs[0].data();
             setUser({ ...currentUser, tipo: userData.tipo || 'client' });
@@ -200,9 +217,10 @@ const Index = () => {
         router.push('/login');
       }
     });
-
+  
     fetchBlockedDays();
-
+    fetchTodayAppointments(); // Busca os agendamentos do dia
+  
     return () => unsubscribe();
   }, [router]);
 
@@ -433,25 +451,37 @@ const Index = () => {
     <ProtectedRoute>
       <div className={styles.container}>
         <div className={styles.formContainer}>
-          <h2 className={styles.title}>Agendar Serviço</h2>
+          <h2 className={styles.title}>Agendamentos</h2>
 
           <Calendar
-            className={styles.reactCalendar}
-            onClickDay={handleDateClick}
-            value={selectedDate}
-            tileDisabled={({ date }) => !isDateValid(date)}
-            tileClassName={({ date, view }) =>
-              view === 'month' && blockedDays.includes(format(date, 'yyyy-MM-dd'))
-                ? styles.blockedDay
-                : ''
-            }
-          />
+              className={styles.reactCalendar}
+              onClickDay={handleDateClick}
+              value={selectedDate}
+              tileDisabled={({ date }) => !isDateValid(date)}
+              tileClassName={({ date, view }) =>
+                view === 'month' && blockedDays.includes(format(date, 'yyyy-MM-dd'))
+                  ? styles.blockedDay
+                  : ''
+              }
+            />
 
-          {user?.tipo === 'admin' && selectedDate && (
-            <button onClick={handleBlockDay} className={styles.blockButton}>
-              Bloquear Dia
-            </button>
-          )}
+            {/* Próximos Agendamentos */}
+            <div className={styles.upcomingAppointments}>
+              <h3>Próximos Agendamentos</h3>
+              {todayAppointments.length > 0 ? (
+                todayAppointments.map((appointment, index) => (
+                  <div key={index} className={styles.appointmentCard}>
+                    <div className={styles.appointmentTime}>{appointment.hora}</div>
+                    <div className={styles.appointmentDetails}>
+                      <strong>{appointment.nomeCrianca}</strong>
+                      <p>{appointment.servico}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className={styles.noAppointments}>Nenhum agendamento para hoje.</p>
+              )}
+            </div>
 
           <Modal
             isOpen={modalIsOpen}
@@ -517,31 +547,36 @@ const Index = () => {
                 <div>
                   <strong>Horários Disponíveis:</strong>
                   <div className={styles.times}>
-                  {availableTimes.map((time) => (
-                    <button
-                      key={time}
-                      type="button"
-                      className={`${styles.timeButton} ${appointmentData.times.includes(time) ? styles.activeTime : ''}`}
-                      onClick={() => handleTimeClick(time, appointmentData.times.length - 1)}
-                      disabled={!availableTimes.includes(time)} // Desabilita horários indisponíveis
-                    >
-                      {time}
-                    </button>
-                  ))}
+                    {availableTimes.map((time) => (
+                      <button
+                        key={time}
+                        type="button"
+                        className={`${styles.timeButton} ${appointmentData.times.includes(time) ? styles.activeTime : ''}`}
+                        onClick={() => handleTimeClick(time, appointmentData.times.length - 1)}
+                        disabled={!availableTimes.includes(time)} // Desabilita horários indisponíveis
+                      >
+                        {time}
+                      </button>
+                    ))}
                   </div>
                 </div>
               ) : (
-                appointmentData.funcionaria && !isLoadingTimes && ( // Só exibe a mensagem se o carregamento já terminou
+                appointmentData.funcionaria && !isLoadingTimes && (
                   <p style={{ color: 'red', fontWeight: 'bold', marginTop: '10px' }}>
-                    Todos os horários nesta data para a funcionária já foram reservados. Entre em contato conosco para possivel encaixe.
+                    Todos os horários nesta data para a funcionária já foram reservados. Entre em contato conosco para possível encaixe.
                   </p>
                 )
               )}
 
-
               <button type="button" onClick={addChild} className={styles.buttonSecondary}>
                 Adicionar Outro Filho
               </button>
+
+              {user?.tipo === 'admin' && (
+                <button type="button" onClick={handleBlockDay} className={styles.blockButton}>
+                  Bloquear Dia
+                </button>
+              )}
 
               {user?.tipo === 'admin' && appointmentData.times[0] && (
                 <button type="button" onClick={handleBlockTime} className={styles.blockButton}>
@@ -554,7 +589,6 @@ const Index = () => {
                   Bloquear Dia da Funcionária
                 </button>
               )}
-
 
               {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
 

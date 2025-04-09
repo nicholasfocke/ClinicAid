@@ -8,13 +8,14 @@
 }
 
 .formContainer {
-    background-color: #f1f1f1f3; /* Ajustado para o novo background */
-    padding: 30px;
-    border-radius: 10px; /* Ajustado para 10px */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ajustado para sombra mais suave */
-    max-width: 500px; /* Ajustado para 500px */
+    background-color: #f1f1f1f3; /* Fundo do formulário */
+    padding: 80px 30px; /* Aumente o padding vertical para expandir o formulário */
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
     width: 100%;
-    box-sizing: border-box; /* Inclui padding e borda no cálculo de largura */
+    box-sizing: border-box;
+    margin-top: -50px; /* Ajuste para puxar o formulário para cima */
 }
 
 .logoContainer {

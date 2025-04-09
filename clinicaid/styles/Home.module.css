@@ -1,20 +1,78 @@
+.upcomingAppointments {
+  margin-top: 35px;
+  background-color: #0a2d4a; /* Fundo azul escuro */
+  border-radius: 10px;
+  padding: 35px;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  width: 77%;
+  margin-left: 48px;
+}
+
+.upcomingAppointments h3 {
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.appointmentCard {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #1a3b5d; /* Fundo mais escuro para os cards */
+}
+
+.appointmentCard:last-child {
+  margin-bottom: 0;
+}
+
+.appointmentTime {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-right: 15px;
+}
+
+.appointmentDetails {
+  display: flex;
+  flex-direction: column;
+}
+
+.appointmentDetails strong {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.appointmentDetails p {
+  font-size: 0.9rem;
+  margin: 0;
+  color: #d1d5db; /* Cinza claro */
+}
+
+.noAppointments {
+  font-size: 1rem;
+  color: #d1d5db; /* Cinza claro */
+  text-align: center;
+}
 
 .container {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 70vh;
-  padding: 10px;
+  padding: 50px 10px; /* mais espaço acima e abaixo */
+  background: transparent; /* remove fundo */
+  margin-right: 700px;
 }
 
+
 .formContainer {
-  background-color: #f1f1f1f3;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: transparent; /* remove fundo */
+  padding: 0; /* reduz padding interno */
+  box-shadow: none; /* remove sombra */
+  border: none; /* remove borda */
   max-width: 700px;
   width: 100%;
-  border: 1px solid #ddd;
 }
 
 .title {
@@ -22,7 +80,7 @@
   font-size: 30px;
   color: #000000;
   margin-bottom: 20px;
-  font-family: 'Patrick Hand', cursive;
+  font-family: 'Inter', sans-serif; /* Aplica a fonte Inter */
 }
 
 .form {
@@ -63,7 +121,7 @@
 }
 
 .inputnome:focus {
-  border-color: #0070f3;
+  border-color: #0a2d4a;
   outline: none;
   box-shadow: 0 0 5px rgba(0, 112, 243, 0.5);
 }
@@ -71,7 +129,7 @@
 .button {
   padding: 12px;
   border: none;
-  background-color: #0070f3;
+  background-color: #0a2d4a;
   color: white;
   font-size: 16px;
   border-radius: 5px;
@@ -82,7 +140,7 @@
 }
 
 .button:hover {
-  background-color: #005bb5;
+  background-color: #0a2d4a;
 }
 
 .modalOverlay {
@@ -139,37 +197,77 @@
 
 .reactCalendar {
   width: 100% !important;
-  max-width: 700px !important;
-  background-color: #fff !important;
+  max-width: 600px !important;
+  background-color: #ffffff !important;
   border: none !important;
-  border-radius: 8px !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
-  font-family: 'Patrick Hand', cursive !important;
-  padding: 20px !important;
-  margin-top: 10px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06) !important;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  padding: 25px !important;
+  margin: 0 auto 20px auto !important;
+  transition: all 0.3s ease;
 }
+
+.react-calendar__navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.react-calendar__navigation button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1a202c;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.react-calendar__month-view__weekdays {
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #0a2d4a;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
 
 .react-calendar__tile {
-  padding: 10px !important;
-  background-color: #f9f9f9 !important;
-  border-radius: 4px !important;
-  text-align: center !important;
-  cursor: pointer !important;
+  padding: 15px !important;
+  background-color: #0a2d4a !important;
+  border-radius: 10px !important;
+  text-align: center;
+  font-weight: 500;
+  color: #2d3748;
+  transition: background-color 0.3s ease;
 }
 
-.react-calendar__tile:hover {
-  background-color: #d1476e !important;
-  color: white !important;
+.react-calendar__tile:enabled:hover {
+  background-color: #0a2d4a !important;
+  color: #ffffff !important;
 }
+
 
 .react-calendar__tile--active {
-  background-color: #007bff !important;
-  color: white !important;
+  background-color: #0f2743 !important;
+  color: #fff !important;
 }
 
+.react-calendar__tile--now {
+  background-color: transparent !important;
+  color: inherit !important;
+  font-weight: bold !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+
 .react-calendar__tile--disabled {
-  background-color: #eee !important;
-  color: #ccc !important;
+  background-color: #f1f1f1 !important;
+  color: #0a2d4a !important;
   cursor: not-allowed !important;
 }
 
@@ -308,4 +406,5 @@
 .blockedDay {
   background-color: #ffcccc !important;
   color: #ff0000 !important;
+  border-radius: 10px !important;
 }
