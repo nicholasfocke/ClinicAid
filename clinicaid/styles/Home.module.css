@@ -58,13 +58,21 @@
 
 .container {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start; /* Alinha os elementos ao início */
+  align-items: flex-start;
   padding: 50px 10px; /* mais espaço acima e abaixo */
   background: transparent; /* remove fundo */
-  margin-right: 700px;
+  flex-direction: row; /* Alinha os elementos em linha */
+  margin-left: 150px;
 }
 
+.mainContent {
+  display: flex;
+  gap: 50px; /* Espaçamento entre o calendário e a sidebar */
+  justify-content: center; /* Centraliza a coluna principal */
+  flex: 1; /* Permite que a coluna principal ocupe mais espaço */
+  margin-right: auto; /* Garante que o conteúdo principal fique à esquerda */
+}
 
 .formContainer {
   background-color: transparent; /* remove fundo */
@@ -73,6 +81,8 @@
   border: none; /* remove borda */
   max-width: 700px;
   width: 100%;
+  flex: 2; /* Ocupar mais espaço */
+  margin-right: auto; /* Empurra o conteúdo para o centro */
 }
 
 .title {
@@ -407,4 +417,11 @@
   background-color: #ffcccc !important;
   color: #ff0000 !important;
   border-radius: 10px !important;
+}
+
+.sidebar {
+  position: absolute; /* Posiciona o Sidebar fora do fluxo normal */
+  right: 0; /* Alinha o Sidebar à direita da tela */
+  top: 50px; /* Ajusta a distância do topo */
+  width: 300px; /* Define uma largura fixa */
 }
