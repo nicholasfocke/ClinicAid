@@ -98,15 +98,8 @@ const Layout = ({ children }: LayoutProps) => {
               )}
 
               <Link className={styles.headerLinks} href="/" onClick={closeMenu}>Home</Link>
-              <Link className={styles.headerLinks} href="/Agendamentos" onClick={closeMenu}>Meus Agendamentos</Link>
+              <Link className={styles.headerLinks} href="/agendamentos" onClick={closeMenu}>Meus Agendamentos</Link>
               <Link className={styles.headerLinks} href="/profile" onClick={closeMenu}>Meu Perfil</Link>
-
-              {/* Botão de administrador visível apenas para admin */}
-              {isAdmin && (
-                <Link className={styles.headerLinks} href="/admin" onClick={closeMenu}>
-                  Agendamentos
-                </Link>
-              )}
 
               {menuOpen && (
                 <div className={styles.logoutContainer}>

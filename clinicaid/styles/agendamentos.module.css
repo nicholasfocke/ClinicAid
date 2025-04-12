@@ -1,0 +1,141 @@
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+}
+
+.titlecontaineragendamento {
+  font-size: 2.5em;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Ajuste dos cards */
+.cardsContainer {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 50px;
+  justify-content: center;
+}
+
+.card {
+  background-color: #d1476e;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: white;
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+}
+
+.card p {
+  margin: 5px 0;
+}
+
+/* Ajuste dos botões */
+.cardActions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.editButton,
+.removeButton,
+.saveButton,
+.cancelButton {
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  color: white;
+  background-color: #0070f3;
+  width: 140px;
+  transition: background-color 0.3s ease;
+}
+
+.editButton:hover,
+.removeButton:hover {
+  background-color: #339af0;
+}
+
+/* Ajuste do formulário */
+.editForm {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.editForm select,
+.editForm input {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 100%;
+}
+
+.editForm button {
+  margin-top: 15px;
+  padding: 12px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.editForm button:hover {
+  background-color: #218838;
+}
+
+/* Ajuste da responsividade */
+@media (max-width: 768px) {
+  .titlecontaineragendamento {
+    font-size: 2em;
+  }
+
+  .cardsContainer {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 90%;
+    margin: 0 auto;
+    padding: 12px;
+  }
+
+  .editButton,
+  .removeButton {
+    width: 100%;
+    max-width: 140px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .titlecontaineragendamento {
+    font-size: 1.8em;
+  }
+
+  .card {
+    padding: 10px;
+    max-width: 95%;
+  }
+
+  .editButton,
+  .removeButton {
+    font-size: 13px;
+    padding: 8px;
+  }
+}
