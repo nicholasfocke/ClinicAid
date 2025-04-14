@@ -10,7 +10,8 @@ import { onAuthStateChanged } from 'firebase/auth';
 import styles from "@/styles/Home.module.css";
 import { format, getYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import Sidebar from '@/components/Sidebar'; // Importação do componente Sidebar
+import SidebarAdmin from '@/components/SidebarAdmin'; // Importação do SidebarAdmin
+import Sidebar from '@/components/Sidebar'; // Importação do Sidebar
 
 Modal.setAppElement('#__next'); // Necessário para acessibilidade
 
@@ -55,16 +56,43 @@ const Index = () => {
   const fetchTodayAppointments = async () => {
     try {
       const today = format(new Date(), 'yyyy-MM-dd');
-      const appointmentsQuery = query(
+
+      // Busca os agendamentos do dia atual
+      const todayAppointmentsQuery = query(
         collection(firestore, 'agendamentos'),
         where('data', '==', today),
         orderBy('hora', 'asc') // Ordena por horário
       );
-      const appointmentsSnapshot = await getDocs(appointmentsQuery);
-      const appointments = appointmentsSnapshot.docs.map((doc) => doc.data());
-      setTodayAppointments(appointments);
+      const todayAppointmentsSnapshot = await getDocs(todayAppointmentsQuery);
+
+      if (!todayAppointmentsSnapshot.empty) {
+        const appointments = todayAppointmentsSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setTodayAppointments(appointments);
+      } else {
+        // Caso não existam agendamentos no dia atual, busca a data mais próxima com agendamentos futuros
+        const futureAppointmentsQuery = query(
+          collection(firestore, 'agendamentos'),
+          where('data', '>', today),
+          orderBy('data', 'asc'),
+          orderBy('hora', 'asc') // Ordena por data e horário
+        );
+        const futureAppointmentsSnapshot = await getDocs(futureAppointmentsQuery);
+
+        if (!futureAppointmentsSnapshot.empty) {
+          const appointments = futureAppointmentsSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setTodayAppointments(appointments);
+        } else {
+          setTodayAppointments([]); // Nenhum agendamento encontrado
+        }
+      }
     } catch (error) {
-      console.error('Erro ao buscar agendamentos do dia:', error);
+      console.error('Erro ao buscar agendamentos:', error);
     }
   };
 
@@ -206,7 +234,8 @@ const Index = () => {
   
           if (!userSnapshot.empty) {
             const userData = userSnapshot.docs[0].data();
-            setUser({ ...currentUser, tipo: userData.tipo || 'client' });
+            const userType = userData.tipo || 'client';
+            setUser({ ...currentUser, tipo: userType });
           } else {
             setUser({ ...currentUser, tipo: 'client' });
           }
@@ -215,12 +244,11 @@ const Index = () => {
         }
       } else {
         setUser(null);
-        router.push('/login');
       }
     });
   
     fetchBlockedDays();
-    fetchTodayAppointments(); // Busca os agendamentos do dia
+    fetchTodayAppointments(); // Busca os agendamentos do dia ou da data mais próxima
   
     return () => unsubscribe();
   }, [router]);
@@ -391,8 +419,11 @@ const Index = () => {
         }
       });
   
-      router.push('/Agendamentos');
-      await sendConfirmationEmail();
+      // Atualiza os próximos agendamentos após salvar
+      await fetchTodayAppointments();
+  
+      // Redireciona para "Meus Agendamentos"
+      router.push('/agendamentos');
     } catch (error: any) {
       console.error('Erro ao salvar agendamento:', error);
       setError(error?.message || 'Erro ao salvar o agendamento. Tente novamente.');
@@ -451,6 +482,9 @@ const Index = () => {
   return (
     <ProtectedRoute>
       <div className={styles.container}>
+        {/* SidebarAdmin fixo à esquerda */}
+        <SidebarAdmin />
+
         <div className={styles.mainContent}>
           <div className={styles.formContainer}>
             <h2 className={styles.title}>Agendamentos</h2>
@@ -471,146 +505,147 @@ const Index = () => {
             <div className={styles.upcomingAppointments}>
               <h3>Próximos Agendamentos</h3>
               {todayAppointments.length > 0 ? (
-                todayAppointments.map((appointment, index) => (
-                  <div key={index} className={styles.appointmentCard}>
+                todayAppointments.map((appointment) => (
+                  <div key={appointment.id} className={styles.appointmentCard}>
                     <div className={styles.appointmentTime}>{appointment.hora}</div>
                     <div className={styles.appointmentDetails}>
                       <strong>{appointment.nomeCrianca}</strong>
                       <p>{appointment.servico}</p>
+                      <p>Data: {format(new Date(appointment.data), 'dd/MM/yyyy')}</p>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className={styles.noAppointments}>Nenhum agendamento para hoje.</p>
+                <p className={styles.noAppointments}>Nenhum agendamento encontrado.</p>
               )}
             </div>
           </div>
-
-          {/* Sidebar adicionada */}
-          <Sidebar />
         </div>
 
-        {/* Modal implementado */}
-        <Modal
-          isOpen={modalIsOpen}
-          onRequestClose={handleCancel}
-          className={styles.modalContent}
-          overlayClassName={styles.modalOverlay}
-        >
-          <h3>Agendar Serviço para {format(selectedDate || new Date(), 'dd/MM/yyyy')}</h3>
-          <form onSubmit={handleSubmit} className={styles.form}>
-            <div className={styles.inputGroup}>
-              <select
-                id="service"
-                name="service"
-                value={appointmentData.service}
-                onChange={handleInputChange}
-                required
-                className={styles.inputoption}
-              >
-                <option value="" disabled>Selecione um serviço</option>
-                <option value="Corte de cabelo">Corte de cabelo</option>
-                <option value="Franja">Franja</option>
-                <option value="Penteado">Penteado</option>
-                <option value="Hidratação">Hidratação</option>
-                <option value="Maquiagem">Maquiagem</option>
-                <option value="Maquiagem e Penteado">Maquiagem e Penteado</option>
-              </select>
-
-              <select
-                name="funcionaria"
-                value={appointmentData.funcionaria}
-                onChange={(e) => {
-                  handleInputChange(e);
-                  fetchAvailableTimes(selectedDate, e.target.value);
-                }}
-                required
-                className={styles.inputoption}
-              >
-                <option value="">Selecione uma funcionária</option>
-                <option value="Frida">Frida</option>
-                <option value="Ana">Ana</option>
-              </select>
-            </div>
-
-            {appointmentData.nomesCriancas.map((nome, index) => (
-              <div key={index} className={styles.inputGroup}>
-                <input
-                  type="text"
-                  name={`nomeCrianca-${index}`}
-                  value={nome}
-                  onChange={(e) => handleNomeCriancaChange(e, index)}
-                  placeholder="Nome da Criança"
-                  required
-                  className={styles.inputnome}
-                />
-              </div>
-            ))}
-
-            {isLoadingTimes ? (
-              <p style={{ color: 'blue', fontWeight: 'bold', marginTop: '10px' }}>
-                Carregando horários disponíveis...
-              </p>
-            ) : availableTimes.length > 0 ? (
-              <div>
-                <strong>Horários Disponíveis:</strong>
-                <div className={styles.times}>
-                  {availableTimes.map((time) => (
-                    <button
-                      key={time}
-                      type="button"
-                      className={`${styles.timeButton} ${appointmentData.times.includes(time) ? styles.activeTime : ''}`}
-                      onClick={() => handleTimeClick(time, appointmentData.times.length - 1)}
-                      disabled={!availableTimes.includes(time)}
-                    >
-                      {time}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              appointmentData.funcionaria && !isLoadingTimes && (
-                <p style={{ color: 'red', fontWeight: 'bold', marginTop: '10px' }}>
-                  Todos os horários nesta data para a funcionária já foram reservados. Entre em contato conosco para possível encaixe.
-                </p>
-              )
-            )}
-
-            <button type="button" onClick={addChild} className={styles.buttonSecondary}>
-              Adicionar Outro Filho
-            </button>
-
-            {user?.tipo === 'admin' && (
-              <button type="button" onClick={handleBlockDay} className={styles.blockButton}>
-                Bloquear Dia
-              </button>
-            )}
-
-            {user?.tipo === 'admin' && appointmentData.times[0] && (
-              <button type="button" onClick={handleBlockTime} className={styles.blockButton}>
-                Bloquear Horário
-              </button>
-            )}
-
-            {user?.tipo === 'admin' && appointmentData.funcionaria && (
-              <button type="button" onClick={handleBlockDayForEmployee} className={styles.blockButton}>
-                Bloquear Dia da Funcionária
-              </button>
-            )}
-
-            {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
-
-            <div className={styles.modalFooter}>
-              <button type="button" onClick={handleCancel} className={styles.buttonSecondary}>
-                Cancelar
-              </button>
-              <button type="submit" className={styles.button} disabled={isSubmitting}>
-                {isSubmitting ? 'Aguarde...' : 'Confirmar'}
-              </button>
-            </div>
-          </form>
-        </Modal>
+        {/* Sidebar fixo à direita */}
+        <Sidebar />
       </div>
+
+      {/* Modal implementado */}
+      <Modal
+        isOpen={modalIsOpen}
+        onRequestClose={handleCancel}
+        className={styles.modalContent}
+        overlayClassName={styles.modalOverlay}
+      >
+        <h3>Agendar Serviço para {format(selectedDate || new Date(), 'dd/MM/yyyy')}</h3>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.inputGroup}>
+            <select
+              id="service"
+              name="service"
+              value={appointmentData.service}
+              onChange={handleInputChange}
+              required
+              className={styles.inputoption}
+            >
+              <option value="" disabled>Selecione um serviço</option>
+              <option value="Corte de cabelo">Corte de cabelo</option>
+              <option value="Franja">Franja</option>
+              <option value="Penteado">Penteado</option>
+              <option value="Hidratação">Hidratação</option>
+              <option value="Maquiagem">Maquiagem</option>
+              <option value="Maquiagem e Penteado">Maquiagem e Penteado</option>
+            </select>
+
+            <select
+              name="funcionaria"
+              value={appointmentData.funcionaria}
+              onChange={(e) => {
+                handleInputChange(e);
+                fetchAvailableTimes(selectedDate, e.target.value);
+              }}
+              required
+              className={styles.inputoption}
+            >
+              <option value="">Selecione uma funcionária</option>
+              <option value="Frida">Frida</option>
+              <option value="Ana">Ana</option>
+            </select>
+          </div>
+
+          {appointmentData.nomesCriancas.map((nome, index) => (
+            <div key={index} className={styles.inputGroup}>
+              <input
+                type="text"
+                name={`nomeCrianca-${index}`}
+                value={nome}
+                onChange={(e) => handleNomeCriancaChange(e, index)}
+                placeholder="Nome da Criança"
+                required
+                className={styles.inputnome}
+              />
+            </div>
+          ))}
+
+          {isLoadingTimes ? (
+            <p style={{ color: 'blue', fontWeight: 'bold', marginTop: '10px' }}>
+              Carregando horários disponíveis...
+            </p>
+          ) : availableTimes.length > 0 ? (
+            <div>
+              <strong>Horários Disponíveis:</strong>
+              <div className={styles.times}>
+                {availableTimes.map((time) => (
+                  <button
+                    key={time}
+                    type="button"
+                    className={`${styles.timeButton} ${appointmentData.times.includes(time) ? styles.activeTime : ''}`}
+                    onClick={() => handleTimeClick(time, appointmentData.times.length - 1)}
+                    disabled={!availableTimes.includes(time)}
+                  >
+                    {time}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            appointmentData.funcionaria && !isLoadingTimes && (
+              <p style={{ color: 'red', fontWeight: 'bold', marginTop: '10px' }}>
+                Todos os horários nesta data para a funcionária já foram reservados. Entre em contato conosco para possível encaixe.
+              </p>
+            )
+          )}
+
+          <button type="button" onClick={addChild} className={styles.buttonSecondary}>
+            Adicionar Outro Filho
+          </button>
+
+          {user?.tipo === 'admin' && (
+            <button type="button" onClick={handleBlockDay} className={styles.blockButton}>
+              Bloquear Dia
+            </button>
+          )}
+
+          {user?.tipo === 'admin' && appointmentData.times[0] && (
+            <button type="button" onClick={handleBlockTime} className={styles.blockButton}>
+              Bloquear Horário
+            </button>
+          )}
+
+          {user?.tipo === 'admin' && appointmentData.funcionaria && (
+            <button type="button" onClick={handleBlockDayForEmployee} className={styles.blockButton}>
+              Bloquear Dia da Funcionária
+            </button>
+          )}
+
+          {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
+
+          <div className={styles.modalFooter}>
+            <button type="button" onClick={handleCancel} className={styles.buttonSecondary}>
+              Cancelar
+            </button>
+            <button type="submit" className={styles.button} disabled={isSubmitting}>
+              {isSubmitting ? 'Aguarde...' : 'Confirmar'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </ProtectedRoute>
   );
 };

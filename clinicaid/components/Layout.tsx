@@ -7,6 +7,7 @@ import Image from 'next/image';
 import styles from './Layout.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import SidebarAdmin from './SidebarAdmin';
 
 type LayoutProps = {
   children: ReactNode;
@@ -78,62 +79,8 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className={styles.layout}>
-      {!noHeaderRoutes.includes(router.pathname) && (
-        <header className={styles.header}>
-          <div className={styles.headerContent}>
-            <Image src="/images/ClinicAidLogoAjustado.png" 
-              alt="Logo clinicaid"
-              width={255}
-              height={72} />
-
-            <div className={styles.menuIcon} onClick={toggleMenu}>
-              {menuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-            </div>
-
-            <nav className={`${styles.nav} ${menuOpen ? styles.navOpen : ''}`} ref={menuRef}>
-              {menuOpen && (
-                <div className={styles.closeMenuIcon} onClick={toggleMenu}>
-                  <FaTimes size={24} />
-                </div>
-              )}
-
-              <Link className={styles.headerLinks} href="/" onClick={closeMenu}>Home</Link>
-              <Link className={styles.headerLinks} href="/agendamentos" onClick={closeMenu}>Meus Agendamentos</Link>
-              <Link className={styles.headerLinks} href="/profile" onClick={closeMenu}>Meu Perfil</Link>
-
-              {menuOpen && (
-                <div className={styles.logoutContainer}>
-                  <button
-                    className={styles.logoutButton}
-                    onClick={() => {
-                      handleLogout();
-                      closeMenu();
-                    }}
-                    style={{ backgroundColor: 'red', color: 'white' }}
-                  >
-                    <FaSignOutAlt size={18} style={{ marginRight: '8px' }} />
-                    Logout
-                  </button>
-                </div>
-              )}
-            </nav>
-
-            {!menuOpen && (
-              <div className={styles.logoutDesktop}>
-                <button
-                  className={styles.logoutButton}
-                  onClick={handleLogout}
-                  style={{ backgroundColor: 'red', color: 'white', marginLeft: '15px' }}
-                >
-                  <FaSignOutAlt size={18} style={{ marginRight: '8px' }} />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </header>
-      )}
-
+      {/* Exibe o SidebarAdmin apenas se não estiver nas rotas de login, registro ou esqueci senha */}
+      {!noHeaderRoutes.includes(router.pathname) && isAdmin && <SidebarAdmin />}
       <main className="mainContent">{children}</main>
 
       <footer className={styles.footer}>

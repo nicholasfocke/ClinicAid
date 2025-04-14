@@ -63,7 +63,7 @@
   padding: 50px 10px; /* mais espaço acima e abaixo */
   background: transparent; /* remove fundo */
   flex-direction: row; /* Alinha os elementos em linha */
-  margin-left: 150px;
+  margin-left: 350px;
 }
 
 .mainContent {
