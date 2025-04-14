@@ -79,8 +79,8 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className={styles.layout}>
-      {/* Exibe o SidebarAdmin apenas se não estiver nas rotas de login, registro ou esqueci senha */}
-      {!noHeaderRoutes.includes(router.pathname) && isAdmin && <SidebarAdmin />}
+      {/* Exibe o SidebarAdmin em todas as páginas, exceto nas rotas de login, registro ou esqueci senha */}
+      {!noHeaderRoutes.includes(router.pathname) && <SidebarAdmin />}
       <main className="mainContent">{children}</main>
 
       <footer className={styles.footer}>

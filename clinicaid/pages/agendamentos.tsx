@@ -263,11 +263,15 @@ const Agendamentos = () => {
     return <p>Carregando agendamentos...</p>;
   }
 
+  if (error) {
+    return <p className={styles.error}>{error}</p>;
+  }
+
   return (
     <div className={styles.container}>
       <h1 className={styles.titlecontaineragendamento}>Meus Agendamentos</h1>
       {agendamentos.length === 0 ? (
-        <p>Não há agendamentos.</p>
+        <p className={styles.noAppointments}>Não há agendamentos.</p>
       ) : (
         <div className={styles.cardsContainer}>
           {agendamentos.map((agendamento) => (
@@ -349,7 +353,7 @@ const Agendamentos = () => {
                 </div>
               ) : (
                 <>
-                  <h2>{agendamento.servico}</h2>
+                  <h2 className={styles.cardTitle}>{agendamento.servico}</h2>
                   <p>Criança: {agendamento.nomeCrianca}</p>
                   <p>Data: {agendamento.data ? format(new Date(agendamento.data), 'dd/MM/yyyy') : 'Data inválida'}</p>
                   <p>Hora: {agendamento.hora}</p>
@@ -362,7 +366,6 @@ const Agendamentos = () => {
                     <button
                       className={styles.removeButton}
                       onClick={() => handleRemove(agendamento.id)}
-                      style={{ backgroundColor: 'red', color: 'white' }}
                     >
                       Remover
                     </button>

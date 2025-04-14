@@ -75,7 +75,7 @@ const Index = () => {
         // Caso não existam agendamentos no dia atual, busca a data mais próxima com agendamentos futuros
         const futureAppointmentsQuery = query(
           collection(firestore, 'agendamentos'),
-          where('data', '>', today),
+          where('data', '>=', today), // Inclui a data de hoje para garantir que agendamentos futuros sejam buscados
           orderBy('data', 'asc'),
           orderBy('hora', 'asc') // Ordena por data e horário
         );
