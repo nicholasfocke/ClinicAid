@@ -35,6 +35,9 @@ const Agendamentos = () => {
 
   const router = useRouter(); // Hook para redirecionamento
 
+  const[todayAppointments, setTodayAppointments] = useState<Agendamento[]>([]); // Estado para armazenar os agendamentos do dia atual
+  const[upcomingAppointments, setUpcomingAppointments] = useState<Agendamento[]>([]);   
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       try {
@@ -354,7 +357,7 @@ const Agendamentos = () => {
               ) : (
                 <>
                   <h2 className={styles.cardTitle}>{agendamento.servico}</h2>
-                  <p>Criança: {agendamento.nomeCrianca}</p>
+                  <p>Paciente: {agendamento.nomeCrianca}</p>
                   <p>Data: {agendamento.data ? format(new Date(agendamento.data), 'dd/MM/yyyy') : 'Data inválida'}</p>
                   <p>Hora: {agendamento.hora}</p>
                   <p>Funcionária: {agendamento.funcionaria}</p>
