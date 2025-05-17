@@ -55,7 +55,7 @@
 }
 
 .input:focus {
-    border-color: #0070f3;
+    border-color: #0a2d4a;
     outline: none;
     box-shadow: 0 0 5px rgba(0, 112, 243, 0.5); /* Adicionado efeito de foco */
 }
@@ -78,7 +78,7 @@
 .button {
     padding: 12px;
     border: none;
-    background-color: #0070f3;
+    background-color: #0a2d4a;
     color: white;
     font-size: 16px;
     border-radius: 5px; /* Ajustado para 5px */
@@ -95,9 +95,9 @@
 .buttonSecondary {
     margin-top: 20px;
     padding: 12px;
-    border: 1px solid #0070f3;
+    border: 1px solid #0a2d4a;
     background-color: transparent;
-    color: #0070f3;
+    color: #0a2d4a;
     font-size: 16px;
     border-radius: 5px; /* Ajustado para 5px */
     cursor: pointer;
@@ -107,16 +107,16 @@
 }
 
 .buttonSecondary:hover {
-    background-color: #0070f3;
+    background-color: #0a2d4a;
     color: white;
 }
 
 .buttonForgotPass {
     margin-top: 20px;
     padding: 12px;
-    border: 1px solid #0070f3;
+    border: 1px solid #0a2d4a;
     background-color: transparent;
-    color: #0070f3;
+    color: #0a2d4a;
     font-size: 16px;
     border-radius: 5px; /* Ajustado para 5px */
     cursor: pointer;
@@ -126,7 +126,7 @@
 }
 
 .buttonForgotPass:hover {
-    background-color: #0070f3;
+    background-color: #0a2d4a;
     color: white;
 }
 

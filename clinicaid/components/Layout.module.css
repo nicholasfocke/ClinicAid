@@ -1,9 +1,12 @@
-
 .layout {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
   font-family: 'Inter', sans-serif;
+}
+
+.mainContent {
+  flex: 1;
 }
 
 .header {
@@ -139,6 +142,7 @@
   padding: 20px;
   text-align: center;
   color: white;
+  margin-top: auto;
 }
 
 .footerContent {

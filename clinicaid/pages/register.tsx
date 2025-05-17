@@ -96,10 +96,10 @@ const Register = () => {
     <div className={styles.container}>
       <div className={styles.formContainer}>
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <Image src="/images/ClinicAidLogoAjustado.png" 
+          <Image src="/images/ClinicAid logo ajustado.png"  
             alt="Logo clinicaid"
-            width={350}
-            height={78} />
+            width={300}
+            height={80} />
         </div>
 
         <h2 className={styles.title}>Cadastro</h2>

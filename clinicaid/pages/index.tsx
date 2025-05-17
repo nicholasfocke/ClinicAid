@@ -22,13 +22,19 @@ const Index = () => {
     tipo: string;
   }
 
+  interface Profissional {
+    id: string;
+    nome: string;
+    empresaId: string;
+  }
+
   const [user, setUser] = useState<User | null>(null);
   const [appointmentData, setAppointmentData] = useState({
     date: '',
     times: [''], // Array para múltiplos horários
-    service: '',
-    nomesCriancas: [''], // Array para múltiplos nomes de crianças
-    funcionaria: '',
+    nomesPacientes: [''], // Array para múltiplos nomes de pacientes
+    profissional: '',
+    detalhes: '',
   });
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -38,8 +44,11 @@ const Index = () => {
   const [isSubmitting, setIsSubmitting] = useState(false); //  Novo estado para bloquear múltiplos cliques
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [blockedDays, setBlockedDays] = useState<string[]>([]);
-  const [blockedTimes, setBlockedTimes] = useState<{ date: string, time: string, funcionaria: string }[]>([]);
+  const [blockedTimes, setBlockedTimes] = useState<{ date: string, time: string, profissional: string }[]>([]);
   const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
+  const [profissionais, setProfissionais] = useState<Profissional[]>([
+    { id: 'emilio', nome: 'Emilio', empresaId: 'default' }
+  ]);
 
   const standardTimes = [
     '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -96,33 +105,33 @@ const Index = () => {
     }
   };
 
-  const fetchAvailableTimes = async (date: Date | null, funcionaria: string) => {
-    if (!date || !funcionaria) return;
+  const fetchAvailableTimes = async (date: Date | null, profissional: string) => {
+    if (!date || !profissional) return;
     
     setIsLoadingTimes(true);
     
     try {
       const formattedDate = format(date, 'yyyy-MM-dd');
   
-      // Verifica se a funcionária está bloqueada nesse dia
+      // Verifica se o profissional está bloqueado nesse dia
       const blockedDaysByEmployeeQuery = query(
         collection(firestore, 'blockedDaysByEmployee'),
         where('date', '==', formattedDate),
-        where('funcionaria', '==', funcionaria)
+        where('funcionaria', '==', profissional)
       );
       const blockedDaysByEmployeeSnapshot = await getDocs(blockedDaysByEmployeeQuery);
   
-      // Se a funcionária estiver bloqueada, não exibe horários
+      // Se o profissional estiver bloqueado, não exibe horários
       if (!blockedDaysByEmployeeSnapshot.empty) {
         setAvailableTimes([]);
         return;
       }
   
-      // Se a funcionária não estiver bloqueada, continua normalmente
+      // Se o profissional não estiver bloqueado, continua normalmente
       const appointmentsQuery = query(
         collection(firestore, 'agendamentos'),
         where('data', '==', formattedDate),
-        where('funcionaria', '==', funcionaria)
+        where('profissional', '==', profissional)
       );
   
       const appointmentDocs = await getDocs(appointmentsQuery);
@@ -132,7 +141,7 @@ const Index = () => {
       const allTimes = user?.tipo === 'admin' ? [...standardTimes, ...adminTimes] : standardTimes;
   
       const filteredTimes = allTimes.filter((time) => {
-        if (bookedTimes.includes(time.trim()) || blockedTimes.some(blockedTime => blockedTime.time === time.trim() && blockedTime.funcionaria === funcionaria)) return false;
+        if (bookedTimes.includes(time.trim()) || blockedTimes.some(blockedTime => blockedTime.time === time.trim() && blockedTime.profissional === profissional)) return false;
   
         if (formattedDate === format(now, 'yyyy-MM-dd')) {
           const [hours, minutes] = time.split(':');
@@ -166,24 +175,24 @@ const Index = () => {
   };
 
   const handleBlockDayForEmployee = async () => {
-    if (!selectedDate || !appointmentData.funcionaria) return;
+    if (!selectedDate || !appointmentData.profissional) return;
   
     try {
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-      await setDoc(doc(firestore, 'blockedDaysByEmployee', `${formattedDate}_${appointmentData.funcionaria}`), {
+      await setDoc(doc(firestore, 'blockedDaysByEmployee', `${formattedDate}_${appointmentData.profissional}`), {
         date: formattedDate,
-        funcionaria: appointmentData.funcionaria,
+        funcionaria: appointmentData.profissional,
       });
   
-      // Atualiza os bloqueios apenas para a funcionária
+      // Atualiza os bloqueios apenas para o profissional
       setBlockedTimes((prev) => [
         ...prev,
-        { date: formattedDate, time: 'all', funcionaria: appointmentData.funcionaria },
+        { date: formattedDate, time: 'all', profissional: appointmentData.profissional },
       ]);
       setError('');
     } catch (error) {
-      console.error('Erro ao bloquear o dia da funcionária:', error);
-      setError('Erro ao bloquear o dia da funcionária. Tente novamente.');
+      console.error('Erro ao bloquear o dia do profissional:', error);
+      setError('Erro ao bloquear o dia do profissional. Tente novamente.');
     }
   };
   
@@ -198,15 +207,15 @@ const Index = () => {
         where('date', '==', formattedDate)
       );
       const blockedTimesSnapshot = await getDocs(blockedTimesQuery);
-      const fetchedBlockedTimes = blockedTimesSnapshot.docs.map((doc) => doc.data() as { date: string, time: string, funcionaria: string });
+      const fetchedBlockedTimes = blockedTimesSnapshot.docs.map((doc) => doc.data() as { date: string, time: string, profissional: string });
   
-      // Busca bloqueios por funcionária
+      // Busca bloqueios por profissional
       const blockedDaysByEmployeeQuery = query(
         collection(firestore, 'blockedDaysByEmployee'),
         where('date', '==', formattedDate)
       );
       const blockedDaysByEmployeeSnapshot = await getDocs(blockedDaysByEmployeeQuery);
-      const fetchedBlockedDaysByEmployee = blockedDaysByEmployeeSnapshot.docs.map((doc) => doc.data() as { date: string, time: string, funcionaria: string });
+      const fetchedBlockedDaysByEmployee = blockedDaysByEmployeeSnapshot.docs.map((doc) => doc.data() as { date: string, time: string, profissional: string });
   
       // Atualiza o estado de bloqueios
       setBlockedTimes([...fetchedBlockedTimes, ...fetchedBlockedDaysByEmployee]);
@@ -217,10 +226,10 @@ const Index = () => {
   
 
   useEffect(() => {
-    if (selectedDate && appointmentData.funcionaria) {
-      fetchAvailableTimes(selectedDate, appointmentData.funcionaria);
+    if (selectedDate && appointmentData.profissional) {
+      fetchAvailableTimes(selectedDate, appointmentData.profissional);
     }
-  }, [selectedDate, appointmentData.funcionaria, user, blockedTimes]);
+  }, [selectedDate, appointmentData.profissional, user, blockedTimes]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -253,6 +262,41 @@ const Index = () => {
     return () => unsubscribe();
   }, [router]);
 
+  useEffect(() => {
+    const fetchProfissionais = async () => {
+      if (!user) return;
+      let empresaId = null;
+      if (user.tipo === 'admin') {
+        const empresaDoc = await getDocs(query(collection(firestore, 'empresas'), where('adminId', '==', user.uid)));
+        if (!empresaDoc.empty) {
+          empresaId = empresaDoc.docs[0].id;
+        }
+      } else {
+        const empresaDoc = await getDocs(collection(firestore, 'empresas'));
+        if (!empresaDoc.empty) {
+          empresaId = empresaDoc.docs[0].id;
+        }
+      }
+      if (!empresaId) return;
+
+      const profissionaisSnap = await getDocs(query(collection(firestore, 'profissionais'), where('empresaId', '==', empresaId)));
+      const profs: Profissional[] = profissionaisSnap.docs.map(doc => ({
+        id: doc.id,
+        nome: doc.data().nome,
+        empresaId: doc.data().empresaId,
+      }));
+
+      // Garante que Emilio sempre aparece na lista
+      const emilioExists = profs.some(p => p.nome === 'Emilio');
+      if (!emilioExists) {
+        profs.unshift({ id: 'emilio', nome: 'Emilio', empresaId });
+      }
+      setProfissionais(profs);
+    };
+
+    fetchProfissionais();
+  }, [user]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setAppointmentData((prevData) => ({
       ...prevData,
@@ -260,12 +304,12 @@ const Index = () => {
     }));
   };
 
-  const handleNomeCriancaChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const newNomesCriancas = [...appointmentData.nomesCriancas];
-    newNomesCriancas[index] = e.target.value;
+  const handleNomePacienteChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const newNomesPacientes = [...appointmentData.nomesPacientes];
+    newNomesPacientes[index] = e.target.value;
     setAppointmentData((prevData) => ({
       ...prevData,
-      nomesCriancas: newNomesCriancas,
+      nomesPacientes: newNomesPacientes,
     }));
   };
 
@@ -288,7 +332,7 @@ const Index = () => {
   const addChild = () => {
     setAppointmentData((prevData) => ({
       ...prevData,
-      nomesCriancas: [...prevData.nomesCriancas, ''],
+      nomesPacientes: [...prevData.nomesPacientes, ''],
       times: [...prevData.times, ''],
     }));
   };
@@ -329,30 +373,34 @@ const Index = () => {
 
   const sendConfirmationEmail = async () => {
     try {
+      if (!user?.email) {
+        console.error('Usuário sem e-mail.');
+        return;
+      }
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: user?.email,
+          email: user.email,
           userId: user?.uid,
           date: appointmentData.date,
-          service: appointmentData.service,
           times: appointmentData.times,
-          funcionaria: appointmentData.funcionaria,
-          nomesCriancas: appointmentData.nomesCriancas,
+          profissional: appointmentData.profissional,
+          nomesPacientes: appointmentData.nomesPacientes,
+          detalhes: appointmentData.detalhes,
           isEdit: false,
           isDelete: false,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao enviar email de confirmação');
+        const errText = await response.text();
+        throw new Error('Erro ao enviar email de confirmação: ' + errText);
       }
     } catch (error) {
       console.error('Erro ao enviar o email:', error);
     }
   };
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -370,13 +418,13 @@ const Index = () => {
       return;
     }
   
-    if (!appointmentData.funcionaria || !appointmentData.date || appointmentData.times.some(time => !time) || appointmentData.nomesCriancas.some(nome => !nome)) {
+    if (!appointmentData.profissional || !appointmentData.date || appointmentData.times.some(time => !time) || appointmentData.nomesPacientes.some(nome => !nome)) {
       setError('Todos os campos são obrigatórios.');
       setIsSubmitting(false);
       return;
     }
   
-    if (appointmentData.nomesCriancas.length !== appointmentData.times.length) {
+    if (appointmentData.nomesPacientes.length !== appointmentData.times.length) {
       setError('Erro interno: número de nomes e horários não correspondem.');
       setIsSubmitting(false);
       return;
@@ -391,13 +439,13 @@ const Index = () => {
   
     try {
       await runTransaction(firestore, async (transaction) => {
-        for (let index = 0; index < appointmentData.nomesCriancas.length; index++) {
-          const nome = appointmentData.nomesCriancas[index];
+        for (let index = 0; index < appointmentData.nomesPacientes.length; index++) {
+          const nome = appointmentData.nomesPacientes[index];
   
           const appointmentRef = doc(
             firestore,
             'agendamentos',
-            `${appointmentData.date}_${appointmentData.funcionaria}_${appointmentData.times[index]}`
+            `${appointmentData.date}_${appointmentData.profissional}_${appointmentData.times[index]}`
           );
   
           const existing = await transaction.get(appointmentRef);
@@ -406,21 +454,23 @@ const Index = () => {
           }
   
           transaction.set(appointmentRef, {
-            nomeCrianca: nome,
-            servico: appointmentData.service,
+            nomePaciente: nome,
             data: appointmentData.date,
             hora: appointmentData.times[index],
-            data_funcionaria_hora: `${appointmentData.date}_${appointmentData.funcionaria}_${appointmentData.times[index]}`,
             usuarioId: user?.uid,
             usuarioEmail: user?.email,
             status: 'agendado',
-            funcionaria: appointmentData.funcionaria,
+            profissional: appointmentData.profissional,
+            detalhes: appointmentData.detalhes,
           });
         }
       });
   
       // Atualiza os próximos agendamentos após salvar
       await fetchTodayAppointments();
+
+      // Envia o e-mail de confirmação
+      await sendConfirmationEmail();
   
       // Redireciona para "Meus Agendamentos"
       router.push('/agendamentos');
@@ -449,16 +499,16 @@ const Index = () => {
   };
 
   const handleBlockTime = async () => {
-    if (!selectedDate || !appointmentData.times[0] || !appointmentData.funcionaria) return;
+    if (!selectedDate || !appointmentData.times[0] || !appointmentData.profissional) return;
 
     try {
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-      await setDoc(doc(firestore, 'blockedTimes', `${formattedDate}_${appointmentData.times[0]}_${appointmentData.funcionaria}`), {
+      await setDoc(doc(firestore, 'blockedTimes', `${formattedDate}_${appointmentData.times[0]}_${appointmentData.profissional}`), {
         date: formattedDate,
         time: appointmentData.times[0],
-        funcionaria: appointmentData.funcionaria,
+        profissional: appointmentData.profissional,
       });
-      setBlockedTimes((prev) => [...prev, { date: formattedDate, time: appointmentData.times[0], funcionaria: appointmentData.funcionaria }]);
+      setBlockedTimes((prev) => [...prev, { date: formattedDate, time: appointmentData.times[0], profissional: appointmentData.profissional }]);
       setError('');
     } catch (error) {
       console.error('Erro ao bloquear o horário:', error);
@@ -471,9 +521,9 @@ const Index = () => {
     setAppointmentData({
       date: '',
       times: [''],
-      service: '',
-      nomesCriancas: [''],
-      funcionaria: '',
+      nomesPacientes: [''],
+      profissional: '',
+      detalhes: '',
     });
     setAvailableTimes([]);
     setModalIsOpen(false);
@@ -509,8 +559,16 @@ const Index = () => {
                   <div key={appointment.id} className={styles.appointmentCard}>
                     <div className={styles.appointmentTime}>{appointment.hora}</div>
                     <div className={styles.appointmentDetails}>
-                      <strong>{appointment.nomeCrianca}</strong>
-                      <p>{appointment.servico}</p>
+                      <strong>
+                        {appointment.nomePaciente
+                          ? appointment.nomePaciente
+                          : (Array.isArray(appointment.nomesPacientes) && appointment.nomesPacientes.length > 0
+                              ? appointment.nomesPacientes[0]
+                              : '')}
+                      </strong>
+                      <p>
+                        Profissional: {appointment.profissional || (appointment.funcionaria || '')}
+                      </p>
                       <p>
                         Data: {
                           format(
@@ -547,52 +605,50 @@ const Index = () => {
         <h3>Agendar Serviço para {format(selectedDate || new Date(), 'dd/MM/yyyy')}</h3>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.inputGroup}>
+            {/* Select de Profissional */}
             <select
-              id="service"
-              name="service"
-              value={appointmentData.service}
-              onChange={handleInputChange}
-              required
-              className={styles.inputoption}
-            >
-              <option value="" disabled>Selecione um serviço</option>
-              <option value="Corte de cabelo">Corte de cabelo</option>
-              <option value="Franja">Franja</option>
-              <option value="Penteado">Penteado</option>
-              <option value="Hidratação">Hidratação</option>
-              <option value="Maquiagem">Maquiagem</option>
-              <option value="Maquiagem e Penteado">Maquiagem e Penteado</option>
-            </select>
-
-            <select
-              name="funcionaria"
-              value={appointmentData.funcionaria}
+              name="profissional"
+              value={appointmentData.profissional}
               onChange={(e) => {
-                handleInputChange(e);
+                setAppointmentData((prev) => ({ ...prev, profissional: e.target.value }));
                 fetchAvailableTimes(selectedDate, e.target.value);
               }}
               required
               className={styles.inputoption}
             >
-              <option value="">Selecione uma funcionária</option>
-              <option value="Frida">Frida</option>
-              <option value="Ana">Ana</option>
+              <option value="">Selecione um profissional</option>
+              {profissionais.map((prof) => (
+                <option key={prof.id} value={prof.nome}>{prof.nome}</option>
+              ))}
             </select>
           </div>
 
-          {appointmentData.nomesCriancas.map((nome, index) => (
+          {appointmentData.nomesPacientes.map((nome, index) => (
             <div key={index} className={styles.inputGroup}>
               <input
                 type="text"
-                name={`nomeCrianca-${index}`}
+                name={`nomePaciente-${index}`}
                 value={nome}
-                onChange={(e) => handleNomeCriancaChange(e, index)}
-                placeholder="Nome da Criança"
+                onChange={(e) => handleNomePacienteChange(e, index)}
+                placeholder="Nome do Paciente"
                 required
                 className={styles.inputnome}
               />
             </div>
           ))}
+
+          {/* Campo de detalhes */}
+          <div className={styles.inputGroup}>
+            <textarea
+              name="detalhes"
+              value={appointmentData.detalhes}
+              onChange={(e) => setAppointmentData((prev) => ({ ...prev, detalhes: e.target.value }))}
+              placeholder="Descreva detalhadamente o motivo da consulta"
+              className={styles.inputoption}
+              rows={4}
+              required
+            />
+          </div>
 
           {isLoadingTimes ? (
             <p style={{ color: 'blue', fontWeight: 'bold', marginTop: '10px' }}>
@@ -616,16 +672,12 @@ const Index = () => {
               </div>
             </div>
           ) : (
-            appointmentData.funcionaria && !isLoadingTimes && (
+            appointmentData.profissional && !isLoadingTimes && (
               <p style={{ color: 'red', fontWeight: 'bold', marginTop: '10px' }}>
-                Todos os horários nesta data para a funcionária já foram reservados. Entre em contato conosco para possível encaixe.
+                Todos os horários nesta data para o profissional já foram reservados. Entre em contato conosco para possível encaixe.
               </p>
             )
           )}
-
-          <button type="button" onClick={addChild} className={styles.buttonSecondary}>
-            Adicionar Outro Filho
-          </button>
 
           {user?.tipo === 'admin' && (
             <button type="button" onClick={handleBlockDay} className={styles.blockButton}>
@@ -639,9 +691,9 @@ const Index = () => {
             </button>
           )}
 
-          {user?.tipo === 'admin' && appointmentData.funcionaria && (
+          {user?.tipo === 'admin' && appointmentData.profissional && (
             <button type="button" onClick={handleBlockDayForEmployee} className={styles.blockButton}>
-              Bloquear Dia da Funcionária
+              Bloquear Dia do Profissional
             </button>
           )}
 

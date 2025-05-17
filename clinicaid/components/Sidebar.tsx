@@ -25,7 +25,7 @@ const Sidebar = () => {
         <p className={styles.description}>
           Acesse os agendamentos dos próximos dias ou datas futuras.
         </p>
-        <button className={styles.button}>Acesse sua agenda</button>
+        <button className={styles.button}>Acessar agenda</button>
       </div>
 
       <div className={styles.card}>

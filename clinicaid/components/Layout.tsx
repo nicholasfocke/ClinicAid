@@ -78,10 +78,10 @@ const Layout = ({ children }: LayoutProps) => {
   const noHeaderRoutes = ['/login', '/register', '/esquecisenha'];
 
   return (
-    <div className={styles.layout}>
+    <div className={styles.layout} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Exibe o SidebarAdmin em todas as páginas, exceto nas rotas de login, registro ou esqueci senha */}
       {!noHeaderRoutes.includes(router.pathname) && <SidebarAdmin />}
-      <main className="mainContent">{children}</main>
+      <main className="mainContent" style={{ flex: 1 }}>{children}</main>
 
       <footer className={styles.footer}>
         <div className={styles.footerContent}>

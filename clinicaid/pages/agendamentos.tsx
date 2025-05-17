@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { auth, firestore } from '../firebase/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/router';
@@ -13,10 +13,16 @@ interface Agendamento {
   id: string;
   data: string;
   hora: string;
-  servico: string;
-  nomeCrianca: string;
+  profissional: string;
+  nomePaciente: string;
   status: string;
-  funcionaria: string;
+  detalhes: string;
+}
+
+interface Profissional {
+  id: string;
+  nome: string;
+  empresaId: string;
 }
 
 const Agendamentos = () => {
@@ -33,6 +39,9 @@ const Agendamentos = () => {
 
   const [todayAppointments, setTodayAppointments] = useState<Agendamento[]>([]);
   const [upcomingAppointments, setUpcomingAppointments] = useState<Agendamento[]>([]);
+  const [profissionais, setProfissionais] = useState<Profissional[]>([
+    { id: 'emilio', nome: 'Emilio', empresaId: 'default' }
+  ]);
 
   // Novos estados para calendário/modal
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -59,6 +68,35 @@ const Agendamentos = () => {
   }, [router]);
 
   useEffect(() => {
+    const fetchProfissionais = async () => {
+      if (!user) return;
+      let empresaId = null;
+      // Busca empresa do usuário (ajuste conforme sua estrutura)
+      const empresaDoc = await getDocs(collection(firestore, 'empresas'));
+      if (!empresaDoc.empty) {
+        empresaId = empresaDoc.docs[0].id;
+      }
+      if (!empresaId) return;
+
+      const profissionaisSnap = await getDocs(query(collection(firestore, 'profissionais'), where('empresaId', '==', empresaId)));
+      const profs: Profissional[] = profissionaisSnap.docs.map(doc => ({
+        id: doc.id,
+        nome: doc.data().nome,
+        empresaId: doc.data().empresaId,
+      }));
+
+      // Garante que Emilio sempre aparece na lista
+      const emilioExists = profs.some(p => p.nome === 'Emilio');
+      if (!emilioExists) {
+        profs.unshift({ id: 'emilio', nome: 'Emilio', empresaId });
+      }
+      setProfissionais(profs);
+    };
+
+    fetchProfissionais();
+  }, [user]);
+
+  useEffect(() => {
     const fetchAgendamentos = async () => {
       if (user) {
         const q = query(
@@ -76,10 +114,10 @@ const Agendamentos = () => {
               id: doc.id,
               data: agendamentoData.data,
               hora: agendamentoData.hora,
-              servico: agendamentoData.servico,
-              nomeCrianca: agendamentoData.nomeCrianca,
+              profissional: agendamentoData.profissional,
+              nomePaciente: agendamentoData.nomePaciente,
               status: agendamentoData.status,
-              funcionaria: agendamentoData.funcionaria || '',
+              detalhes: agendamentoData.detalhes || '',
             });
           });
 
@@ -140,10 +178,33 @@ const Agendamentos = () => {
     if (!confirmDelete) return;
 
     try {
+      // Busca o agendamento antes de remover
+      const agendamentoDoc = await getDoc(doc(firestore, 'agendamentos', id));
+      const agendamentoData = agendamentoDoc.exists() ? agendamentoDoc.data() : null;
+
       await deleteDoc(doc(firestore, 'agendamentos', id));
       setAgendamentos((prev) => prev.filter((agendamento) => agendamento.id !== id));
       setTodayAppointments((prev) => prev.filter((agendamento) => agendamento.id !== id));
       setUpcomingAppointments((prev) => prev.filter((agendamento) => agendamento.id !== id));
+
+      // Envia e-mail de exclusão se dados disponíveis
+      if (agendamentoData && user?.email) {
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: user.email,
+            userId: user.uid,
+            date: agendamentoData.data,
+            times: [agendamentoData.hora],
+            profissional: agendamentoData.profissional,
+            nomesPacientes: [agendamentoData.nomePaciente],
+            detalhes: agendamentoData.detalhes,
+            isEdit: false,
+            isDelete: true,
+          }),
+        });
+      }
     } catch (error) {
       console.error('Erro ao remover agendamento: ', error);
       setError('Erro ao remover o agendamento.');
@@ -215,9 +276,9 @@ const Agendamentos = () => {
                 <div key={ag.id} className={styles.cardGridItem}>
                   <div className={styles.timeBox}>{ag.hora}</div>
                   <div>
-                    <div className={styles.cardName}>{ag.nomeCrianca}</div>
-                    <div className={styles.cardService}>{ag.servico}</div>
-                    <div className={styles.cardFuncionario}>{ag.funcionaria}</div>
+                    <div className={styles.cardName}>{ag.nomePaciente}</div>
+                    <div className={styles.cardService}>{ag.profissional}</div>
+                    <div className={styles.cardFuncionario}>{ag.detalhes}</div>
                   </div>
                   <button className={styles.removeButton} onClick={() => handleRemove(ag.id)}>
                     Remover
@@ -241,9 +302,9 @@ const Agendamentos = () => {
               <div key={ag.id} className={styles.cardGridItem}>
                 <div className={styles.timeBox}>{ag.hora}</div>
                 <div>
-                  <div className={styles.cardName}>{ag.nomeCrianca}</div>
-                  <div className={styles.cardService}>{ag.servico}</div>
-                  <div className={styles.cardFuncionario}>{ag.funcionaria}</div>
+                  <div className={styles.cardName}>{ag.nomePaciente}</div>
+                  <div className={styles.cardService}>{ag.profissional}</div>
+                  <div className={styles.cardFuncionario}>{ag.detalhes}</div>
                 </div>
                 <button className={styles.removeButton} onClick={() => handleRemove(ag.id)}>
                   Remover
@@ -270,9 +331,9 @@ const Agendamentos = () => {
                     {ag.hora}
                   </div>
                   <div>
-                    <div className={styles.cardName}>{ag.nomeCrianca}</div>
-                    <div className={styles.cardService}>{ag.servico}</div>
-                    <div className={styles.cardFuncionario}>{ag.funcionaria}</div>
+                    <div className={styles.cardName}>{ag.nomePaciente}</div>
+                    <div className={styles.cardService}>{ag.profissional}</div>
+                    <div className={styles.cardFuncionario}>{ag.detalhes}</div>
                     <div className={styles.cardDate}>
                       {format(agDate, 'dd/MM/yyyy')}
                     </div>

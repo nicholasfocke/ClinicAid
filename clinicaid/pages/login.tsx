@@ -113,9 +113,9 @@ const Login = () => {
       <div className={styles.formContainer}>
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <Image
-            src="/images/ClinicAidLogoAjustado.png" 
+            src="/images/ClinicAid logo ajustado.png" 
             alt="Logo clinicaid"
-            width={290}
+            width={300}
             height={80}
           />
         </div>

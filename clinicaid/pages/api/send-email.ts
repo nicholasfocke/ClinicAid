@@ -5,7 +5,22 @@ import { firestore } from '../../firebase/firebaseConfig';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { email, userId, date, service, times, funcionaria, nomesCriancas, isEdit, isDelete } = req.body;
+    // Suporte para ambos os formatos antigos e novos
+    const {
+      email,
+      userId,
+      date,
+      times,
+      profissional,
+      nomesPacientes,
+      detalhes,
+      isEdit,
+      isDelete,
+      // campos antigos para compatibilidade
+      service,
+      funcionaria,
+      nomesCriancas,
+    } = req.body;
 
     if (!userId || !date) {
       return res.status(400).json({ message: 'userId e date são obrigatórios.' });
@@ -22,8 +37,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const userName = userDoc.data()?.nome || "Usuário";
       const userPhone = userDoc.data()?.telefone || "Não informado";
-
-      console.log(`Usuário encontrado: Nome - ${userName}, Telefone - ${userPhone}`);
 
       // Formatar a data para padrão brasileiro (DD/MM/YYYY)
       const [year, month, day] = date.split('-').map(Number);
@@ -57,11 +70,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const sendAdminEmail = async (subject: string, message: string) => {
         await transporter.sendMail({
           from: process.env.EMAIL_USER,
-          to: 'equipefridakids@gmail.com',
+          to: 'nicholasfocke05@gmail.com',
           subject,
           html: message,
         });
       };
+
+      // Decide campos para template (compatível com ambos os formatos)
+      const pacienteList = nomesPacientes || nomesCriancas || [];
+      const profissionalNome = profissional || funcionaria || '-';
+      const servico = service || '-';
+      const detalhesTexto = detalhes || '-';
 
       // Template de e-mail para o usuário
       const userMessage = `
@@ -70,11 +89,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           <p>${isDelete ? 'Seu agendamento foi excluído.' : isEdit ? 'Seu agendamento foi atualizado.' : 'Seu agendamento foi criado com sucesso!'}</p>
           <ul>
             <li><strong>Nome do usuário:</strong> ${userName}</li>
-            <li><strong>Serviço:</strong> ${service}</li>
-            <li><strong>Crianças:</strong> ${nomesCriancas.join(', ')}</li>
+            <li><strong>Profissional:</strong> ${profissionalNome}</li>
+            <li><strong>Serviço:</strong> ${servico}</li>
+            <li><strong>Paciente(s):</strong> ${Array.isArray(pacienteList) ? pacienteList.join(', ') : pacienteList}</li>
             <li><strong>Data:</strong> ${formattedDate}</li>
-            <li><strong>Horários:</strong> ${times.join(', ')}</li>
-            <li><strong>Funcionária:</strong> ${funcionaria}</li>
+            <li><strong>Horários:</strong> ${Array.isArray(times) ? times.join(', ') : times}</li>
+            <li><strong>Detalhes:</strong> ${detalhesTexto}</li>
           </ul>
           <p>Se precisar de alguma alteração, entre em contato.</p>
           <p>Atenciosamente,<br><strong>Equipe FridaKids</strong></p>
@@ -88,11 +108,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           <p>O usuário <strong>${userName}</strong> (${email}) ${isDelete ? 'excluiu' : isEdit ? 'editou' : 'criou'} um agendamento.</p>
           <ul>
             <li><strong>Nome do usuário:</strong> ${userName}</li>
-            <li><strong>Serviço:</strong> ${service}</li>
-            <li><strong>Crianças:</strong> ${nomesCriancas.join(', ')}</li>
+            <li><strong>Profissional:</strong> ${profissionalNome}</li>
+            <li><strong>Serviço:</strong> ${servico}</li>
+            <li><strong>Paciente(s):</strong> ${Array.isArray(pacienteList) ? pacienteList.join(', ') : pacienteList}</li>
             <li><strong>Data:</strong> ${formattedDate}</li>
-            <li><strong>Horários:</strong> ${times.join(', ')}</li>
-            <li><strong>Funcionária:</strong> ${funcionaria}</li>
+            <li><strong>Horários:</strong> ${Array.isArray(times) ? times.join(', ') : times}</li>
+            <li><strong>Detalhes:</strong> ${detalhesTexto}</li>
             <li><strong>Telefone do usuário:</strong> ${userPhone}</li>
           </ul>
           <p>Atenciosamente,<br><strong>Equipe FridaKids</strong></p>
