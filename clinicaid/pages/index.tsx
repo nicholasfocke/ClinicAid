@@ -487,7 +487,7 @@ const Index = () => {
 
         <div className={styles.mainContent}>
           <div className={styles.formContainer}>
-            <h2 className={styles.title}>Agendamentos</h2>
+            <h2 className={styles.title}>Dashboard</h2>
 
             <Calendar
               className={styles.reactCalendar}
@@ -505,13 +505,24 @@ const Index = () => {
             <div className={styles.upcomingAppointments}>
               <h3>Próximos Agendamentos</h3>
               {todayAppointments.length > 0 ? (
-                todayAppointments.map((appointment) => (
+                todayAppointments.slice(0, 4).map((appointment) => (
                   <div key={appointment.id} className={styles.appointmentCard}>
                     <div className={styles.appointmentTime}>{appointment.hora}</div>
                     <div className={styles.appointmentDetails}>
                       <strong>{appointment.nomeCrianca}</strong>
                       <p>{appointment.servico}</p>
-                      <p>Data: {format(new Date(appointment.data), 'dd/MM/yyyy')}</p>
+                      <p>
+                        Data: {
+                          format(
+                            (() => {
+                              const d = new Date(appointment.data);
+                              d.setDate(d.getDate() + 1);
+                              return d;
+                            })(),
+                            'dd/MM/yyyy'
+                          )
+                        }
+                      </p>
                     </div>
                   </div>
                 ))
