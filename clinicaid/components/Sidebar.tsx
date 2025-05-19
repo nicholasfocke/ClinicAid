@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './Sidebar.module.css';
 import { MessageSquare, User2, CalendarDays } from 'lucide-react';
+import Link from 'next/link';
 
 const Sidebar = () => {
   return (
@@ -14,7 +15,9 @@ const Sidebar = () => {
           Assistente com inteligência artificial, oferece sugestões de tratamento,
           realiza diagnóstico e pronto para realizar prontuários e está disponível para responder.
         </p>
+        <Link href="/artificialinteligence" passHref legacyBehavior>
         <button className={styles.button}>Faça uma pergunta</button>
+        </Link>
       </div>
 
       <div className={styles.card}>
@@ -25,7 +28,9 @@ const Sidebar = () => {
         <p className={styles.description}>
           Acesse os agendamentos dos próximos dias ou datas futuras.
         </p>
-        <button className={styles.button}>Acessar agenda</button>
+        <Link href="/agendamentos" passHref legacyBehavior>
+          <button className={styles.button}>Acessar agenda</button>
+        </Link>
       </div>
 
       <div className={styles.card}>
@@ -36,7 +41,9 @@ const Sidebar = () => {
         <p className={styles.description}>
           Visualize e edite as informações do seu perfil.
         </p>
-        <button className={styles.button}>Acessar perfil</button>
+        <Link href="/profile" passHref legacyBehavior>
+          <button className={styles.button}>Acessar perfil</button>
+        </Link>
       </div>
     </aside>
   );
