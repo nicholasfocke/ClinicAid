@@ -604,6 +604,13 @@ const Index = () => {
       >
         <h3>Agendar Serviço para {format(selectedDate || new Date(), 'dd/MM/yyyy')}</h3>
         <form onSubmit={handleSubmit} className={styles.form}>
+          {/* Loading spinner sobreposto ao modal durante envio */}
+          {isSubmitting && (
+            <div className={styles.modalLoadingOverlay}>
+              <div className={styles.modalSpinner}></div>
+              <span className={styles.modalLoadingText}>Aguarde...</span>
+            </div>
+          )}
           <div className={styles.inputGroup}>
             {/* Select de Profissional */}
             <select
@@ -615,6 +622,7 @@ const Index = () => {
               }}
               required
               className={styles.inputoption}
+              disabled={isSubmitting}
             >
               <option value="">Selecione um profissional</option>
               {profissionais.map((prof) => (
@@ -633,6 +641,7 @@ const Index = () => {
                 placeholder="Nome do Paciente"
                 required
                 className={styles.inputnome}
+                disabled={isSubmitting}
               />
             </div>
           ))}
@@ -647,6 +656,7 @@ const Index = () => {
               className={styles.inputoption}
               rows={4}
               required
+              disabled={isSubmitting}
             />
           </div>
 
@@ -664,7 +674,7 @@ const Index = () => {
                     type="button"
                     className={`${styles.timeButton} ${appointmentData.times.includes(time) ? styles.activeTime : ''}`}
                     onClick={() => handleTimeClick(time, appointmentData.times.length - 1)}
-                    disabled={!availableTimes.includes(time)}
+                    disabled={!availableTimes.includes(time) || isSubmitting}
                   >
                     {time}
                   </button>
@@ -680,19 +690,37 @@ const Index = () => {
           )}
 
           {user?.tipo === 'admin' && (
-            <button type="button" onClick={handleBlockDay} className={styles.blockButton}>
+            <button
+              type="button"
+              onClick={handleBlockDay}
+              className={styles.blockButton}
+              disabled={isSubmitting}
+              style={isSubmitting ? { backgroundColor: '#ccc', color: '#888', cursor: 'not-allowed', border: 'none' } : {}}
+            >
               Bloquear Dia
             </button>
           )}
 
           {user?.tipo === 'admin' && appointmentData.times[0] && (
-            <button type="button" onClick={handleBlockTime} className={styles.blockButton}>
+            <button
+              type="button"
+              onClick={handleBlockTime}
+              className={styles.blockButton}
+              disabled={isSubmitting}
+              style={isSubmitting ? { backgroundColor: '#ccc', color: '#888', cursor: 'not-allowed', border: 'none' } : {}}
+            >
               Bloquear Horário
             </button>
           )}
 
           {user?.tipo === 'admin' && appointmentData.profissional && (
-            <button type="button" onClick={handleBlockDayForEmployee} className={styles.blockButton}>
+            <button
+              type="button"
+              onClick={handleBlockDayForEmployee}
+              className={styles.blockButton}
+              disabled={isSubmitting}
+              style={isSubmitting ? { backgroundColor: '#ccc', color: '#888', cursor: 'not-allowed', border: 'none' } : {}}
+            >
               Bloquear Dia do Profissional
             </button>
           )}
@@ -700,10 +728,19 @@ const Index = () => {
           {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
 
           <div className={styles.modalFooter}>
-            <button type="button" onClick={handleCancel} className={styles.buttonSecondary}>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className={styles.buttonSecondary}
+              disabled={isSubmitting}
+            >
               Cancelar
             </button>
-            <button type="submit" className={styles.button} disabled={isSubmitting}>
+            <button
+              type="submit"
+              className={styles.button}
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Aguarde...' : 'Confirmar'}
             </button>
           </div>

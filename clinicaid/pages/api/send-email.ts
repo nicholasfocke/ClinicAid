@@ -97,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             <li><strong>Detalhes:</strong> ${detalhesTexto}</li>
           </ul>
           <p>Se precisar de alguma alteração, entre em contato.</p>
-          <p>Atenciosamente,<br><strong>Equipe FridaKids</strong></p>
+          <p>Atenciosamente,<br><strong>Equipe ClinicAid</strong></p>
         </div>
       `;
 
@@ -116,7 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             <li><strong>Detalhes:</strong> ${detalhesTexto}</li>
             <li><strong>Telefone do usuário:</strong> ${userPhone}</li>
           </ul>
-          <p>Atenciosamente,<br><strong>Equipe FridaKids</strong></p>
+          <p>Atenciosamente,<br><strong>Equipe ClinicAid</strong></p>
         </div>
       `;
 

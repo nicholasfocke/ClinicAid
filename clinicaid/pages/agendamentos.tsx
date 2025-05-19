@@ -239,7 +239,7 @@ const Agendamentos = () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.titlecontaineragendamento}>Meus Agendamentos</h1>
+      <h1 className={styles.titlecontaineragendamento}>Painel de Agendamentos</h1>
 
       {/* Calendário com marcação de datas com agendamento */}
       <div className={styles.calendarWrapper}>
