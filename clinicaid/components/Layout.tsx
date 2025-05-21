@@ -1,4 +1,5 @@
 import { ReactNode, useState, useEffect, useRef } from 'react';
+import { FaWhatsapp, FaEnvelope } from "react-icons/fa";
 import { FaInstagram, FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
 import { auth, firestore } from '../firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
@@ -85,19 +86,33 @@ const Layout = ({ children }: LayoutProps) => {
 
       <footer className={styles.footer}>
         <div className={styles.footerContent}>
+          <p className={styles.impactPhrase}>
+            A tecnologia que otimiza seu tempo e melhora seu atendimento.
+          </p>
           <div className={styles.contactInfo}>
-            <p>Alguma dúvida?</p>
-            <button className={styles.contactButton}>
-              <a href="https://api.whatsapp.com/send/?phone=5582996900232&text=Gostaria+de+fazer+um+agendamento+&type=phone_number&app_absent=0" target="_blank" rel="noopener noreferrer">
-                Entre em contato
+            <button className={styles.contactButton}>Entre em Contato</button>
+            <div className={styles.contactButtons}>
+              <a href="https://api.whatsapp.com/send/?phone=5582996900232&text=Gostaria+de+fazer+um+agendamento+&type=phone_number&app_absent=0" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+                <FaWhatsapp size={24} color="white" />
               </a>
-            </button>
-            <div className={styles.socialMedia}>
+              <a href="mailto:contato@clinicaid.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Email"
+                  className={styles.iconLink}>
+                <FaEnvelope size={24} color="white"/>
+              </a>
               <a href="https://www.instagram.com/frida.kids_?igsh=MXY4dHN5aHpkZjRuOA==" target="_blank" rel="noopener noreferrer">
                 <FaInstagram size={24} color="white" />
               </a>
             </div>
           </div>
+          <nav className={styles.usefulLinks}>
+            <a href="/sobre">Sobre</a>
+            <a href="/termos">Termos de Uso</a>
+            <a href="/privacidade">Política de Privacidade</a>
+            <a href="/faq">FAQ</a>
+          </nav>
         </div>
         <p>© 2025 ClinicAid - Todos os direitos reservados.</p>
       </footer>

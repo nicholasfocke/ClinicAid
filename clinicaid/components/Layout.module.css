@@ -161,8 +161,8 @@
 }
 
 .contactButton {
-  color: white;
-  background-color: #3182ce;
+  color: #0a2d4a;
+  background-color:white;
   padding: 10px 20px;
   text-decoration: none;
   border-radius: 5px;
@@ -178,6 +178,30 @@
 .contactButton a {
   color: white;
   text-decoration: none;
+}
+
+.contactButtons {
+  display: flex;
+  justify-content: space-around;
+  padding-top: 0.8rem;
+  
+}
+
+.contactInfo p,
+.usefulLinks a {
+  color: #cbd5e0;
+  text-decoration: none;
+}
+
+.usefulLinks a:hover {
+  text-decoration: underline;
+  color: #63b3ed; 
+}
+
+.usefulLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .socialMedia {
