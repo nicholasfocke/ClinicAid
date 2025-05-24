@@ -136,18 +136,205 @@
     margin-bottom: 10px;
 }
 
-/* Responsividade para dispositivos móveis */
-@media (max-width: 768px) {
-    .formContainer {
-        padding: 20px; /* Diminui o padding para telas menores */
-    }
+/* Novo estilo moderno */
+.loginModernBg {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: loginFadeIn 0.7s;
+  box-shadow: 0 0 80px 0 #0099ff44 inset;
+  /* Espaço extra acima e abaixo */
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
 
-    .title {
-        font-size: 20px; /* Reduz o tamanho da fonte do título em telas menores */
-    }
+@keyframes loginFadeIn {
+  from { opacity: 0; transform: scale(0.97);}
+  to { opacity: 1; transform: scale(1);}
+}
 
-    .input, .button, .buttonSecondary, .buttonForgotPass {
-        font-size: 14px; /* Ajusta o tamanho da fonte para telas menores */
-        padding: 10px; /* Ajusta o padding para telas menores */
-    }
+.loginModernCard {
+  background: rgba(255,255,255,0.98);
+  border-radius: 28px;
+  box-shadow: 0 8px 32px rgba(7,44,63,0.13), 0 1.5px 8px #0099ff22;
+  /* Aumente levemente o padding vertical */
+  padding: 42px 48px 42px 48px;
+  min-width: 340px;
+  max-width: 370px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: loginCardIn 0.7s;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(2px);
+  min-height: 440px;
+  justify-content: center;
+}
+
+@keyframes loginCardIn {
+  from { opacity: 0; transform: translateY(30px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+
+.logoModernBox {
+  margin-bottom: 18px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.loginModernTitle {
+  font-size: 2.1rem;
+  font-weight: 700;
+  margin-bottom: 18px;
+  text-align: center;
+  color: #333;
+  font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+  letter-spacing: -1px;
+  text-shadow: 0 2px 8px #0099ff22;
+}
+
+.loginModernCard h2.loginModernTitle {
+  color: #072c3f;
+  margin-bottom: 18px;
+}
+
+.loginModernForm {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
+.inputGroup {
+  width: 100%;
+  position: relative;
+}
+
+.loginModernInput {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1.5px solid #e0e0e0;
+  font-size: 1.08rem;
+  background: #f7fafd;
+  color: #222;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+  font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+  box-shadow: 0 1.5px 8px #0099ff11;
+}
+
+.loginModernInput:focus {
+  border: 1.5px solid #0099ff;
+  background: #fff;
+  box-shadow: 0 0 0 2px #0099ff33;
+}
+
+.loginModernInput::placeholder {
+  color: #bdbdbd;
+  opacity: 1;
+}
+
+.loginModernEye {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #0099ff;
+  z-index: 2;
+  transition: color 0.2s;
+}
+
+.loginModernEye:hover {
+  color: #072c3f;
+}
+
+.loginModernButton {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 15px 0;
+  font-size: 1.13rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(90deg, #0099ff 0%, #072c3f 100%);
+  color: #fff;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px #0099ff22;
+  letter-spacing: 0.5px;
+}
+
+.loginModernButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.loginModernError {
+  color: #e53935;
+  font-size: 1rem;
+  text-align: center;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.loginModernLinks {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.loginModernLink,
+.loginModernLinkAlt {
+  background: none;
+  border: none;
+  color: #072c3f;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 1rem;
+  text-align: center;
+  transition: color 0.2s;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.loginModernLinkAlt {
+  color: #072c3f;
+  font-weight: 700;
+  text-decoration: none;
+  margin-top: 2px;
+}
+
+.loginModernLink:hover,
+.loginModernLinkAlt:hover {
+  color: #00c6ff;
+}
+
+@media (max-width: 500px) {
+  .loginModernBg {
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+  .loginModernCard {
+    min-width: 96vw;
+    max-width: 99vw;
+    padding: 18px 4vw 18px 4vw;
+    min-height: 340px;
+  }
+  .loginModernForm {
+    gap: 12px;
+  }
 }

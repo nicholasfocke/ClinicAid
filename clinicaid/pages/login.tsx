@@ -7,24 +7,17 @@ import { auth, firestore } from '../firebase/firebaseConfig';
 import styles from "@/styles/login.module.css";
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    senha: '',
-  });
+  const [formData, setFormData] = useState({ email: '', senha: '' });
   const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // Controle de exibição da senha
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const toggleShowPassword = () => {
-    setShowPassword(!showPassword); // Alterna a visualização da senha
-  };
+  const toggleShowPassword = () => setShowPassword((v) => !v);
 
   // Verifica se o usuário está bloqueado
   const checkBlockStatus = async (email: string) => {
@@ -69,17 +62,12 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
       await checkBlockStatus(formData.email);
       const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.senha);
       const user = userCredential.user;
-
-      await setDoc(
-        doc(firestore, 'users', user.uid),
-        { email: user.email },
-        { merge: true }
-      );
-
+      await setDoc(doc(firestore, 'users', user.uid), { email: user.email }, { merge: true });
       await resetLoginAttempts(formData.email);
       router.push('/');
     } catch (err: any) {
@@ -98,73 +86,70 @@ const Login = () => {
         setError('Erro de login. Tente novamente.');
       }
     }
+    setLoading(false);
   };
 
-  const handleRegisterRedirect = () => {
-    router.push('/register');
-  };
-
-  const handleForgotPasswordRedirect = () => {
-    router.push('/esquecisenha'); 
-  };
+  const handleRegisterRedirect = () => router.push('/register');
+  const handleForgotPasswordRedirect = () => router.push('/esquecisenha');
 
   return (
-    <div className={styles.container}>
-      <div className={styles.formContainer}>
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+    <div className={styles.loginModernBg}>
+      <div className={styles.loginModernCard}>
+        <div className={styles.logoModernBox}>
           <Image
-            src="/images/ClinicAid logo ajustado.png" 
+            src="/images/ClinicAid logo ajustado.png"
             alt="Logo clinicaid"
-            width={300}
-            height={80}
+            width={220}
+            height={60}
+            priority
           />
         </div>
-        
-        <h1 className={styles.title}>Login</h1>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <input 
-            name="email" 
-            type="email" 
-            placeholder="Email" 
-            value={formData.email} 
-            onChange={handleChange} 
-            required 
-            className={styles.input}
-          />
-          <div className={styles.passwordContainer}>
-            <input 
-              name="senha" 
-              type={showPassword ? "text" : "password"} 
-              placeholder="Senha" 
-              value={formData.senha} 
-              onChange={handleChange} 
-              required 
-              className={styles.input}
+        <h1 className={styles.loginModernTitle}>Login</h1>
+        <form onSubmit={handleSubmit} className={styles.loginModernForm} autoComplete="off">
+          <div className={styles.inputGroup}>
+            <input
+              name="email"
+              type="email"
+              placeholder="E-mail"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className={styles.loginModernInput}
+              autoComplete="username"
             />
-            <span onClick={toggleShowPassword} className={styles.eyeIcon}>
+          </div>
+          <div className={styles.inputGroup}>
+            <input
+              name="senha"
+              type={showPassword ? "text" : "password"}
+              placeholder="Senha"
+              value={formData.senha}
+              onChange={handleChange}
+              required
+              className={styles.loginModernInput}
+              autoComplete="current-password"
+            />
+            <span onClick={toggleShowPassword} className={styles.loginModernEye}>
               {showPassword ? (
-                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
-                  <path d="M0 0h24v24H0z" fill="none" />
-                  <path d="M12 4.5C7.5 4.5 3.7 7.7 2 12c1.7 4.3 5.5 7.5 10 7.5s8.3-3.2 10-7.5c-1.7-4.3-5.5-7.5-10-7.5zm0 12.5c-2.8 0-5.2-1.9-5.8-4.5.6-2.6 3-4.5 5.8-4.5 2.8 0 5.2 1.9 5.8 4.5-.6 2.6-3 4.5-5.8 4.5zM12 8c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4z" />
-                </svg>
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#0099ff" strokeWidth="2" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3" stroke="#0099ff" strokeWidth="2"/></svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
-                  <path d="M0 0h24v24H0z" fill="none" />
-                  <path d="M12 5c-7.7 0-12 7-12 7s4.3 7 12 7 12-7 12-7-4.3-7-12-7zm0 12c-4.2 0-7.2-3.5-7.8-5 .6-1.5 3.6-5 7.8-5 4.2 0 7.2 3.5 7.8 5-.6 1.5-3.6 5-7.8 5zm0-8c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3-1.3-3-3-3z" />
-                </svg>
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#0099ff" strokeWidth="2" d="M17.94 17.94A10.97 10.97 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-6.06M9.88 9.88A3 3 0 0 1 12 9c1.66 0 3 1.34 3 3 0 .41-.08.8-.22 1.16"/><path stroke="#0099ff" strokeWidth="2" d="m1 1 22 22"/></svg>
               )}
             </span>
           </div>
-          {error && <p className={styles.error}>{error}</p>}
-          <button type="submit" className={styles.button}>Entrar</button>
+          {error && <p className={styles.loginModernError}>{error}</p>}
+          <button type="submit" className={styles.loginModernButton} disabled={loading}>
+            {loading ? 'Carregando...' : 'Entrar'}
+          </button>
         </form>
-
-        <button onClick={handleRegisterRedirect} className={styles.buttonSecondary}>
-          Criar uma nova conta
-        </button>
-        <button onClick={handleForgotPasswordRedirect} className={styles.buttonForgotPass}>
-          Esqueci minha senha
-        </button>
+        <div className={styles.loginModernLinks}>
+          <button onClick={handleForgotPasswordRedirect} className={styles.loginModernLink}>
+            Esqueci minha senha
+          </button>
+          <button onClick={handleRegisterRedirect} className={styles.loginModernLinkAlt}>
+            Criar uma nova conta
+          </button>
+        </div>
       </div>
     </div>
   );

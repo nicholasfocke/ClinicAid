@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebase/firebaseConfig'; 
-import styles from "@/styles/esquecisenha.module.css";
+import styles from "@/styles/login.module.css";
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 
@@ -9,6 +9,7 @@ const EsqueciSenha = () => {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -19,13 +20,12 @@ const EsqueciSenha = () => {
     e.preventDefault();
     setError('');
     setMessage('');
+    setLoading(true);
 
     try {
-      // Envia o email de redefinição de senha
       await sendPasswordResetEmail(auth, email);
       setMessage('Um email de redefinição de senha foi enviado.');
     } catch (err: any) {
-      // Tratamento de erros
       if (err.code === 'auth/invalid-email') {
         setError('Endereço de email inválido.');
       } else if (err.code === 'auth/user-not-found') {
@@ -34,44 +34,48 @@ const EsqueciSenha = () => {
         setError('Ocorreu um erro. Tente novamente mais tarde.');
       }
     }
+    setLoading(false);
   };
 
-  // Função para redirecionar para a página de login
   const handleLoginRedirect = () => {
-    router.push('/login'); // Substitua '/login' pelo caminho correto da sua página de login
+    router.push('/login');
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.formContainer}>
-      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+    <div className={styles.loginModernBg}>
+      <div className={styles.loginModernCard}>
+        <div className={styles.logoModernBox}>
           <Image
-              src="/images/ClinicAid logo ajustado.png" 
-             alt="Logo clinicaid"
-             width={300}
-             height={80}
+            src="/images/ClinicAid logo ajustado.png"
+            alt="Logo clinicaid"
+            width={220}
+            height={60}
+            priority
           />
         </div>
-
-        <h2 className={styles.title}>Recuperar senha</h2>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <input
-            type="email"
-            placeholder="Digite seu email"
-            value={email}
-            onChange={handleChange}
-            required
-            className={styles.input}
-          />
-          {error && <p className={styles.error}>{error}</p>}
-          {message && <p className={styles.message}>{message}</p>}
-          <button type="submit" className={styles.button}>Enviar</button>
+        <h2 className={styles.loginModernTitle}>Recuperar senha</h2>
+        <form onSubmit={handleSubmit} className={styles.loginModernForm}>
+          <div className={styles.inputGroup}>
+            <input
+              type="email"
+              placeholder="Digite seu email"
+              value={email}
+              onChange={handleChange}
+              required
+              className={styles.loginModernInput}
+            />
+          </div>
+          {error && <p className={styles.loginModernError}>{error}</p>}
+          {message && <p className={styles.loginModernError} style={{ color: "#0099ff" }}>{message}</p>}
+          <button type="submit" className={styles.loginModernButton} disabled={loading}>
+            {loading ? "Enviando..." : "Enviar"}
+          </button>
         </form>
-
-        {/* Botão para redirecionar ao login */}
-        <button onClick={handleLoginRedirect} className={styles.buttonSecondary}>
-          Voltar ao Login
-        </button>
+        <div className={styles.loginModernLinks}>
+          <button onClick={handleLoginRedirect} className={styles.loginModernLinkAlt}>
+            Voltar ao Login
+          </button>
+        </div>
       </div>
     </div>
   );

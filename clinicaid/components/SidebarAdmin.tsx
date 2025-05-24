@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './SidebarAdmin.module.css';
 import { Home, Calendar, User, LogOut } from 'lucide-react';
 import Link from 'next/link';
@@ -8,6 +8,14 @@ import { useRouter } from 'next/router';
 
 const SidebarAdmin = () => {
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsAuthenticated(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -17,6 +25,10 @@ const SidebarAdmin = () => {
       console.error('Erro ao fazer logout:', error);
     }
   };
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <aside className={styles.sidebar}>
