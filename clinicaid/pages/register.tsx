@@ -16,6 +16,32 @@ const formatCPF = (value: string) => {
     .slice(0, 14);
 };
 
+// Máscara para telefone (formato: (99) 99999-9999)
+const formatTelefone = (value: string) => {
+  return value
+    .replace(/\D/g, '')
+    .replace(/^(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2')
+    .slice(0, 15);
+};
+
+// Função para validar CPF
+function isValidCPF(cpf: string): boolean {
+  cpf = cpf.replace(/\D/g, '');
+  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+  let soma = 0, resto;
+  for (let i = 1; i <= 9; i++) soma += parseInt(cpf[i - 1]) * (11 - i);
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf[9])) return false;
+  soma = 0;
+  for (let i = 1; i <= 10; i++) soma += parseInt(cpf[i - 1]) * (12 - i);
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf[10])) return false;
+  return true;
+}
+
 const Register = () => {
   const [formData, setFormData] = useState({
     nome: '',
@@ -35,6 +61,7 @@ const Register = () => {
     const { name, value } = e.target;
     let newValue = value;
     if (name === 'cpf') newValue = formatCPF(value);
+    if (name === 'telefone') newValue = formatTelefone(value);
     setFormData({ ...formData, [name]: newValue });
   };
 
@@ -52,6 +79,21 @@ const Register = () => {
       setError('As senhas não coincidem.');
       return;
     }
+
+    // Validação do telefone: deve conter exatamente 11 dígitos numéricos
+    const telefoneNumeros = formData.telefone.replace(/\D/g, '');
+    if (telefoneNumeros.length !== 11) {
+      setError('O telefone deve conter exatamente 11 dígitos.');
+      return;
+    }
+
+    // Validação do CPF: deve conter exatamente 11 dígitos numéricos e ser válido
+    const cpfNumeros = formData.cpf.replace(/\D/g, '');
+    if (cpfNumeros.length !== 11 || !isValidCPF(formData.cpf)) {
+      setError('O CPF informado não é válido.');
+      return;
+    }
+
     setLoading(true);
     try {
       const usersRef = collection(firestore, 'users');
