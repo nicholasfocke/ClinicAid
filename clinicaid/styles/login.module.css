@@ -171,7 +171,7 @@
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(2px);
-  min-height: 440px;
+  min-height: 450px;
   justify-content: center;
 }
 
@@ -267,13 +267,17 @@
   font-size: 1.13rem;
   font-weight: 700;
   cursor: pointer;
-  background: linear-gradient(90deg, #0099ff 0%, #072c3f 100%);
+  background: #1096ea;
   color: #fff;
   margin-top: 8px;
   margin-bottom: 8px;
   transition: background 0.2s, color 0.2s, box-shadow 0.2s;
   box-shadow: 0 2px 8px #0099ff22;
   letter-spacing: 0.5px;
+}
+
+.loginModernButton:hover {
+  color: #00c6ff;
 }
 
 .loginModernButton:disabled {
@@ -295,6 +299,32 @@
   flex-direction: column;
   gap: 8px;
   margin-top: 8px;
+  
+}
+.loginModernLink,
+.loginModernLinkesquecisenha{
+  background: none;
+  border: none;
+  color: #072c3f;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 1rem;
+  text-align: center;
+  transition: color 0.2s;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.loginModernLinkesquecisenha {
+  color: #072c3f;
+  font-weight: 700;
+  text-decoration: none;
+  margin-top: 2px;
+}
+
+.loginModernLink:hover,
+.loginModernLinkesquecisenha:hover {
+  color: #00c6ff;
 }
 
 .loginModernLink,
@@ -312,7 +342,7 @@
 }
 
 .loginModernLinkAlt {
-  color: #072c3f;
+  color: #fff;
   font-weight: 700;
   text-decoration: none;
   margin-top: 2px;
@@ -323,18 +353,349 @@
   color: #00c6ff;
 }
 
-@media (max-width: 500px) {
-  .loginModernBg {
-    padding-top: 24px;
-    padding-bottom: 24px;
+.loginSplitBg {
+  min-height: 100vh;
+  width: 100vw;
+  background: #fff; /* cor do footer */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loginSplitCard {
+  width: 900px;
+  height: 540px;
+  background: #fff;
+  border-radius: 32px;
+  box-shadow: 0 8px 32px rgba(7,44,63,0.13), 0 1.5px 8px #0099ff22;
+  display: flex;
+  overflow: hidden;
+  opacity: 0;
+  transform: scale(0.97) translateY(40px);
+  animation: loginSplitCardIn 0.7s cubic-bezier(.68,-0.55,.27,1.55) forwards;
+}
+
+@keyframes loginSplitCardIn {
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
-  .loginModernCard {
+}
+
+.loginSplitLeft {
+  width: 50%;
+  background: #072c3f; /* cor do footer */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 48px;
+  opacity: 0;
+  transform: translateX(-40px) scale(0.98);
+  animation: loginSplitLeftIn 0.8s 0.1s cubic-bezier(.68,-0.55,.27,1.55) forwards;
+}
+
+@keyframes loginSplitLeftIn {
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.loginSplitRight {
+  width: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  position: relative;
+  padding: 0 48px;
+  opacity: 0;
+  transform: translateX(40px) scale(0.98);
+  animation: loginSplitRightIn 0.8s 0.2s cubic-bezier(.68,-0.55,.27,1.55) forwards;
+}
+
+@keyframes loginSplitRightIn {
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.loginSplitForm {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  opacity: 0;
+  transform: translateY(40px) scale(0.98);
+  animation: loginSplitFormIn 0.7s 0.25s cubic-bezier(.68,-0.55,.27,1.55) forwards;
+}
+
+@keyframes loginSplitFormIn {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.loginSplitTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 18px;
+  font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+  text-align: center;
+}
+
+.loginSplitInputGroup {
+  width: 100%;
+  position: relative;
+}
+
+.loginSplitInput {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: none;
+  font-size: 1.08rem;
+  background: #0e3a53;
+  color: #fff;
+  outline: none;
+  margin-bottom: 0;
+  transition: box-shadow 0.2s, background 0.2s;
+  box-sizing: border-box;
+  font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+}
+
+.loginSplitInput::placeholder {
+  color: #b3d2e6;
+  opacity: 1;
+}
+
+.loginSplitEye {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #b3d2e6;
+  z-index: 2;
+  transition: color 0.2s;
+}
+
+.loginSplitButton,
+.loginSplitPanelButton {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 16px 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #1096ea;
+  color: #fff;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, border 0.2s;
+  box-shadow: 0 2px 12px #0a2d4a33;
+  letter-spacing: 0.5px;
+  border: 1.5px solid #0a2d4a;
+}
+
+.loginSplitButton:disabled,
+.loginSplitPanelButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.loginSplitPanelButton {
+  margin-top: 12px;
+  /* border já está herdando acima */
+  box-shadow: 0 1px 6px #0a2d4a22;
+}
+
+.loginSplitPanelButton:hover,
+.loginSplitButton:hover {
+  background: #0078d4;
+  color: #fff;
+  border-color: #0078d4;
+}
+
+.loginSplitError {
+  color: #e53935;
+  font-size: 1rem;
+  text-align: center;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.loginSplitDivider {
+  width: 100%;
+  text-align: center;
+  margin: 10px 0 8px 0;
+  color: #bdbdbd;
+  font-size: 1rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loginSplitDivider span {
+  background: #072c3f;
+  padding: 0 12px;
+  position: relative;
+  z-index: 2;
+}
+.loginSplitDivider:before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: #0e3a53;
+  z-index: 1;
+}
+
+.loginSplitSocialRow {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  width: 100%;
+}
+
+.loginSplitSocialBtn {
+  background: #072c3f;
+  border: 2px solid #b3d2e6;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+}
+.loginSplitSocialBtn:hover {
+  background: #0e3a53;
+  border: 2px solid #0099ff;
+}
+
+.loginSplitRight {
+  width: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  position: relative;
+  padding: 0 48px;
+  opacity: 0;
+  transform: translateX(40px) scale(0.98);
+  animation: loginSplitRightIn 0.8s 0.2s cubic-bezier(.68,-0.55,.27,1.55) forwards;
+}
+
+@keyframes loginSplitRightIn {
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.loginSplitPanel {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+  border-radius: 24px;
+  padding: 0;
+}
+
+.logoModernBox {
+  margin-bottom: 12px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.loginSplitPanelTitle {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #072c3f;
+  margin-bottom: 18px;
+  font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+  text-align: center;
+}
+
+.loginSplitPanelDesc {
+  font-size: 1.05rem;
+  color: #444;
+  margin-bottom: 32px;
+  text-align: center;
+  font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+}
+
+.loginSplitPanelButton {
+  border: 1.5px solid #1096ea;
+  background: #0c8ade;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 14px;
+  padding: 14px 0;
+  width: 100%;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  margin-top: 12px;
+  box-shadow: 0 1px 6px #0099ff22;
+}
+.loginSplitPanelButton:hover {
+  background: #0078d4;
+  color: #fff;
+  border: 1.5px solid #0078d4;
+}
+
+@media (max-width: 900px) {
+  .loginSplitCard {
+    width: 98vw;
+    height: auto;
+    min-height: 500px;
+    flex-direction: column;
+  }
+  .loginSplitLeft, .loginSplitRight {
+    width: 100% !important;
+    border-radius: 0 !important;
+    min-width: unset !important;
+    max-width: unset !important;
+    border-radius: 0 !important;
+    padding: 32px 8vw;
+  }
+  .loginSplitPanel {
+    max-width: 100vw;
+  }
+}
+@media (max-width: 500px) {
+  .loginSplitCard {
     min-width: 96vw;
     max-width: 99vw;
-    padding: 18px 4vw 18px 4vw;
-    min-height: 340px;
+    padding: 0;
+    border-radius: 0;
   }
-  .loginModernForm {
+  .loginSplitLeft, .loginSplitRight {
+    padding: 18px 4vw;
+  }
+  .loginSplitForm {
     gap: 12px;
   }
 }

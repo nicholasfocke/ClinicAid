@@ -48,8 +48,8 @@ const EsqueciSenha = () => {
           <Image
             src="/images/ClinicAid logo ajustado.png"
             alt="Logo clinicaid"
-            width={220}
-            height={60}
+            width={270}
+            height={70}
             priority
           />
         </div>
@@ -72,7 +72,7 @@ const EsqueciSenha = () => {
           </button>
         </form>
         <div className={styles.loginModernLinks}>
-          <button onClick={handleLoginRedirect} className={styles.loginModernLinkAlt}>
+          <button onClick={handleLoginRedirect} className={styles.loginModernLinkesquecisenha}>
             Voltar ao Login
           </button>
         </div>

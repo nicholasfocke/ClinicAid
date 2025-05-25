@@ -19,7 +19,6 @@ const Login = () => {
 
   const toggleShowPassword = () => setShowPassword((v) => !v);
 
-  // Verifica se o usuário está bloqueado
   const checkBlockStatus = async (email: string) => {
     const docRef = doc(firestore, 'loginAttempts', email);
     const docSnap = await getDoc(docRef);
@@ -33,7 +32,6 @@ const Login = () => {
     }
   };
 
-  // Incrementa as tentativas de login
   const incrementLoginAttempts = async (email: string) => {
     const docRef = doc(firestore, 'loginAttempts', email);
     const docSnap = await getDoc(docRef);
@@ -58,7 +56,6 @@ const Login = () => {
     await setDoc(docRef, { count: 0, blockedUntil: null }, { merge: true });
   };
 
-  // Função de envio do formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -93,62 +90,80 @@ const Login = () => {
   const handleForgotPasswordRedirect = () => router.push('/esquecisenha');
 
   return (
-    <div className={styles.loginModernBg}>
-      <div className={styles.loginModernCard}>
-        <div className={styles.logoModernBox}>
-          <Image
-            src="/images/ClinicAid logo ajustado.png"
-            alt="Logo clinicaid"
-            width={220}
-            height={60}
-            priority
-          />
-        </div>
-        <h1 className={styles.loginModernTitle}>Login</h1>
-        <form onSubmit={handleSubmit} className={styles.loginModernForm} autoComplete="off">
-          <div className={styles.inputGroup}>
-            <input
-              name="email"
-              type="email"
-              placeholder="E-mail"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className={styles.loginModernInput}
-              autoComplete="username"
-            />
-          </div>
-          <div className={styles.inputGroup}>
-            <input
-              name="senha"
-              type={showPassword ? "text" : "password"}
-              placeholder="Senha"
-              value={formData.senha}
-              onChange={handleChange}
-              required
-              className={styles.loginModernInput}
-              autoComplete="current-password"
-            />
-            <span onClick={toggleShowPassword} className={styles.loginModernEye}>
-              {showPassword ? (
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#0099ff" strokeWidth="2" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3" stroke="#0099ff" strokeWidth="2"/></svg>
-              ) : (
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#0099ff" strokeWidth="2" d="M17.94 17.94A10.97 10.97 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-6.06M9.88 9.88A3 3 0 0 1 12 9c1.66 0 3 1.34 3 3 0 .41-.08.8-.22 1.16"/><path stroke="#0099ff" strokeWidth="2" d="m1 1 22 22"/></svg>
-              )}
-            </span>
-          </div>
-          {error && <p className={styles.loginModernError}>{error}</p>}
-          <button type="submit" className={styles.loginModernButton} disabled={loading}>
-            {loading ? 'Carregando...' : 'Entrar'}
-          </button>
-        </form>
-        <div className={styles.loginModernLinks}>
-          <button onClick={handleForgotPasswordRedirect} className={styles.loginModernLink}>
+    <div className={styles.loginSplitBg}>
+      <div className={styles.loginSplitCard}>
+        {/* Lado esquerdo: Login */}
+        <div className={styles.loginSplitLeft}>
+          <form onSubmit={handleSubmit} className={styles.loginSplitForm + ' ' + styles.loginSplitFormAnimated} autoComplete="off">
+            <h1 className={styles.loginSplitTitle}>Fazer login</h1>
+            <div className={styles.loginSplitInputGroup}>
+              <input
+                name="email"
+                type="email"
+                placeholder="E-mail"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className={styles.loginSplitInput}
+                autoComplete="username"
+              />
+            </div>
+            <div className={styles.loginSplitInputGroup}>
+              <input
+                name="senha"
+                type={showPassword ? "text" : "password"}
+                placeholder="Senha"
+                value={formData.senha}
+                onChange={handleChange}
+                required
+                className={styles.loginSplitInput}
+                autoComplete="current-password"
+              />
+              <span onClick={toggleShowPassword} className={styles.loginSplitEye}>
+                {showPassword ? (
+                  <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#bdbdbd" strokeWidth="2" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3" stroke="#bdbdbd" strokeWidth="2"/></svg>
+                ) : (
+                  <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#bdbdbd" strokeWidth="2" d="M17.94 17.94A10.97 10.97 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-6.06M9.88 9.88A3 3 0 0 1 12 9c1.66 0 3 1.34 3 3 0 .41-.08.8-.22 1.16"/><path stroke="#bdbdbd" strokeWidth="2" d="m1 1 22 22"/></svg>
+                )}
+              </span>
+            </div>
+            {error && <p className={styles.loginSplitError}>{error}</p>}
+            <button type="submit" className={styles.loginSplitButton} disabled={loading}>
+              {loading ? 'Carregando...' : 'Entrar'}
+            </button>
+            <button onClick={handleForgotPasswordRedirect} className={styles.loginModernLinkAlt}>
             Esqueci minha senha
           </button>
-          <button onClick={handleRegisterRedirect} className={styles.loginModernLinkAlt}>
-            Criar uma nova conta
-          </button>
+            <div className={styles.loginSplitDivider}>
+              <span>ou</span>
+            </div>
+            <div className={styles.loginSplitSocialRow}>
+              <button type="button" className={styles.loginSplitSocialBtn} tabIndex={-1}>
+                <svg width="26" height="26" viewBox="0 0 48 48"><g><circle fill="#fff" cx="24" cy="24" r="24"/><path fill="#4285F4" d="M34.5 24.3c0-.7-.1-1.4-.2-2H24v3.8h6c-.2 1.2-1 2.7-2.6 3.6v3h4.2c2.5-2.3 3.9-5.7 3.9-9.4z"/><path fill="#34A853" d="M24 36c3.2 0 5.8-1.1 7.7-2.9l-4.2-3c-1.2.8-2.7 1.3-4.5 1.3-3.5 0-6.5-2.4-7.6-5.6h-4.3v3.1C13.4 33.7 18.3 36 24 36z"/><path fill="#FBBC05" d="M16.4 25.8c-.3-.8-.5-1.7-.5-2.8s.2-2 .5-2.8v-3.1h-4.3C11.4 19.3 11 21.6 11 24s.4 4.7 1.1 6.9l4.3-3.1z"/><path fill="#EA4335" d="M24 17.7c1.8 0 3.4.6 4.6 1.7l3.4-3.4C29.8 14.1 27.2 13 24 13c-5.7 0-10.6 3.3-12.6 8.1l4.3 3.1c1.1-3.2 4.1-5.5 7.6-5.5z"/></g></svg>
+              </button>
+            </div>
+          </form>
+        </div>
+        {/* Lado direito: Painel de cadastro */}
+        <div className={styles.loginSplitRight}>
+          <div className={styles.loginSplitPanel}>
+            <div className={styles.logoModernBox} style={{ marginBottom: 18 }}>
+              <Image
+                src="/images/ClinicAid logo ajustado.png"
+                alt="Logo clinicaid"
+                width={270}
+                height={70}
+                priority
+              />
+            </div>
+            <h2 className={styles.loginSplitPanelTitle}>Não tem uma conta?</h2>
+            <p className={styles.loginSplitPanelDesc}>
+              Cadastre-se para acessar todos os recursos da plataforma.
+            </p>
+            <button className={styles.loginSplitPanelButton} onClick={handleRegisterRedirect}>
+              Cadastre-se
+            </button>
+          </div>
         </div>
       </div>
     </div>

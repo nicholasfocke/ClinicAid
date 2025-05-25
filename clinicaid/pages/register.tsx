@@ -4,16 +4,8 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, firestore } from '../firebase/firebaseConfig';
 import bcrypt from 'bcryptjs';
-import styles from "@/styles/login.module.css";
+import styles from "@/styles/register.module.css";
 import Image from 'next/image';
-
-const formatTelefone = (value: string) => {
-  return value
-    .replace(/\D/g, '')
-    .replace(/^(\d{2})(\d)/, '($1) $2')
-    .replace(/(\d{5})(\d)/, '$1-$2')
-    .slice(0, 15);
-};
 
 const formatCPF = (value: string) => {
   return value
@@ -28,8 +20,8 @@ const Register = () => {
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
-    telefone: '',
     cpf: '',
+    telefone: '', // adicionado telefone
     senha: '',
     confirmarSenha: '',
   });
@@ -42,7 +34,6 @@ const Register = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let newValue = value;
-    if (name === 'telefone') newValue = formatTelefone(value);
     if (name === 'cpf') newValue = formatCPF(value);
     setFormData({ ...formData, [name]: newValue });
   };
@@ -63,7 +54,6 @@ const Register = () => {
     }
     setLoading(true);
     try {
-      // Verifica se o email já existe
       const usersRef = collection(firestore, 'users');
       const q = query(usersRef, where('email', '==', formData.email));
       const querySnapshot = await getDocs(q);
@@ -74,17 +64,16 @@ const Register = () => {
       }
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.senha);
       const user = userCredential.user;
-      // Criptografa a senha antes de salvar no banco
       const hashedPassword = await bcrypt.hash(formData.senha, 10);
       await setDoc(doc(firestore, 'users', user.uid), {
         nome: formData.nome,
         email: formData.email,
-        telefone: formData.telefone,
         cpf: formData.cpf,
+        telefone: formData.telefone, // salva telefone
         senha: hashedPassword,
         tipo: 'cliente',
       });
-      router.push('/');
+      router.push('/login');
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
         setError('Esse email já está cadastrado.');
@@ -98,26 +87,54 @@ const Register = () => {
   const handleRedirectToLogin = () => router.push('/login');
 
   return (
-    <div className={styles.loginModernBg}>
-      <div className={styles.loginModernCard}>
-        <div className={styles.logoModernBox}>
-          <Image src="/images/ClinicAid logo ajustado.png" alt="Logo clinicaid" width={220} height={60} priority />
+    <div className={styles.loginSplitBg}>
+      <div className={styles.loginSplitCard}>
+        {/* Esquerda */}
+        <div className={styles.loginSplitLeft}>
+          <div className={styles.loginSplitPanel}>
+            <h2 className={styles.loginSplitPanelTitle}>
+              <div className={styles.logoModernBox} style={{ marginBottom: 18 }}>
+              <Image
+                src="/images/ClinicAid logo ajustado.png"
+                alt="Logo clinicaid"
+                width={270}
+                height={70}
+                priority
+              />
+            </div>
+              Já tem uma conta?
+            </h2>
+            <p className={styles.loginSplitPanelDesc}>
+              Faça o login para acessar sua conta e aproveitar todos os nossos serviços.
+            </p>
+            <button
+              className={styles.loginSplitPanelButton}
+              onClick={handleRedirectToLogin}
+            >
+              Faça login
+            </button>
+          </div>
         </div>
-        <h2 className={styles.loginModernTitle}>Cadastro</h2>
-        <form onSubmit={handleSubmit} className={styles.loginModernForm} autoComplete="off">
-          <div className={styles.inputGroup}>
+        {/* Direita */}
+        <div className={styles.loginSplitRight}>
+          <form
+            onSubmit={handleSubmit}
+            className={styles.loginSplitForm}
+            autoComplete="off"
+          >
+            <h2 className={styles.loginSplitTitle}>
+              Cadastro
+            </h2>
             <input
               name="nome"
               type="text"
-              placeholder="Nome completo"
+              placeholder="Nome"
               value={formData.nome}
               onChange={handleChange}
               required
-              className={styles.loginModernInput}
+              className={styles.loginSplitInput}
               autoComplete="name"
             />
-          </div>
-          <div className={styles.inputGroup}>
             <input
               name="email"
               type="email"
@@ -125,24 +142,9 @@ const Register = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              className={styles.loginModernInput}
+              className={styles.loginSplitInput}
               autoComplete="username"
             />
-          </div>
-          <div className={styles.inputGroup}>
-            <input
-              name="telefone"
-              type="text"
-              placeholder="Telefone"
-              value={formData.telefone}
-              onChange={handleChange}
-              required
-              className={styles.loginModernInput}
-              autoComplete="tel"
-              maxLength={15}
-            />
-          </div>
-          <div className={styles.inputGroup}>
             <input
               name="cpf"
               type="text"
@@ -150,62 +152,94 @@ const Register = () => {
               value={formData.cpf}
               onChange={handleChange}
               required
-              className={styles.loginModernInput}
+              className={styles.loginSplitInput}
               autoComplete="off"
               maxLength={14}
             />
-          </div>
-          <div className={styles.inputGroup}>
             <input
-              name="senha"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Senha (mínimo 8 caracteres)"
-              value={formData.senha}
+              name="telefone"
+              type="tel"
+              placeholder="Telefone"
+              value={formData.telefone}
               onChange={handleChange}
               required
-              className={styles.loginModernInput}
-              autoComplete="new-password"
-              minLength={8}
+              className={styles.loginSplitInput}
+              autoComplete="tel"
+              maxLength={15}
             />
-            <span onClick={toggleShowPassword} className={styles.loginModernEye}>
-              {showPassword ? (
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#0099ff" strokeWidth="2" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3" stroke="#0099ff" strokeWidth="2"/></svg>
-              ) : (
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#0099ff" strokeWidth="2" d="M17.94 17.94A10.97 10.97 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-6.06M9.88 9.88A3 3 0 0 1 12 9c1.66 0 3 1.34 3 3 0 .41-.08.8-.22 1.16"/><path stroke="#0099ff" strokeWidth="2" d="m1 1 22 22"/></svg>
-              )}
-            </span>
-          </div>
-          <div className={styles.inputGroup}>
-            <input
-              name="confirmarSenha"
-              type={showConfirmPassword ? 'text' : 'password'}
-              placeholder="Confirmar Senha"
-              value={formData.confirmarSenha}
-              onChange={handleChange}
-              required
-              className={styles.loginModernInput}
-              autoComplete="new-password"
-              minLength={8}
-            />
-            <span onClick={toggleShowConfirmPassword} className={styles.loginModernEye}>
-              {showConfirmPassword ? (
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#0099ff" strokeWidth="2" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3" stroke="#0099ff" strokeWidth="2"/></svg>
-              ) : (
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#0099ff" strokeWidth="2" d="M17.94 17.94A10.97 10.97 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-6.06M9.88 9.88A3 3 0 0 1 12 9c1.66 0 3 1.34 3 3 0 .41-.08.8-.22 1.16"/><path stroke="#0099ff" strokeWidth="2" d="m1 1 22 22"/></svg>
-              )}
-            </span>
-          </div>
-          {error && <p className={styles.loginModernError}>{error}</p>}
-          <button type="submit" className={styles.loginModernButton} disabled={loading}>
-            {loading ? 'Cadastrando...' : 'Cadastrar'}
-          </button>
-        </form>
-        <div className={styles.loginModernLinks}>
-          <button onClick={handleRedirectToLogin} className={styles.loginModernLinkAlt}>
-            Já possui uma conta? Fazer Login
-          </button>
+            <div className={styles.passwordContainer}>
+              <input
+                name="senha"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Senha"
+                value={formData.senha}
+                onChange={handleChange}
+                required
+                className={styles.loginSplitInput}
+                autoComplete="new-password"
+                minLength={8}
+              />
+              <span onClick={toggleShowPassword} className={styles.loginSplitEye}>
+                {showPassword ? (
+                  <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#bdbdbd" strokeWidth="2" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3" stroke="#bdbdbd" strokeWidth="2"/></svg>
+                ) : (
+                  <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#bdbdbd" strokeWidth="2" d="M17.94 17.94A10.97 10.97 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-6.06M9.88 9.88A3 3 0 0 1 12 9c1.66 0 3 1.34 3 3 0 .41-.08.8-.22 1.16"/><path stroke="#bdbdbd" strokeWidth="2" d="m1 1 22 22"/></svg>
+                )}
+              </span>
+            </div>
+            <div className={styles.passwordContainer}>
+              <input
+                name="confirmarSenha"
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder="Confirmação de Senha"
+                value={formData.confirmarSenha}
+                onChange={handleChange}
+                required
+                className={styles.loginSplitInput}
+                autoComplete="new-password"
+                minLength={8}
+              />
+              <span onClick={toggleShowConfirmPassword} className={styles.loginSplitEye}>
+                {showConfirmPassword ? (
+                  <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#bdbdbd" strokeWidth="2" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3" stroke="#bdbdbd" strokeWidth="2"/></svg>
+                ) : (
+                  <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#bdbdbd" strokeWidth="2" d="M17.94 17.94A10.97 10.97 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-6.06M9.88 9.88A3 3 0 0 1 12 9c1.66 0 3 1.34 3 3 0 .41-.08.8-.22 1.16"/><path stroke="#bdbdbd" strokeWidth="2" d="m1 1 22 22"/></svg>
+                )}
+              </span>
+            </div>
+            {error && <p className={styles.loginSplitError}>{error}</p>}
+            <button
+              type="submit"
+              className={styles.loginSplitButton}
+              disabled={loading}
+            >
+              {loading ? 'Cadastrando...' : 'Cadastrar'}
+            </button>
+            <div className={styles.loginSplitDivider}>
+              <span>ou</span>
+            </div>
+            <div className={styles.loginSplitSocialRow}>
+              <button type="button" className={styles.loginSplitSocialBtn} tabIndex={-1}>
+                <svg width="26" height="26" viewBox="0 0 48 48"><g><circle fill="#fff" cx="24" cy="24" r="24"/><path fill="#4285F4" d="M34.5 24.3c0-.7-.1-1.4-.2-2H24v3.8h6c-.2 1.2-1 2.7-2.6 3.6v3h4.2c2.5-2.3 3.9-5.7 3.9-9.4z"/><path fill="#34A853" d="M24 36c3.2 0 5.8-1.1 7.7-2.9l-4.2-3c-1.2.8-2.7 1.3-4.5 1.3-3.5 0-6.5-2.4-7.6-5.6h-4.3v3.1C13.4 33.7 18.3 36 24 36z"/><path fill="#FBBC05" d="M16.4 25.8c-.3-.8-.5-1.7-.5-2.8s.2-2 .5-2.8v-3.1h-4.3C11.4 19.3 11 21.6 11 24s.4 4.7 1.1 6.9l4.3-3.1z"/><path fill="#EA4335" d="M24 17.7c1.8 0 3.4.6 4.6 1.7l3.4-3.4C29.8 14.1 27.2 13 24 13c-5.7 0-10.6 3.3-12.6 8.1l4.3 3.1c1.1-3.2 4.1-5.5 7.6-5.5z"/></g></svg>
+              </button>
+            </div>
+          </form>
         </div>
       </div>
+      <style jsx global>{`
+        @keyframes loginSplitCardIn {
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        @keyframes loginSplitFormIn {
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      `}</style>
     </div>
   );
 };
