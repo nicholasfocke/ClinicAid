@@ -529,6 +529,13 @@ const Index = () => {
     setModalIsOpen(false);
   };
 
+  // Redireciona para indexCliente se não for admin
+  useEffect(() => {
+    if (user && user.tipo !== 'admin') {
+      router.replace('/indexCliente');
+    }
+  }, [user, router]);
+
   return (
     <ProtectedRoute>
       <div className={styles.container}>

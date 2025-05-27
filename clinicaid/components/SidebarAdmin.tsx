@@ -2,17 +2,30 @@ import React, { useEffect, useState } from 'react';
 import styles from './SidebarAdmin.module.css';
 import { Home, Calendar, User, LogOut } from 'lucide-react';
 import Link from 'next/link';
-import { auth } from '../firebase/firebaseConfig';
+import { auth, firestore } from '../firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/router';
+import { doc, getDoc } from 'firebase/firestore';
 
 const SidebarAdmin = () => {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       setIsAuthenticated(!!user);
+      if (user) {
+        // Busca o tipo do usuário no Firestore
+        const userDoc = await getDoc(doc(firestore, 'users', user.uid));
+        if (userDoc.exists() && userDoc.data().tipo === 'admin') {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -26,7 +39,7 @@ const SidebarAdmin = () => {
     }
   };
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !isAdmin) {
     return null;
   }
 
