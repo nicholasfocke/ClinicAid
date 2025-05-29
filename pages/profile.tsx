@@ -153,9 +153,12 @@ const Profile = () => {
         const storage = getStorage();
         // Upload da nova foto se houver
         if (fotoFile) {
-          const storageRef = ref(storage, `profile_photos/${user.uid}`);
+          console.log("Arquivo selecionado:", fotoFile);
+          const nomeUnico = `${user.uid}_${Date.now()}_$`; // Garante nome único para evitar conflitos
+          const storageRef = ref(storage, `profile_photos/${nomeUnico}`);
           await uploadBytes(storageRef, fotoFile);
           fotoPerfilUrl = await getDownloadURL(storageRef);
+          console.log("URL da imagem:", fotoPerfilUrl);
         }
         // Remover foto do storage se removida
         if (!foto && originalData.fotoPerfil && !fotoFile) {
