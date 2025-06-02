@@ -1,17 +1,22 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, firestore } from '../firebase/firebaseConfig';
 import styles from "@/styles/login.module.css";
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', senha: '' });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const router = useRouter();
+  
+  //Configuração do reCAPTCHA
+  const {executeRecaptcha: recaptchaRef} = useGoogleReCaptcha();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -60,29 +65,97 @@ const Login = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    
+    const email = formData.email.trim();
+    const senha = formData.senha;
+
+    // Validação básica
+    if (!email || !senha) {
+      setError('Por favor, preencha todos os campos.');
+      setLoading(false);
+      return;
+    }
+
+    // Validação de email básica
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    if (!emailRegex.test(formData.email)) { 
+      setError('Formato de email inválido.');
+      setLoading(false);
+      return;
+    }
+
+    //Verificação do reCAPTCHA
+    if (!recaptchaRef) {  
+      setError('Não foi possível carregar reCAPTCHA. Tente novamente mais tarde.');
+      setLoading(false);
+      return;
+    }
+
+    let recaptchaToken: string;
+    try{
+      recaptchaToken = await recaptchaRef('login');
+    }catch(err){
+      setError('Erro ao verificar reCAPTCHA. Tente novamente.');
+      setLoading(false);
+      return;
+    }
+
+    //Verficação do token no backend para validar o reCAPTCHA
+   try{
+      const verifyRes = await fetch('/api/verify-recaptcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: recaptchaToken }),
+      });
+      const verifyData = await verifyRes.json();
+
+      if (!verifyData.success) {
+        setError('Falha na verificação do reCAPTCHA. Atualize a página e tente novamente.');
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      setError('Erro ao verificar reCAPTCHA. Tente novamente.');
+      setLoading(false);
+      return;
+    }
+
+    //Validando email e senha antes de enviar o login form
     try {
       await checkBlockStatus(formData.email);
-      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.senha);
+
+      const userCredential = await signInWithEmailAndPassword(auth, email, senha);
       const user = userCredential.user;
+
       await setDoc(doc(firestore, 'users', user.uid), { email: user.email }, { merge: true });
+
       await resetLoginAttempts(formData.email);
       router.push('/');
-    } catch (err: any) {
-      if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+  } 
+    catch (err: any) {
+      if(err.code === 'auth/user-not-found') {
+        setError('Email ou senha incorreto.');
+      }
+      else if (err.code === 'auth/wrong-password') {
         try {
           await incrementLoginAttempts(formData.email);
-          setError('Senha ou email incorreto.');
-        } catch (blockError: any) {
+          setError('Email ou senha incorreto.');
+        } 
+        catch (blockError: any) {
           setError(blockError.message);
         }
-      } else if (err.code === 'auth/invalid-email') {
+      } 
+      else if (err.code === 'auth/invalid-email') {
         setError('Formato de email inválido.');
-      } else if (err.code === 'auth/too-many-requests') {
-        setError('Muitas tentativas falhadas. Tente novamente mais tarde ou redefina sua senha.');
-      } else {
+      } 
+      else if (err.code === 'auth/too-many-requests') {
+        setError('Muitas tentativas de login. Tente novamente mais tarde ou redefina sua senha.');
+      } 
+      else {
         setError('Erro de login. Tente novamente.');
       }
     }
+
     setLoading(false);
   };
 

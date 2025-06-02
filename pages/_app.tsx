@@ -5,6 +5,7 @@ import Head from 'next/head';
 import { Analytics } from '@vercel/analytics/react';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 import type { AppProps } from 'next/app';
 
@@ -42,12 +43,22 @@ function MyApp({ Component, pageProps }: AppProps) {
         </div>
       )}
 
-      <AuthProvider>
-        <Layout>
-          <Component {...pageProps} />
-          <Analytics />
-        </Layout>
-      </AuthProvider>
+      <GoogleReCaptchaProvider
+        reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+        scriptProps={{
+          async: true,
+          defer: true,
+          appendTo: 'head',
+          nonce: undefined,
+        }}
+      >
+        <AuthProvider>
+          <Layout>
+            <Component {...pageProps} />
+            <Analytics />
+          </Layout>
+        </AuthProvider>
+      </GoogleReCaptchaProvider>
     </>
   );
 }
