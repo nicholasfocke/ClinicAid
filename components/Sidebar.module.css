@@ -1,18 +1,20 @@
 .sidebar {
-    position: relative; /* Remove o posicionamento fixo */
-    top: 0; /* Remove a distância do topo */
-    right: 0; /* Remove alinhamento extremo à direita */
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 20px;
     width: 280px;
     padding: 10px;
-    margin-right: 50px;
-    height: auto; /* Ajusta a altura automaticamente */
-    overflow-y: auto; /* Adiciona rolagem se necessário */
-    background-color: transparent; /* Remove 
-    fundo */
-    margin-top: 75px;
+    height: auto;
+    overflow-y: auto;
+    background-color: transparent;
+    align-items: center; /* Centraliza os cards na horizontal */
+    justify-content: flex-start;
+    /* Para alinhar mais ao calendário, ajuste o margin-top conforme necessário */
+    /* Exemplo: */
+    margin-top: 135px; /* Aumente para descer mais */
+    margin-left: auto;
+    margin-right: 150px !important;
 }
   
 .card {
@@ -59,4 +61,89 @@
   
 .button:hover {
     background-color: #08304b;
+}
+
+.medicosSection {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px #0001;
+  padding: 20px 18px 18px 18px;
+  margin-bottom: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.medicosHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.medicosTitle {
+  font-weight: 600;
+  color: #3b4a60;
+  font-size: 1.05rem;
+}
+
+.medicosVerTodos {
+  font-size: 13px;
+  color: #3b82f6;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.medicosEmpty {
+  color: #8b98a9;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.medicoCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.medicoFoto {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.medicoFotoFallback {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b4a60;
+}
+
+.medicoInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.medicoNome {
+  font-weight: 500;
+  color: #222;
+  font-size: 15px;
+}
+
+.medicoEspecialidade {
+  color: #8b98a9;
+  font-size: 13px;
+}
+
+.medicoAgendamentos {
+  color: #3b82f6;
+  font-weight: 600;
+  font-size: 13px;
 }

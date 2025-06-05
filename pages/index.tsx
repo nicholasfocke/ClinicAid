@@ -12,8 +12,13 @@ import { format, getYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import SidebarAdmin from '@/components/SidebarAdmin'; // Importação do SidebarAdmin
 import Sidebar from '@/components/Sidebar'; // Importação do Sidebar
+import Breadcrumb from '@/components/Breadcrumb';
+import { Bar } from 'react-chartjs-2';
+import { Chart, BarElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 
 Modal.setAppElement('#__next'); // Necessário para acessibilidade
+
+Chart.register(BarElement, CategoryScale, LinearScale, Tooltip);
 
 const Index = () => {
   interface User {
@@ -49,6 +54,8 @@ const Index = () => {
   const [profissionais, setProfissionais] = useState<Profissional[]>([
     { id: 'emilio', nome: 'Emilio', empresaId: 'default' }
   ]);
+
+  const [pacientesPorDia, setPacientesPorDia] = useState<{ [dia: string]: number }>({});
 
   const standardTimes = [
     '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -536,6 +543,67 @@ const Index = () => {
     }
   }, [user, router]);
 
+  useEffect(() => {
+    const fetchPacientesPorDia = async () => {
+      const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      const counts: { [dia: string]: number } = {};
+      diasSemana.forEach(dia => { counts[dia] = 0; });
+
+      try {
+        const snap = await getDocs(collection(firestore, 'agendamentos'));
+        snap.docs.forEach(docRef => {
+          const data = docRef.data();
+          if (data.data) {
+            const dateObj = new Date(data.data + 'T00:00:00');
+            const diaSemana = diasSemana[dateObj.getDay()];
+            counts[diaSemana] = (counts[diaSemana] || 0) + 1;
+          }
+        });
+        setPacientesPorDia(counts);
+      } catch {
+        setPacientesPorDia({});
+      }
+    };
+    fetchPacientesPorDia();
+  }, []);
+
+  const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const pacientesData = diasSemana.map(dia => pacientesPorDia[dia] || 0);
+
+  const chartData = {
+    labels: diasSemana,
+    datasets: [
+      {
+        label: 'Pacientes por dia',
+        data: pacientesData,
+        backgroundColor: '#2563eb',
+        borderRadius: 8,
+        barThickness: 32,
+        maxBarThickness: 40,
+      }
+    ]
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: true }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { color: '#8b98a9', font: { size: 14, weight: 600 } }
+      },
+      y: {
+        beginAtZero: true,
+        grid: { color: '#f1f1f1' },
+        ticks: { color: '#8b98a9', font: { size: 13 } },
+        suggestedMax: Math.max(...pacientesData, 5) + 1
+      }
+    }
+  };
+
   return (
     <ProtectedRoute>
       <div className={styles.container}>
@@ -544,62 +612,100 @@ const Index = () => {
 
         <div className={styles.mainContent}>
           <div className={styles.formContainer}>
-            <h2 className={styles.title}>Dashboard</h2>
+            {/* Breadcrumb, título, subtítulo */}
+            <div className={styles.breadcrumbWrapper}>
+              <span className={styles.breadcrumb}>
+                Menu Principal &gt; <span className={styles.breadcrumbActive}>Dashboard</span>
+              </span>
+            </div>
+            <h2 className={styles.titleDashboard}>
+              Dashboard
+            </h2>
+            <div className={styles.dashboardSubtitle}>
+              Acesse uma visão detalhada de métricas e resultados dos pacientes
+            </div>
 
-            <Calendar
-              className={styles.reactCalendar}
-              onClickDay={handleDateClick}
-              value={selectedDate}
-              tileDisabled={({ date }) => !isDateValid(date)}
-              tileClassName={({ date, view }) =>
-                view === 'month' && blockedDays.includes(format(date, 'yyyy-MM-dd'))
-                  ? styles.blockedDay
-                  : ''
-              }
-            />
+            {/* Gráfico de volume de pacientes */}
+            <div className={styles.pacientesChartBox}>
+              <div className={styles.pacientesChartTitle}>
+                Volume de Pacientes por Dia da Semana
+              </div>
+              <Bar data={chartData} options={chartOptions} height={180} />
+            </div>
+            {/* Calendário alinhado à esquerda */}
+            <div className={styles.calendarAndAppointments}>
+              <Calendar
+                className={styles.reactCalendar}
+                onClickDay={handleDateClick}
+                value={selectedDate}
+                tileDisabled={({ date }) => !isDateValid(date)}
+                tileClassName={({ date, view }) =>
+                  view === 'month' && blockedDays.includes(format(date, 'yyyy-MM-dd'))
+                    ? styles.blockedDay
+                    : ''
+                }
+              />
 
-            {/* Próximos Agendamentos */}
-            <div className={styles.upcomingAppointments}>
-              <h3>Próximos Agendamentos</h3>
-              {todayAppointments.length > 0 ? (
-                todayAppointments.slice(0, 4).map((appointment) => (
-                  <div key={appointment.id} className={styles.appointmentCard}>
-                    <div className={styles.appointmentTime}>{appointment.hora}</div>
-                    <div className={styles.appointmentDetails}>
-                      <strong>
-                        {appointment.nomePaciente
-                          ? appointment.nomePaciente
-                          : (Array.isArray(appointment.nomesPacientes) && appointment.nomesPacientes.length > 0
-                              ? appointment.nomesPacientes[0]
-                              : '')}
-                      </strong>
-                      <p>
-                        Profissional: {appointment.profissional || (appointment.funcionaria || '')}
-                      </p>
-                      <p>
-                        Data: {
-                          format(
-                            (() => {
-                              const d = new Date(appointment.data);
-                              d.setDate(d.getDate() + 1);
-                              return d;
-                            })(),
-                            'dd/MM/yyyy'
-                          )
-                        }
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className={styles.noAppointments}>Nenhum agendamento encontrado.</p>
-              )}
+              {/* Próximos Agendamentos */}
+              <div className={styles.upcomingAppointments}>
+                <h3 className={styles.upcomingTitle}>Agendamentos</h3>
+                <table className={styles.upcomingTable}>
+                  <thead>
+                    <tr>
+                      <th>Paciente</th>
+                      <th>Data</th>
+                      <th>Doutor</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {todayAppointments.length > 0 ? (
+                      todayAppointments.slice(0, 4).map((appointment) => (
+                        <tr key={appointment.id}>
+                          <td className={styles.upcomingPacienteCell}>
+                            {appointment.nomePaciente
+                              ? appointment.nomePaciente
+                              : (Array.isArray(appointment.nomesPacientes) && appointment.nomesPacientes.length > 0
+                                ? appointment.nomesPacientes[0]
+                                : '')}
+                          </td>
+                          <td>
+                            {appointment.data && appointment.hora
+                              ? `${format(new Date(appointment.data + 'T' + appointment.hora), 'dd/MM/yy, HH:mm')}`
+                              : ''}
+                          </td>
+                          <td className={styles.upcomingDoutorCell}>
+                            {appointment.profissional || appointment.funcionaria || ''}
+                          </td>
+                          <td className={`${styles.upcomingStatusCell} ${appointment.status === 'agendado' ? styles.statusConfirmado : ''}`}>
+                            {appointment.status === 'agendado' ? 'Confirmado' : appointment.status}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className={styles.noAppointments}>Nenhum agendamento encontrado.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
+          {/* Sidebar centralizado na coluna da direita */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            minWidth: 340,
+            marginLeft: 'auto',
+            marginRight: 'auto'
+          }}>
+            <Sidebar />
+          </div>
         </div>
-
-        {/* Sidebar fixo à direita */}
-        <Sidebar />
       </div>
 
       {/* Modal implementado */}
