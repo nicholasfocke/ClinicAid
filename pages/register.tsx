@@ -114,6 +114,8 @@ const Register = () => {
         telefone: formData.telefone, // salva telefone
         senha: hashedPassword,
         tipo: 'cliente',
+        fotoPerfil: '',
+        fotoPerfilPath: '',
       });
       router.push('/login');
     } catch (err: any) {

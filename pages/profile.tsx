@@ -13,7 +13,8 @@ const Profile = () => {
     email: '',
     telefone: '',
     cpf: '',
-    fotoPerfil: '', // Novo campo para URL da foto
+    fotoPerfil: '', // URL da foto de perfil
+    fotoPerfilPath: '', // Caminho da foto no Storage
   });
   const [originalData, setOriginalData] = useState({
     nome: '',
@@ -21,6 +22,7 @@ const Profile = () => {
     telefone: '',
     cpf: '',
     fotoPerfil: '',
+    fotoPerfilPath: '',
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -45,6 +47,7 @@ const Profile = () => {
             telefone: data.telefone || '',
             cpf: data.cpf || '',
             fotoPerfil: data.fotoPerfil || '',
+            fotoPerfilPath: data.fotoPerfilPath || '',
           };
           setUserData(initialData);
           setOriginalData(initialData);
@@ -148,6 +151,7 @@ const Profile = () => {
     try {
       const user = auth.currentUser;
       let fotoPerfilUrl = userData.fotoPerfil;
+      let fotoPerfilPath = userData.fotoPerfilPath;
 
       if (user) {
         const storage = getStorage();
@@ -157,16 +161,19 @@ const Profile = () => {
           const storageRef = ref(storage, `profile_photos/${nomeUnico}`);
           await uploadBytes(storageRef, fotoFile);
           fotoPerfilUrl = await getDownloadURL(storageRef);
+          fotoPerfilPath = storageRef.fullPath;
         }
         // Remover foto do storage se removida
         if (!foto && originalData.fotoPerfil && !fotoFile) {
           try {
-            const storageRef = ref(storage, `profile_photos/${user.uid}`);
+            const pathToDelete = originalData.fotoPerfilPath || `profile_photos/${user.uid}`;
+            const storageRef = ref(storage, pathToDelete);
             await deleteObject(storageRef);
           } catch (err) {
             // Se não existir, ignora
           }
           fotoPerfilUrl = '';
+          fotoPerfilPath = '';
         }
 
         // Permite atualizar mesmo se email ou telefone já existirem, desde que seja o próprio usuário
@@ -184,13 +191,14 @@ const Profile = () => {
           telefone: userData.telefone,
           cpf: userData.cpf,
           fotoPerfil: fotoPerfilUrl,
+          fotoPerfilPath: fotoPerfilPath,
         });
         alert('Dados atualizados com sucesso!');
         // Atualiza o estado original e limpa preview local
-        setOriginalData({ ...userData, fotoPerfil: fotoPerfilUrl });
+        setOriginalData({ ...userData, fotoPerfil: fotoPerfilUrl, fotoPerfilPath });
         setFotoFile(null);
         setIsChanged(false);
-        setUserData((prev) => ({ ...prev, fotoPerfil: fotoPerfilUrl }));
+        setUserData((prev) => ({ ...prev, fotoPerfil: fotoPerfilUrl, fotoPerfilPath }));
         setFoto(fotoPerfilUrl || null);
       }
     } catch (error) {
