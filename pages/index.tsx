@@ -4,19 +4,21 @@ import { useRouter } from 'next/router';
 import Calendar from 'react-calendar';
 import Modal from 'react-modal';
 import 'react-calendar/dist/Calendar.css';
-import { collection, query, where, getDocs, setDoc, doc, writeBatch, runTransaction, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, firestore } from '../firebase/firebaseConfig';
+import { buscarAgendamentosDeHoje, buscarHorariosDisponiveis, buscarDiasBloqueados, bloquearDiaParaFuncionario, buscarHorariosBloqueados,
+  criarAgendamento, bloquearDia, bloquearHorario, enviarEmailDeConfirmacao} from '@/functions/agendamentosFunction';
 import { onAuthStateChanged } from 'firebase/auth';
 import styles from "@/styles/Home.module.css";
 import { format, getYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import SidebarAdmin from '@/components/layout/SidebarAdmin'; // Importação do SidebarAdmin
-import Sidebar from '@/components/layout/Sidebar'; // Importação do Sidebar
+import SidebarAdmin from '@/components/layout/SidebarAdmin';
+import Sidebar from '@/components/layout/Sidebar';
 import Breadcrumb from '@/components/Breadcrumb';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 
-Modal.setAppElement('#__next'); // Necessário para acessibilidade
+Modal.setAppElement('#__next');
 
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip);
 
@@ -36,20 +38,20 @@ const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [appointmentData, setAppointmentData] = useState({
     date: '',
-    times: [''], // Array para múltiplos horários
-    nomesPacientes: [''], // Array para múltiplos nomes de pacientes
+    times: [''],
+    nomesPacientes: [''],
     profissional: '',
     detalhes: '',
   });
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
-  const [isLoadingTimes, setIsLoadingTimes] = useState(false); // Novo estado para evitar piscar a mensagem
+  const [isLoadingTimes, setIsLoadingTimes] = useState(false);
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false); //  Novo estado para bloquear múltiplos cliques
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [blockedDays, setBlockedDays] = useState<string[]>([]);
-  const [blockedTimes, setBlockedTimes] = useState<{ date: string, time: string, profissional: string }[]>([]);
+  const [blockedTimes, setBlockedTimes] = useState<{ date: string; time: string; profissional: string }[]>([]);
   const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
   const [profissionais, setProfissionais] = useState<Profissional[]>([
     { id: 'emilio', nome: 'Emilio', empresaId: 'default' }
@@ -69,129 +71,52 @@ const Index = () => {
 
   const router = useRouter();
 
-  const fetchTodayAppointments = async () => {
+  const fetchHoje = async () => {
     try {
-      const today = format(new Date(), 'yyyy-MM-dd');
-
-      // Busca os agendamentos do dia atual
-      const todayAppointmentsQuery = query(
-        collection(firestore, 'agendamentos'),
-        where('data', '==', today),
-        orderBy('hora', 'asc') // Ordena por horário
-      );
-      const todayAppointmentsSnapshot = await getDocs(todayAppointmentsQuery);
-
-      if (!todayAppointmentsSnapshot.empty) {
-        const appointments = todayAppointmentsSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setTodayAppointments(appointments);
-      } else {
-        // Caso não existam agendamentos no dia atual, busca a data mais próxima com agendamentos futuros
-        const futureAppointmentsQuery = query(
-          collection(firestore, 'agendamentos'),
-          where('data', '>=', today), // Inclui a data de hoje para garantir que agendamentos futuros sejam buscados
-          orderBy('data', 'asc'),
-          orderBy('hora', 'asc') // Ordena por data e horário
-        );
-        const futureAppointmentsSnapshot = await getDocs(futureAppointmentsQuery);
-
-        if (!futureAppointmentsSnapshot.empty) {
-          const appointments = futureAppointmentsSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setTodayAppointments(appointments);
-        } else {
-          setTodayAppointments([]); // Nenhum agendamento encontrado
-        }
-      }
+      const appointments = await buscarAgendamentosDeHoje();
+      setTodayAppointments(appointments);
     } catch (error) {
       console.error('Erro ao buscar agendamentos:', error);
     }
   };
 
-  const fetchAvailableTimes = async (date: Date | null, profissional: string) => {
+  const fetchHorariosDisponiveis = async (date: Date | null, profissional: string) => {
     if (!date || !profissional) return;
-    
+
     setIsLoadingTimes(true);
-    
+
     try {
-      const formattedDate = format(date, 'yyyy-MM-dd');
-  
-      // Verifica se o profissional está bloqueado nesse dia
-      const blockedDaysByEmployeeQuery = query(
-        collection(firestore, 'blockedDaysByEmployee'),
-        where('date', '==', formattedDate),
-        where('funcionaria', '==', profissional)
+      const times = await buscarHorariosDisponiveis(
+        date,
+        profissional,
+        user?.tipo,
+        blockedTimes,
+        standardTimes,
+        adminTimes
       );
-      const blockedDaysByEmployeeSnapshot = await getDocs(blockedDaysByEmployeeQuery);
-  
-      // Se o profissional estiver bloqueado, não exibe horários
-      if (!blockedDaysByEmployeeSnapshot.empty) {
-        setAvailableTimes([]);
-        return;
-      }
-  
-      // Se o profissional não estiver bloqueado, continua normalmente
-      const appointmentsQuery = query(
-        collection(firestore, 'agendamentos'),
-        where('data', '==', formattedDate),
-        where('profissional', '==', profissional)
-      );
-  
-      const appointmentDocs = await getDocs(appointmentsQuery);
-      const bookedTimes = appointmentDocs.docs.map((doc) => doc.data().hora);
-  
-      const now = new Date();
-      const allTimes = user?.tipo === 'admin' ? [...standardTimes, ...adminTimes] : standardTimes;
-  
-      const filteredTimes = allTimes.filter((time) => {
-        if (bookedTimes.includes(time.trim()) || blockedTimes.some(blockedTime => blockedTime.time === time.trim() && blockedTime.profissional === profissional)) return false;
-  
-        if (formattedDate === format(now, 'yyyy-MM-dd')) {
-          const [hours, minutes] = time.split(':');
-          const appointmentTime = new Date();
-          appointmentTime.setHours(parseInt(hours));
-          appointmentTime.setMinutes(parseInt(minutes));
-          return appointmentTime > now;
-        }
-        return true;
-      });
-  
-      setAvailableTimes(filteredTimes);
+      setAvailableTimes(times);
     } catch (error) {
       console.error('Erro ao buscar horários disponíveis:', error);
     } finally {
       setIsLoadingTimes(false);
     }
   };
-  
-  
 
-  const fetchBlockedDays = async () => {
+  const fetchDiasBloqueados = async () => {
     try {
-      const blockedDaysQuery = query(collection(firestore, 'blockedDays'));
-      const blockedDaysSnapshot = await getDocs(blockedDaysQuery);
-      const fetchedBlockedDays = blockedDaysSnapshot.docs.map((doc) => doc.data().date);
-      setBlockedDays(fetchedBlockedDays);
+      const days = await buscarDiasBloqueados();
+      setBlockedDays(days);
     } catch (error) {
       console.error('Erro ao buscar dias bloqueados:', error);
     }
   };
 
-  const handleBlockDayForEmployee = async () => {
+  const handleBloquearDiaFuncionario = async () => {
     if (!selectedDate || !appointmentData.profissional) return;
-  
+
     try {
+      await bloquearDiaParaFuncionario(selectedDate, appointmentData.profissional);
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-      await setDoc(doc(firestore, 'blockedDaysByEmployee', `${formattedDate}_${appointmentData.profissional}`), {
-        date: formattedDate,
-        funcionaria: appointmentData.profissional,
-      });
-  
-      // Atualiza os bloqueios apenas para o profissional
       setBlockedTimes((prev) => [
         ...prev,
         { date: formattedDate, time: 'all', profissional: appointmentData.profissional },
@@ -202,39 +127,19 @@ const Index = () => {
       setError('Erro ao bloquear o dia do profissional. Tente novamente.');
     }
   };
-  
 
-  const fetchBlockedTimes = async (date: Date) => {
+  const fetchHorariosBloqueados = async (date: Date) => {
     try {
-      const formattedDate = format(date, 'yyyy-MM-dd');
-  
-      // Busca bloqueios gerais
-      const blockedTimesQuery = query(
-        collection(firestore, 'blockedTimes'),
-        where('date', '==', formattedDate)
-      );
-      const blockedTimesSnapshot = await getDocs(blockedTimesQuery);
-      const fetchedBlockedTimes = blockedTimesSnapshot.docs.map((doc) => doc.data() as { date: string, time: string, profissional: string });
-  
-      // Busca bloqueios por profissional
-      const blockedDaysByEmployeeQuery = query(
-        collection(firestore, 'blockedDaysByEmployee'),
-        where('date', '==', formattedDate)
-      );
-      const blockedDaysByEmployeeSnapshot = await getDocs(blockedDaysByEmployeeQuery);
-      const fetchedBlockedDaysByEmployee = blockedDaysByEmployeeSnapshot.docs.map((doc) => doc.data() as { date: string, time: string, profissional: string });
-  
-      // Atualiza o estado de bloqueios
-      setBlockedTimes([...fetchedBlockedTimes, ...fetchedBlockedDaysByEmployee]);
+      const times = await buscarHorariosBloqueados(date);
+      setBlockedTimes(times);
     } catch (error) {
       console.error('Erro ao buscar horários bloqueados:', error);
     }
   };
-  
 
   useEffect(() => {
     if (selectedDate && appointmentData.profissional) {
-      fetchAvailableTimes(selectedDate, appointmentData.profissional);
+      fetchHorariosDisponiveis(selectedDate, appointmentData.profissional);
     }
   }, [selectedDate, appointmentData.profissional, user, blockedTimes]);
 
@@ -244,10 +149,10 @@ const Index = () => {
         try {
           const userQuery = query(
             collection(firestore, 'users'),
-            where('__name__', '==', currentUser.uid),
+            where('__name__', '==', currentUser.uid)
           );
           const userSnapshot = await getDocs(userQuery);
-  
+
           if (!userSnapshot.empty) {
             const userData = userSnapshot.docs[0].data();
             const userType = userData.tipo || 'client';
@@ -262,10 +167,10 @@ const Index = () => {
         setUser(null);
       }
     });
-  
-    fetchBlockedDays();
-    fetchTodayAppointments(); // Busca os agendamentos do dia ou da data mais próxima
-  
+
+    fetchDiasBloqueados();
+    fetchHoje();
+
     return () => unsubscribe();
   }, [router]);
 
@@ -293,7 +198,6 @@ const Index = () => {
         empresaId: doc.data().empresaId,
       }));
 
-      // Garante que Emilio sempre aparece na lista
       const emilioExists = profs.some(p => p.nome === 'Emilio');
       if (!emilioExists) {
         profs.unshift({ id: 'emilio', nome: 'Emilio', empresaId });
@@ -325,16 +229,15 @@ const Index = () => {
       setError('Este horário já foi reservado. Escolha outro horário disponível.');
       return;
     }
-  
+
     const newTimes = [...appointmentData.times];
     newTimes[index] = time;
     setAppointmentData((prevData) => ({
       ...prevData,
       times: newTimes,
     }));
-    setError(''); // Limpa o erro ao selecionar um horário válido
+    setError('');
   };
-  
 
   const addChild = () => {
     setAppointmentData((prevData) => ({
@@ -352,12 +255,10 @@ const Index = () => {
     const isNotCurrentYear = getYear(date) !== getYear(today);
     const isBlockedDay = blockedDays.includes(format(date, 'yyyy-MM-dd'));
 
-    // Permitir que administradores agendem em qualquer dia, mas destacar dias bloqueados
     if (user?.tipo === 'admin') {
       return !isPastDay && !isNotCurrentYear;
     }
 
-    // Bloquear domingos, segundas, datas passadas e dias bloqueados para usuários comuns
     return !isPastDay && !isMonday && !isSunday && !isNotCurrentYear && !isBlockedDay;
   };
 
@@ -374,36 +275,17 @@ const Index = () => {
       date: format(date, 'yyyy-MM-dd'),
     });
     setError('');
-    setModalIsOpen(true); // Abre o modal
-    fetchBlockedTimes(date); // Buscar horários bloqueados para a data selecionada
+    setModalIsOpen(true);
+    fetchHorariosBloqueados(date);
   };
 
-  const sendConfirmationEmail = async () => {
+  const handleEnviarEmail = async () => {
     try {
-      if (!user?.email) {
+      if (!user?.email || !user.uid) {
         console.error('Usuário sem e-mail.');
         return;
       }
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: user.email,
-          userId: user?.uid,
-          date: appointmentData.date,
-          times: appointmentData.times,
-          profissional: appointmentData.profissional,
-          nomesPacientes: appointmentData.nomesPacientes,
-          detalhes: appointmentData.detalhes,
-          isEdit: false,
-          isDelete: false,
-        }),
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error('Erro ao enviar email de confirmação: ' + errText);
-      }
+      await enviarEmailDeConfirmacao(user.email, user.uid, appointmentData);
     } catch (error) {
       console.error('Erro ao enviar o email:', error);
     }
@@ -411,75 +293,53 @@ const Index = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     if (isSubmitting) {
       setError('Aguarde enquanto processamos seu agendamento.');
       return;
     }
-  
+
     setIsSubmitting(true);
-  
+
     if (!user) {
       setError('Você precisa estar logado para fazer um agendamento.');
       setIsSubmitting(false);
       return;
     }
-  
-    if (!appointmentData.profissional || !appointmentData.date || appointmentData.times.some(time => !time) || appointmentData.nomesPacientes.some(nome => !nome)) {
+
+    if (
+      !appointmentData.profissional ||
+      !appointmentData.date ||
+      appointmentData.times.some(time => !time) ||
+      appointmentData.nomesPacientes.some(nome => !nome)
+    ) {
       setError('Todos os campos são obrigatórios.');
       setIsSubmitting(false);
       return;
     }
-  
+
     if (appointmentData.nomesPacientes.length !== appointmentData.times.length) {
       setError('Erro interno: número de nomes e horários não correspondem.');
       setIsSubmitting(false);
       return;
     }
-  
-    // Validação extra para experiência do usuário
-    if (availableTimes.length === 0 || appointmentData.times.some(time => !availableTimes.includes(time))) {
+
+    if (
+      availableTimes.length === 0 ||
+      appointmentData.times.some(time => !availableTimes.includes(time))
+    ) {
       setError('Um ou mais horários selecionados já foram reservados. Atualize a página e tente novamente.');
       setIsSubmitting(false);
       return;
     }
-  
-    try {
-      await runTransaction(firestore, async (transaction) => {
-        for (let index = 0; index < appointmentData.nomesPacientes.length; index++) {
-          const nome = appointmentData.nomesPacientes[index];
-  
-          const appointmentRef = doc(
-            firestore,
-            'agendamentos',
-            `${appointmentData.date}_${appointmentData.profissional}_${appointmentData.times[index]}`
-          );
-  
-          const existing = await transaction.get(appointmentRef);
-          if (existing.exists()) {
-            throw new Error(`O horário ${appointmentData.times[index]} já foi reservado.`);
-          }
-  
-          transaction.set(appointmentRef, {
-            nomePaciente: nome,
-            data: appointmentData.date,
-            hora: appointmentData.times[index],
-            usuarioId: user?.uid,
-            usuarioEmail: user?.email,
-            status: 'agendado',
-            profissional: appointmentData.profissional,
-            detalhes: appointmentData.detalhes,
-          });
-        }
-      });
-  
-      // Atualiza os próximos agendamentos após salvar
-      await fetchTodayAppointments();
 
-      // Envia o e-mail de confirmação
-      await sendConfirmationEmail();
-  
-      // Redireciona para "Meus Agendamentos"
+    try {
+      await criarAgendamento(appointmentData, { uid: user.uid, email: user.email });
+
+      await fetchHoje();
+
+      await handleEnviarEmail();
+
       router.push('/admin/agendamentos');
     } catch (error: any) {
       console.error('Erro ao salvar agendamento:', error);
@@ -488,15 +348,13 @@ const Index = () => {
       setIsSubmitting(false);
     }
   };
-  
-  const handleBlockDay = async () => {
+
+  const handleBloquearDia = async () => {
     if (!selectedDate) return;
 
     try {
+      await bloquearDia(selectedDate);
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-      await setDoc(doc(firestore, 'blockedDays', formattedDate), {
-        date: formattedDate,
-      });
       setBlockedDays((prev) => [...prev, formattedDate]);
       setError('');
     } catch (error) {
@@ -505,17 +363,16 @@ const Index = () => {
     }
   };
 
-  const handleBlockTime = async () => {
+  const handleBloquearHorario = async () => {
     if (!selectedDate || !appointmentData.times[0] || !appointmentData.profissional) return;
 
     try {
+      await bloquearHorario(selectedDate, appointmentData.times[0], appointmentData.profissional);
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-      await setDoc(doc(firestore, 'blockedTimes', `${formattedDate}_${appointmentData.times[0]}_${appointmentData.profissional}`), {
-        date: formattedDate,
-        time: appointmentData.times[0],
-        profissional: appointmentData.profissional,
-      });
-      setBlockedTimes((prev) => [...prev, { date: formattedDate, time: appointmentData.times[0], profissional: appointmentData.profissional }]);
+      setBlockedTimes((prev) => [
+        ...prev,
+        { date: formattedDate, time: appointmentData.times[0], profissional: appointmentData.profissional }
+      ]);
       setError('');
     } catch (error) {
       console.error('Erro ao bloquear o horário:', error);
@@ -524,7 +381,6 @@ const Index = () => {
   };
 
   const handleCancel = () => {
-    // Resetar o estado do appointmentData e availableTimes
     setAppointmentData({
       date: '',
       times: [''],
@@ -536,7 +392,6 @@ const Index = () => {
     setModalIsOpen(false);
   };
 
-  // Redireciona para indexCliente se não for admin
   useEffect(() => {
     if (user && user.tipo !== 'admin') {
       router.replace('/indexCliente');
@@ -607,32 +462,27 @@ const Index = () => {
   return (
     <ProtectedRoute>
       <div className={styles.container}>
-        {/* SidebarAdmin fixo à esquerda */}
         <SidebarAdmin />
 
         <div className={styles.mainContent}>
           <div className={styles.formContainer}>
-            {/* Breadcrumb, título, subtítulo */}
             <div className={styles.breadcrumbWrapper}>
               <span className={styles.breadcrumb}>
                 Menu Principal &gt; <span className={styles.breadcrumbActive}>Dashboard</span>
               </span>
             </div>
-            <h2 className={styles.titleDashboard}>
-              Dashboard
-            </h2>
+            <h2 className={styles.titleDashboard}>Dashboard</h2>
             <div className={styles.dashboardSubtitle}>
               Acesse uma visão detalhada de métricas e resultados dos pacientes
             </div>
 
-            {/* Gráfico de volume de pacientes */}
             <div className={styles.pacientesChartBox}>
               <div className={styles.pacientesChartTitle}>
                 Volume de Pacientes por Dia da Semana
               </div>
               <Bar data={chartData} options={chartOptions} height={180} />
             </div>
-            {/* Calendário alinhado à esquerda */}
+
             <div className={styles.calendarAndAppointments}>
               <Calendar
                 className={styles.reactCalendar}
@@ -646,7 +496,6 @@ const Index = () => {
                 }
               />
 
-              {/* Próximos Agendamentos */}
               <div className={styles.upcomingAppointments}>
                 <h3 className={styles.upcomingTitle}>Agendamentos</h3>
                 <table className={styles.upcomingTable}>
@@ -692,7 +541,7 @@ const Index = () => {
               </div>
             </div>
           </div>
-          {/* Sidebar centralizado na coluna da direita */}
+
           <div style={{
             flex: 1,
             display: 'flex',
@@ -708,7 +557,6 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Modal implementado */}
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={handleCancel}
@@ -717,7 +565,6 @@ const Index = () => {
       >
         <h3>Agendar Serviço para {format(selectedDate || new Date(), 'dd/MM/yyyy')}</h3>
         <form onSubmit={handleSubmit} className={styles.form}>
-          {/* Loading spinner sobreposto ao modal durante envio */}
           {isSubmitting && (
             <div className={styles.modalLoadingOverlay}>
               <div className={styles.modalSpinner}></div>
@@ -725,13 +572,12 @@ const Index = () => {
             </div>
           )}
           <div className={styles.inputGroup}>
-            {/* Select de Profissional */}
             <select
               name="profissional"
               value={appointmentData.profissional}
               onChange={(e) => {
                 setAppointmentData((prev) => ({ ...prev, profissional: e.target.value }));
-                fetchAvailableTimes(selectedDate, e.target.value);
+                fetchHorariosDisponiveis(selectedDate, e.target.value);
               }}
               required
               className={styles.inputoption}
@@ -759,7 +605,6 @@ const Index = () => {
             </div>
           ))}
 
-          {/* Campo de detalhes */}
           <div className={styles.inputGroup}>
             <textarea
               name="detalhes"
@@ -805,7 +650,7 @@ const Index = () => {
           {user?.tipo === 'admin' && (
             <button
               type="button"
-              onClick={handleBlockDay}
+              onClick={handleBloquearDia}
               className={styles.blockButton}
               disabled={isSubmitting}
               style={isSubmitting ? { backgroundColor: '#ccc', color: '#888', cursor: 'not-allowed', border: 'none' } : {}}
@@ -817,7 +662,7 @@ const Index = () => {
           {user?.tipo === 'admin' && appointmentData.times[0] && (
             <button
               type="button"
-              onClick={handleBlockTime}
+              onClick={handleBloquearHorario}
               className={styles.blockButton}
               disabled={isSubmitting}
               style={isSubmitting ? { backgroundColor: '#ccc', color: '#888', cursor: 'not-allowed', border: 'none' } : {}}
@@ -829,7 +674,7 @@ const Index = () => {
           {user?.tipo === 'admin' && appointmentData.profissional && (
             <button
               type="button"
-              onClick={handleBlockDayForEmployee}
+              onClick={handleBloquearDiaFuncionario}
               className={styles.blockButton}
               disabled={isSubmitting}
               style={isSubmitting ? { backgroundColor: '#ccc', color: '#888', cursor: 'not-allowed', border: 'none' } : {}}
