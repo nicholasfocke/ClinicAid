@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './Sidebar.module.css';
 import { MessageSquare, CalendarDays, User2 } from 'lucide-react';
 import Link from 'next/link';
-import { firestore } from '../firebase/firebaseConfig';
+import { firestore } from '../../firebase/firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
 
 const Sidebar = () => {
@@ -136,7 +136,7 @@ const Sidebar = () => {
         <p className={styles.description}>
           Acesse os agendamentos dos próximos dias ou datas futuras.
         </p>
-        <Link href="/agendamentos" passHref legacyBehavior>
+        <Link href="/admin/agendamentos" passHref legacyBehavior>
           <button className={styles.button}>Acessar agenda</button>
         </Link>
       </div>

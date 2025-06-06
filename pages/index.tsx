@@ -1,4 +1,4 @@
-import ProtectedRoute from '@/components/ProtectedRoute';
+import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Calendar from 'react-calendar';
@@ -10,8 +10,8 @@ import { onAuthStateChanged } from 'firebase/auth';
 import styles from "@/styles/Home.module.css";
 import { format, getYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import SidebarAdmin from '@/components/SidebarAdmin'; // Importação do SidebarAdmin
-import Sidebar from '@/components/Sidebar'; // Importação do Sidebar
+import SidebarAdmin from '@/components/layout/SidebarAdmin'; // Importação do SidebarAdmin
+import Sidebar from '@/components/layout/Sidebar'; // Importação do Sidebar
 import Breadcrumb from '@/components/Breadcrumb';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
@@ -480,7 +480,7 @@ const Index = () => {
       await sendConfirmationEmail();
   
       // Redireciona para "Meus Agendamentos"
-      router.push('/agendamentos');
+      router.push('/admin/agendamentos');
     } catch (error: any) {
       console.error('Erro ao salvar agendamento:', error);
       setError(error?.message || 'Erro ao salvar o agendamento. Tente novamente.');

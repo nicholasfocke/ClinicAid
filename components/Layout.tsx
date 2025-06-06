@@ -8,7 +8,7 @@ import Image from 'next/image';
 import styles from './Layout.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import SidebarAdmin from './SidebarAdmin';
+import SidebarAdmin from './layout/SidebarAdmin';
 
 type LayoutProps = {
   children: ReactNode;
@@ -29,7 +29,7 @@ const Layout = ({ children }: LayoutProps) => {
   const handleLogout = async () => {
     try {
       await signOut(auth); // Firebase signOut
-      router.push('/login'); // Redireciona para a página de login após o logout
+      router.push('/auth/login'); // Redireciona para a página de login após o logout
     } catch (error) {
       console.error('Erro ao fazer logout: ', error);
     }
@@ -76,7 +76,7 @@ const Layout = ({ children }: LayoutProps) => {
     checkUserRole();
   }, [auth.currentUser]);
 
-  const noHeaderRoutes = ['/login', '/register', '/esquecisenha'];
+  const noHeaderRoutes = ['/auth/login', '/auth/register', '/auth/esquecisenha'];
 
   return (
     <div className={styles.layout} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

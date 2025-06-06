@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { auth, firestore } from '../firebase/firebaseConfig';
+import { auth, firestore } from '../../firebase/firebaseConfig';
 import styles from "@/styles/login.module.css";
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
@@ -159,8 +159,8 @@ const Login = () => {
     setLoading(false);
   };
 
-  const handleRegisterRedirect = () => router.push('/register');
-  const handleForgotPasswordRedirect = () => router.push('/esquecisenha');
+  const handleRegisterRedirect = () => router.push('/auth/register');
+  const handleForgotPasswordRedirect = () => router.push('/auth/esquecisenha');
 
   return (
     <div className={styles.loginSplitBg}>

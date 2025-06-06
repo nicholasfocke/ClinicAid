@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { auth, firestore } from '../firebase/firebaseConfig';
+import { auth, firestore } from '../../firebase/firebaseConfig';
 import bcrypt from 'bcryptjs';
 import styles from "@/styles/register.module.css";
 import Image from 'next/image';
@@ -117,7 +117,7 @@ const Register = () => {
         fotoPerfil: '',
         fotoPerfilPath: '',
       });
-      router.push('/login');
+      router.push('/auth/login');
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
         setError('Esse email já está cadastrado.');
@@ -128,7 +128,7 @@ const Register = () => {
     setLoading(false);
   };
 
-  const handleRedirectToLogin = () => router.push('/login');
+  const handleRedirectToLogin = () => router.push('/auth/login');
 
   return (
     <div className={styles.loginSplitBg}>

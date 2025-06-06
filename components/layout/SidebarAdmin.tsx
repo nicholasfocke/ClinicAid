@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './SidebarAdmin.module.css';
 import { Home, Calendar, User, LogOut } from 'lucide-react';
 import Link from 'next/link';
-import { auth, firestore } from '../firebase/firebaseConfig';
+import { auth, firestore } from '../../firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/router';
 import { doc, getDoc } from 'firebase/firestore';
@@ -33,7 +33,7 @@ const SidebarAdmin = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      router.push('/login');
+      router.push('/auth/login');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
@@ -53,7 +53,7 @@ const SidebarAdmin = () => {
           <Home className={styles.icon} />
           <span>Dashboard</span>
         </Link>
-        <Link href="/agendamentos" className={styles.navItem}>
+        <Link href="/admin/agendamentos" className={styles.navItem}>
           <Calendar className={styles.icon} />
           <span>Agendamentos</span>
         </Link>

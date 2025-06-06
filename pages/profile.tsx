@@ -56,7 +56,7 @@ const Profile = () => {
         }
         if (!ignore) setIsLoading(false);
       } else {
-        if (!ignore) router.push('/login');
+        if (!ignore) router.push('/auth/login');
       }
     });
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, deleteDoc, getDoc } from 'firebase/firestore';
-import { auth, firestore } from '../firebase/firebaseConfig';
+import { auth, firestore } from '../../firebase/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/router';
 import styles from "@/styles/agendamentos.module.css";
@@ -56,7 +56,7 @@ const Agendamentos = () => {
             email: currentUser.email || '',
           });
         } else {
-          router.push('/login');
+          router.push('/auth/login');
         }
       } catch (error) {
         console.error('Erro ao verificar autenticação:', error);
