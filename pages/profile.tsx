@@ -7,6 +7,25 @@ import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'fire
 import styles from '@/styles/profile.module.css';
 import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
 
+// Máscara para CPF (formato: 999.999.999-99)
+const formatCPF = (value: string) => {
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+    .slice(0, 14);
+};
+
+// Máscara para telefone (formato: (99) 99999-9999)
+const formatTelefone = (value: string) => {
+  return value
+    .replace(/\D/g, '')
+    .replace(/^(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2')
+    .slice(0, 15);
+};
+
 const Profile = () => {
   const [userData, setUserData] = useState({
     nome: '',
@@ -44,8 +63,8 @@ const Profile = () => {
           const initialData = {
             nome: data.nome || '',
             email: data.email || '',
-            telefone: data.telefone || '',
-            cpf: data.cpf || '',
+            telefone: formatTelefone(data.telefone || ''),
+            cpf: formatCPF(data.cpf || ''),
             fotoPerfil: data.fotoPerfil || '',
             fotoPerfilPath: data.fotoPerfilPath || '',
           };
@@ -297,10 +316,13 @@ const Profile = () => {
             <div className={styles.profileField}>
               <label htmlFor="telefone">Telefone</label>
               <input
-                type="text"
+                type="tel"
                 id="telefone"
                 value={userData.telefone}
-                onChange={(e) => setUserData({ ...userData, telefone: e.target.value })}
+                onChange={(e) =>
+                  setUserData({ ...userData, telefone: formatTelefone(e.target.value) })
+                }
+                maxLength={15}
                 required
               />
               <span className={styles.perfilHint}>Telefone para notificações e contato.</span>
@@ -311,7 +333,10 @@ const Profile = () => {
                 type="text"
                 id="cpf"
                 value={userData.cpf}
-                onChange={(e) => setUserData({ ...userData, cpf: e.target.value })}
+                onChange={(e) =>
+                  setUserData({ ...userData, cpf: formatCPF(e.target.value) })
+                }
+                maxLength={14}
                 required
               />
               <span className={styles.perfilHint}>O número do seu documento sem pontos ou traços.</span>
