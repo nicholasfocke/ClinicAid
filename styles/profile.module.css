@@ -78,14 +78,41 @@
     align-items: center;
   }
   
-  .perfilTitulo {
-    font-size: 2.8rem;
-    font-weight: 700;
-    margin-bottom: 28px;
-    color: #1a202c;
-    text-align: center;
-    font-family: 'Inter', sans-serif;
-  }
+.perfilTitulo {
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin-bottom: 28px;
+  color: #1a202c;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Novo layout alinhado aos demais formulários */
+.profilePageContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 50px 10px;
+  margin-left: 350px;
+}
+
+.profileTitle {
+  text-align: left;
+  font-weight: 800;
+  font-size: 36px;
+  margin: 18px 0 0 0;
+  color: #111827;
+  letter-spacing: -1px;
+}
+
+.profileSubtitle {
+  color: #8b98a9;
+  margin-bottom: 32px;
+  margin-top: 6px;
+  text-align: left;
+  margin-left: 0;
+  font-size: 17px;
+  font-weight: 500;
+}
   
   .perfilFotoBox {
     display: flex;
@@ -204,7 +231,9 @@
     box-shadow: 0 8px 32px #0001;
     padding: 48px 48px 32px 48px;
     max-width: 900px;
-    margin: 0 auto 48px auto;
+    width: 100%;
+    margin-right: auto;
+    margin-bottom: 48px;
     align-items: flex-start;
   }
   
@@ -326,6 +355,10 @@
   }
   
   @media (max-width: 900px) {
+    .profilePageContainer {
+      margin-left: 0;
+      padding: 20px;
+    }
     .profileFormWrapper {
       flex-direction: column;
       gap: 32px;

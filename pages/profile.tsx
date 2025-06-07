@@ -229,13 +229,16 @@ const Profile = () => {
   }
 
   return (
-    <>
+    <div className={styles.profilePageContainer}>
       <div className={breadcrumbStyles.breadcrumbWrapper}>
         <span className={breadcrumbStyles.breadcrumb}>
           Menu Principal &gt; <span className={breadcrumbStyles.breadcrumbActive}>Perfil</span>
         </span>
       </div>
-      <h1 className={styles.perfilTitulo} >Meu perfil</h1>
+      <h1 className={styles.profileTitle}>Meu perfil</h1>
+      <div className={styles.profileSubtitle}>
+        Atualize suas informações pessoais e mantenha seus dados em dia
+      </div>
       <div className={styles.profileFormWrapper}>
         <div className={styles.profilePhotoColumn}>
           <div className={styles.perfilFotoBox}>
@@ -322,7 +325,7 @@ const Profile = () => {
           </div>
         </form>
       </div>
-    </>
+    </div>
   );
 };
 
