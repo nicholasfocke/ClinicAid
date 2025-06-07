@@ -5,7 +5,7 @@ import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'fireb
 import { onAuthStateChanged } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import styles from '@/styles/profile.module.css';
-import Image from "next/image";
+import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
 
 const Profile = () => {
   const [userData, setUserData] = useState({
@@ -229,83 +229,100 @@ const Profile = () => {
   }
 
   return (
-    <div className={styles.perfilContainer}>
-      <h1 className={styles.perfilTitulo}>Meu perfil</h1>
-      <div className={styles.perfilFotoBox}>
-        <div className={styles.perfilFotoWrapper}>
-          {foto ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={foto} alt="Foto de perfil" className={styles.perfilFoto} />
-          ) : userData.fotoPerfil ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={userData.fotoPerfil} alt="Foto de perfil" className={styles.perfilFoto} />
-          ) : (
-            <svg className={styles.perfilFoto} width="120" height="120" viewBox="0 0 120 120" fill="none">
-              <circle cx="60" cy="60" r="60" fill="#E5E7EB"/>
-              <circle cx="60" cy="54" r="28" fill="#D1D5DB"/>
-              <ellipse cx="60" cy="94" rx="36" ry="22" fill="#D1D5DB"/>
-            </svg>
-          )}
-        </div>
-        <div style={{ display: "flex", gap: 12 }}>
-          <label className={styles.perfilFotoBtn}>
-            Carregar foto
-            <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleFotoChange} />
-          </label>
-          {(foto || userData.fotoPerfil) && (
-            <button type="button" className={styles.perfilFotoBtn} style={{ background: "#e53e3e" }} onClick={handleRemoverFoto}>
-              Remover foto
-            </button>
-          )}
-        </div>
+    <>
+      <div className={breadcrumbStyles.breadcrumbWrapper}>
+        <span className={breadcrumbStyles.breadcrumb}>
+          Menu Principal &gt; <span className={breadcrumbStyles.breadcrumbActive}>Perfil</span>
+        </span>
       </div>
-      {error && <p className={styles.error}>{error}</p>}
-      <form onSubmit={handleUpdate} className={styles.perfilForm}>
-        <div className={styles.perfilCampo}>
-          <label htmlFor="nome">Nome</label>
-          <input
-            type="text"
-            id="nome"
-            value={userData.nome}
-            onChange={(e) => setUserData({ ...userData, nome: e.target.value })}
-            required
-          />
+      <h1 className={styles.perfilTitulo} >Meu perfil</h1>
+      <div className={styles.profileFormWrapper}>
+        <div className={styles.profilePhotoColumn}>
+          <div className={styles.perfilFotoBox}>
+            <div className={styles.perfilFotoWrapper}>
+              {foto ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={foto} alt="Foto de perfil" className={styles.perfilFoto} />
+              ) : userData.fotoPerfil ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={userData.fotoPerfil} alt="Foto de perfil" className={styles.perfilFoto} />
+              ) : (
+                <svg className={styles.perfilFoto} width="120" height="120" viewBox="0 0 120 120" fill="none">
+                  <circle cx="60" cy="60" r="60" fill="#E5E7EB"/>
+                  <circle cx="60" cy="54" r="28" fill="#D1D5DB"/>
+                  <ellipse cx="60" cy="94" rx="36" ry="22" fill="#D1D5DB"/>
+                </svg>
+              )}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
+              <label className={styles.perfilFotoBtn}>
+                Carregar foto
+                <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleFotoChange} />
+              </label>
+              {(foto || userData.fotoPerfil) && (
+                <button type="button" className={styles.perfilFotoBtn} style={{ background: "#e53e3e" }} onClick={handleRemoverFoto}>
+                  Remover foto
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-        <div className={styles.perfilCampo}>
-          <label htmlFor="email">E-mail</label>
-          <input
-            type="email"
-            id="email"
-            value={userData.email}
-            onChange={(e) => setUserData({ ...userData, email: e.target.value })}
-            required
-          />
-        </div>
-        <div className={styles.perfilCampo}>
-          <label htmlFor="telefone">Telefone</label>
-          <input
-            type="text"
-            id="telefone"
-            value={userData.telefone}
-            onChange={(e) => setUserData({ ...userData, telefone: e.target.value })}
-            required
-          />
-        </div>
-        <div className={`${styles.perfilCampo} ${styles.cpf}`}>
-          <label htmlFor="cpf">CPF</label>
-          <input
-            type="text"
-            id="cpf"
-            value={userData.cpf}
-            onChange={(e) => setUserData({ ...userData, cpf: e.target.value })}
-            required
-          />
-        </div>
-        <button type="submit" className={styles.perfilBtn} disabled={!isChanged || isUpdating}>
-          {isUpdating ? 'Atualizando...' : 'Atualizar Dados'}
-        </button>
-      </form>
-    </div>
+        <form onSubmit={handleUpdate} className={styles.profileFormMain}>
+          <div className={styles.profileGrid}>
+            <div className={styles.profileField}>
+              <label htmlFor="nome">Nome</label>
+              <input
+                type="text"
+                id="nome"
+                value={userData.nome}
+                onChange={(e) => setUserData({ ...userData, nome: e.target.value })}
+                required
+              />
+              <span className={styles.perfilHint}>Nome como aparece em seu documento.</span>
+            </div>
+            <div className={styles.profileField}>
+              <label htmlFor="email">E-mail</label>
+              <input
+                type="email"
+                id="email"
+                value={userData.email}
+                onChange={(e) => setUserData({ ...userData, email: e.target.value })}
+                required
+              />
+              <span className={styles.perfilHint}>e-mail para notificações e recuperação de senha.</span>
+            </div>
+            <div className={styles.profileField}>
+              <label htmlFor="telefone">Telefone</label>
+              <input
+                type="text"
+                id="telefone"
+                value={userData.telefone}
+                onChange={(e) => setUserData({ ...userData, telefone: e.target.value })}
+                required
+              />
+              <span className={styles.perfilHint}>Telefone para notificações e contato.</span>
+            </div>
+            <div className={styles.profileField}>
+              <label htmlFor="cpf">CPF</label>
+              <input
+                type="text"
+                id="cpf"
+                value={userData.cpf}
+                onChange={(e) => setUserData({ ...userData, cpf: e.target.value })}
+                required
+              />
+              <span className={styles.perfilHint}>O número do seu documento sem pontos ou traços.</span>
+            </div>
+          </div>
+          {error && <p className={styles.error}>{error}</p>}
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 32 }}>
+            <button type="submit" className={styles.perfilBtn} disabled={!isChanged || isUpdating}>
+              {isUpdating ? 'Atualizando...' : 'Atualizar Dados'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 };
 

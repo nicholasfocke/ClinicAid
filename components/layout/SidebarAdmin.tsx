@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styles from './SidebarAdmin.module.css';
-import { Home, Calendar, User, LogOut } from 'lucide-react';
+import { Home, Calendar, User, LogOut, Stethoscope, Bot } from 'lucide-react';
 import Link from 'next/link';
 import { auth, firestore } from '../../firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
@@ -56,6 +56,26 @@ const SidebarAdmin = () => {
         <Link href="/admin/agendamentos" className={styles.navItem}>
           <Calendar className={styles.icon} />
           <span>Agendamentos</span>
+        </Link>
+        <Link href="/assistente-ia" className={styles.navItem}>
+          <Bot className={styles.icon} color="#fff" />
+          <span>Assistente IA</span>
+        </Link>
+        <Link href="/admin/medicos" className={styles.navItem}>
+          <Stethoscope className={styles.icon} color="#fff" />
+          <span>Médicos</span>
+        </Link>
+        <Link href="/admin/pacientes" className={styles.navItem}>
+          <span className={styles.icon} style={{width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+            {/* SVG gratuito de grupo de pessoas, branco, estilo Heroicons Users */}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="9" cy="7" r="4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M23 20v-2a4 4 0 0 0-3-3.87" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </span>
+          <span>Pacientes</span>
         </Link>
         <Link href="/profile" className={styles.navItem}>
           <User className={styles.icon} />

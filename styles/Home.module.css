@@ -29,26 +29,6 @@
   font-size: 1.1em;
 }
 
-.breadcrumbWrapper {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0;
-  margin-left: 0;
-}
-
-.breadcrumb {
-  font-size: 14px;
-  color: #2563eb;
-  font-weight: 600;
-  margin-top: 0;
-  margin-bottom: 0;
-  letter-spacing: 0;
-}
-
-.breadcrumbActive {
-  color: #2563eb;
-}
-
 .titleDashboard {
   text-align: left;
   font-weight: 800;
@@ -117,27 +97,86 @@
 
 .upcomingTable th {
   text-align: left;
-  font-size: 0.97rem;
+  font-size: 1.05rem;
   color: #8b98a9;
-  font-weight: 600;
-  padding: 10px 0 8px 0;
+  font-weight: 700;
+  padding: 18px 0 12px 28px;
   border-bottom: 1px solid #f1f1f1;
+  background: #f9fafb;
+  letter-spacing: 0.5px;
+}
+
+.upcomingTable th:first-child {
+  padding-left: 32px;
+}
+
+.upcomingTable th:last-child {
+  padding-right: 18px;
 }
 
 .upcomingTable td {
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   color: #222;
-  padding: 12px 0;
+  padding: 16px 0 16px 28px;
   border-bottom: 1px solid #f6f6f6;
   vertical-align: middle;
 }
 
-.upcomingTable tr:last-child td {
-  border-bottom: none;
+.upcomingTable td:first-child {
+  padding-left: 32px;
+}
+
+.upcomingTable td:last-child {
+  padding-right: 18px;
+}
+
+.statusConfirmado,
+.upcomingStatusCell.statusConfirmado {
+  display: inline-flex;
+  align-items: center;
+  background: #e7f9ef;
+  color: #22c55e !important;
+  font-weight: 700;
+  font-size: 0.97rem;
+  border-radius: 16px;
+  padding: 1px 10px 1px 7px;
+  margin-left: 0;
+  gap: 7px;
+  border: none;
+  box-sizing: border-box;
+  min-width: 80px;
+  min-height: 24px;
+  justify-content: flex-start;
+  transition: background 0.2s;
+}
+
+.upcomingStatusCell svg,
+.statusConfirmado svg {
+  color: #22c55e !important;
+  margin-right: 0;
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  border-radius: 50%;
+  box-sizing: border-box;
+  padding: 0;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+  border: none;
+}
+
+.statusConfirmado,
+.upcomingStatusCell.statusConfirmado,
+.statusConfirmado span,
+.upcomingStatusCell.statusConfirmado span {
+  font-weight: 800;
+  color: #22c55e !important;
+  letter-spacing: 0.5px;
 }
 
 .upcomingPacienteCell {
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .upcomingDoutorCell {
@@ -146,64 +185,12 @@
   font-weight: 500;
 }
 
-.upcomingStatusCell {
-  font-size: 1.01rem;
-  font-weight: 700;
-  color: #bdbdbd;
-}
-
-.statusConfirmado,
-.upcomingStatusCell.statusConfirmado {
-  color: #22c55e !important;
-}
-
 .noAppointments {
   font-size: 1rem;
   color: #8b98a9;
   text-align: center;
   width: 100%;
   padding: 18px 0;
-}
-
-.appointmentCard {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-  padding: 10px;
-  border-radius: 8px;
-  background-color: #1a3b5d; /* Fundo mais escuro para os cards */
-}
-
-.appointmentCard:last-child {
-  margin-bottom: 0;
-}
-
-.appointmentTime {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-right: 15px;
-}
-
-.appointmentDetails {
-  display: flex;
-  flex-direction: column;
-}
-
-.appointmentDetails strong {
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.appointmentDetails p {
-  font-size: 0.9rem;
-  margin: 0;
-  color: #d1d5db; /* Cinza claro */
-}
-
-.noAppointments {
-  font-size: 1rem;
-  color: #d1d5db; /* Cinza claro */
-  text-align: center;
 }
 
 .container {
@@ -337,26 +324,11 @@
 
 .modalFooter {
   display: flex;
-  justify-content: center; /* Centraliza botões no mobile */
-  flex-wrap: wrap; /* Permite que os botões quebrem de linha se necessário */
+  justify-content: center;
+  flex-wrap: wrap;
   margin-top: 20px;
   gap: 15px;
   width: 100%;
-}
-
-
-.buttonSecondary {
-  background-color: #ccc;
-  color: black;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.buttonSecondary:hover {
-  background-color: #aaa;
 }
 
 .reactCalendar {
@@ -596,11 +568,4 @@
   background-color: #ffcccc !important;
   color: #ff0000 !important;
   border-radius: 10px !important;
-}
-
-.sidebar {
-  position: absolute; /* Posiciona o Sidebar fora do fluxo normal */
-  right: 0; /* Alinha o Sidebar à direita da tela */
-  top: 50px; /* Ajusta a distância do topo */
-  width: 300px; /* Define uma largura fixa */
 }

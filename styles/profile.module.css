@@ -195,6 +195,96 @@
     cursor: not-allowed;
   }
   
+  .profileFormWrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 48px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px #0001;
+    padding: 48px 48px 32px 48px;
+    max-width: 900px;
+    margin: 0 auto 48px auto;
+    align-items: flex-start;
+  }
+  
+  .profilePhotoColumn {
+    min-width: 180px;
+    max-width: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .profileFormMain {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .profileGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px 32px;
+    width: 100%;
+  }
+  
+  .profileField {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .profileField label {
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 2px;
+  }
+  
+  .profileField input {
+    padding: 14px 16px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1.08rem;
+    background: #f9fafb;
+    transition: border 0.2s, box-shadow 0.2s;
+    outline: none;
+    box-shadow: 0 1px 2px #00000008;
+  }
+  
+  .profileField input:focus {
+    border: 1.5px solid #2563eb;
+    background: #fff;
+    box-shadow: 0 0 0 2px #2563eb22;
+  }
+  
+  .perfilHint {
+    font-size: 0.93rem;
+    color: #8b98a9;
+    margin-top: 2px;
+  }
+  
+  .perfilBtn {
+    margin-top: 18px;
+    padding: 14px 36px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.08rem;
+    font-weight: 600;
+    cursor: pointer;
+    align-self: flex-end;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px #2563eb22;
+  }
+  
+  .perfilBtn:disabled {
+    background: #b3b3b3;
+    cursor: not-allowed;
+  }
+  
   @media (max-width: 768px) {
     .container {
       padding: 15px;
@@ -232,5 +322,21 @@
     .submitButton {
       font-size: 0.9em;
       padding: 7px;
+    }
+  }
+  
+  @media (max-width: 900px) {
+    .profileFormWrapper {
+      flex-direction: column;
+      gap: 32px;
+      padding: 32px 12px;
+    }
+    .profileGrid {
+      grid-template-columns: 1fr;
+      gap: 24px 0;
+    }
+    .profilePhotoColumn {
+      align-items: flex-start;
+      margin-bottom: 16px;
     }
   }

@@ -134,7 +134,7 @@ const Sidebar = () => {
         </div>
         <h3 className={styles.title}>Agendamentos</h3>
         <p className={styles.description}>
-          Acesse os agendamentos dos próximos dias ou datas futuras.
+          Acesse as métricas ou realize agendamentos dos próximos dias ou datas futuras.
         </p>
         <Link href="/admin/agendamentos" passHref legacyBehavior>
           <button className={styles.button}>Acessar agenda</button>

@@ -4,10 +4,9 @@ import { auth, firestore } from '../../firebase/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/router';
 import styles from "@/styles/agendamentos.module.css";
-import { format, isAfter, isSameDay } from 'date-fns';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
-import Modal from 'react-modal';
+import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
+import { format, isAfter } from 'date-fns';
+import { ExternalLink, CheckCircle2 } from 'lucide-react';
 
 interface Agendamento {
   id: string;
@@ -44,8 +43,11 @@ const Agendamentos = () => {
   ]);
 
   // Novos estados para calendário/modal
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  // const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Novo estado para armazenar todos os agendamentos
+  const [allAgendamentos, setAllAgendamentos] = useState<Agendamento[]>([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -66,6 +68,40 @@ const Agendamentos = () => {
 
     return () => unsubscribe();
   }, [router]);
+
+  useEffect(() => {
+    // Busca todos os agendamentos do banco de dados
+    const fetchAllAgendamentos = async () => {
+      try {
+        const q = query(collection(firestore, 'agendamentos'));
+        const querySnapshot = await getDocs(q);
+        const fetched: Agendamento[] = [];
+        querySnapshot.forEach((doc) => {
+          const agendamentoData = doc.data();
+          fetched.push({
+            id: doc.id,
+            data: agendamentoData.data,
+            hora: agendamentoData.hora,
+            profissional: agendamentoData.profissional,
+            nomePaciente: agendamentoData.nomePaciente,
+            status: agendamentoData.status,
+            detalhes: agendamentoData.detalhes || ''
+            // especialidade e valor removidos
+          });
+        });
+        // Ordena por data/hora
+        fetched.sort((a, b) => {
+          const dateA = new Date(`${a.data}T${a.hora}`);
+          const dateB = new Date(`${b.data}T${b.hora}`);
+          return dateA.getTime() - dateB.getTime();
+        });
+        setAllAgendamentos(fetched);
+      } catch (error) {
+        setError('Erro ao buscar agendamentos.');
+      }
+    };
+    fetchAllAgendamentos();
+  }, []);
 
   useEffect(() => {
     const fetchProfissionais = async () => {
@@ -211,24 +247,6 @@ const Agendamentos = () => {
     }
   };
 
-  // Funções para calendário/modal
-  const getAgendamentosDoDia = (date: Date) =>
-    agendamentos.filter((ag) => {
-      const agDate = new Date(ag.data);
-      agDate.setDate(agDate.getDate() + 1);
-      return isSameDay(agDate, date);
-    });
-
-  const handleDateClick = (date: Date) => {
-    setSelectedDate(date);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedDate(null);
-  };
-
   if (loading) {
     return <p>Carregando agendamentos...</p>;
   }
@@ -239,114 +257,66 @@ const Agendamentos = () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.titlecontaineragendamento}>Painel de Agendamentos</h1>
-
-      {/* Calendário com marcação de datas com agendamento */}
-      <div className={styles.calendarWrapper}>
-        <Calendar
-          className={styles.reactCalendar}
-          onClickDay={handleDateClick}
-          tileClassName={({ date, view }) =>
-            view === 'month' &&
-            agendamentos.some((ag) => {
-              const agDate = new Date(ag.data);
-              agDate.setDate(agDate.getDate() + 1);
-              return isSameDay(agDate, date);
-            })
-              ? styles.markedDay
-              : ''
-          }
-          locale="pt-BR"
-        />
+      {/* Breadcrumb e título */}
+      <div className={breadcrumbStyles.breadcrumbWrapper}>
+        <span className={breadcrumbStyles.breadcrumb}>
+          Menu Principal &gt; <span className={breadcrumbStyles.breadcrumbActive}>Agendamentos</span>
+        </span>
+      </div>
+      <h1 className={styles.titleAgendamentos}>Agendamentos</h1>
+      <div className={styles.subtitleAgendamentos}>
+        Acesse uma visão geral detalhada dos agendamentos e resultados dos pacientes
       </div>
 
-      {/* Modal de agendamentos do dia */}
-      <Modal
-        isOpen={isModalOpen}
-        onRequestClose={closeModal}
-        contentLabel="Agendamentos do Dia"
-        className={styles.modal}
-        overlayClassName={styles.overlay}
-      >
-        <h2>Agendamentos do dia {selectedDate && format(selectedDate, 'dd/MM/yyyy')}</h2>
-        <div>
-          {selectedDate &&
-            getAgendamentosDoDia(selectedDate).length > 0 ? (
-              getAgendamentosDoDia(selectedDate).map((ag) => (
-                <div key={ag.id} className={styles.cardGridItem}>
-                  <div className={styles.timeBox}>{ag.hora}</div>
-                  <div>
-                    <div className={styles.cardName}>{ag.nomePaciente}</div>
-                    <div className={styles.cardService}>{ag.profissional}</div>
-                    <div className={styles.cardFuncionario}>{ag.detalhes}</div>
-                  </div>
-                  <button className={styles.removeButton} onClick={() => handleRemove(ag.id)}>
-                    Remover
-                  </button>
-                </div>
-              ))
-            ) : (
-              <p>Nenhum agendamento para este dia.</p>
-            )}
-        </div>
-        <button className={styles.removeButton} onClick={closeModal} style={{marginTop: 16}}>Fechar</button>
-      </Modal>
-
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Agendamentos para Hoje</h2>
-        <div className={styles.cardsGrid}>
-          {todayAppointments.length === 0 ? (
-            <p className={styles.noAppointments}>Nenhum agendamento para hoje.</p>
-          ) : (
-            todayAppointments.map((ag) => (
-              <div key={ag.id} className={styles.cardGridItem}>
-                <div className={styles.timeBox}>{ag.hora}</div>
-                <div>
-                  <div className={styles.cardName}>{ag.nomePaciente}</div>
-                  <div className={styles.cardService}>{ag.profissional}</div>
-                  <div className={styles.cardFuncionario}>{ag.detalhes}</div>
-                </div>
-                <button className={styles.removeButton} onClick={() => handleRemove(ag.id)}>
-                  Remover
-                </button>
-              </div>
-            ))
-          )}
-        </div>
+      {/* Botões de ação alinhados à direita */}
+      <div className={styles.actionButtonsWrapper}>
+        <button className={styles.buttonAgendar}>
+          + Agendar consulta
+        </button>
+        <button className={styles.buttonAgendar}>
+          Visualizar agendamentos
+        </button>
       </div>
 
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Próximos Agendamentos</h2>
-        <div className={styles.cardsGrid}>
-          {upcomingAppointments.length === 0 ? (
-            <p className={styles.noAppointments}>Nenhum agendamento futuro.</p>
-          ) : (
-            upcomingAppointments.map((ag) => {
-              const agDate = new Date(ag.data);
-              agDate.setDate(agDate.getDate() + 1);
-              return (
-                <div key={ag.id} className={styles.cardGridItem}>
-                  <div className={styles.timeBox}>
-                    {format(agDate, 'MMM')}<br />
-                    {ag.hora}
-                  </div>
-                  <div>
-                    <div className={styles.cardName}>{ag.nomePaciente}</div>
-                    <div className={styles.cardService}>{ag.profissional}</div>
-                    <div className={styles.cardFuncionario}>{ag.detalhes}</div>
-                    <div className={styles.cardDate}>
-                      {format(agDate, 'dd/MM/yyyy')}
-                    </div>
-                  </div>
-                  <button className={styles.removeButton} onClick={() => handleRemove(ag.id)}>
-                    Remover
-                  </button>
-                </div>
-              );
-            })
-          )}
-        </div>
+      {/* Tabela de agendamentos */}
+      <div className={styles.agendamentosTableWrapper}>
+        <table className={styles.agendamentosTable}>
+          <thead>
+            <tr>
+              <th>PACIENTE</th>
+              <th>DATA</th>
+              <th>DOUTOR</th>
+              <th>STATUS</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {allAgendamentos.map((ag) => (
+              <tr key={ag.id}>
+                <td>{ag.nomePaciente}</td>
+                <td>
+                  {ag.data && ag.hora
+                    ? `${format(new Date(ag.data + 'T' + ag.hora), 'dd/MM/yy, HH:mm')}`
+                    : ''}
+                </td>
+                <td>{ag.profissional}</td>
+                <td>
+                  <span className={styles.statusConfirmado}>
+                    <CheckCircle2 size={16} style={{ marginRight: 6, color: '#22c55e', verticalAlign: 'middle' }} />
+                    Confirmado
+                  </span>
+                </td>
+                <td>
+                  <a href="#" className={styles.externalLink} title="Ver detalhes">
+                    <ExternalLink size={16} />
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+      {/* Calendário removido */}
     </div>
   );
 };

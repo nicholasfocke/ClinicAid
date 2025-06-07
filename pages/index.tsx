@@ -17,6 +17,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import Breadcrumb from '@/components/Breadcrumb';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
+import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
 
 Modal.setAppElement('#__next');
 
@@ -466,9 +467,9 @@ const Index = () => {
 
         <div className={styles.mainContent}>
           <div className={styles.formContainer}>
-            <div className={styles.breadcrumbWrapper}>
-              <span className={styles.breadcrumb}>
-                Menu Principal &gt; <span className={styles.breadcrumbActive}>Dashboard</span>
+            <div className={breadcrumbStyles.breadcrumbWrapper}>
+              <span className={breadcrumbStyles.breadcrumb}>
+                Menu Principal &gt; <span className={breadcrumbStyles.breadcrumbActive}>Dashboard</span>
               </span>
             </div>
             <h2 className={styles.titleDashboard}>Dashboard</h2>
@@ -526,8 +527,23 @@ const Index = () => {
                           <td className={styles.upcomingDoutorCell}>
                             {appointment.profissional || appointment.funcionaria || ''}
                           </td>
-                          <td className={`${styles.upcomingStatusCell} ${appointment.status === 'agendado' ? styles.statusConfirmado : ''}`}>
-                            {appointment.status === 'agendado' ? 'Confirmado' : appointment.status}
+                          <td>
+                            <span className={styles.statusConfirmado}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="11" stroke="#22c55e" strokeWidth="1.2" fill="#e7f9ef"/>
+                                <path d="M8 12.5l2.5 2.5 5-5" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              Confirmado
+                            </span>
+                          </td>
+                          <td>
+                            <a href="#" className={styles.externalLink} title="Ver detalhes">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <polyline points="15 3 21 3 21 9" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <line x1="10" y1="14" x2="21" y2="3" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </a>
                           </td>
                         </tr>
                       ))
@@ -542,21 +558,12 @@ const Index = () => {
             </div>
           </div>
 
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            minWidth: 340,
-            marginLeft: 'auto',
-            marginRight: 'auto'
-          }}>
+          {/* Sidebar centralizado na coluna da direita */}
+          <div className={styles.sidebarRight}>
             <Sidebar />
           </div>
         </div>
       </div>
-
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={handleCancel}
