@@ -129,10 +129,7 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                   <>
                     <label className={styles.buttonEditar}>
                       Carregar foto
-                      <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: 'none' }}
+                      <input type="file" accept="image/*" style={{ display: 'none' }}
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
                             const file = e.target.files[0];

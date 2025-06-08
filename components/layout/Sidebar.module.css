@@ -87,10 +87,13 @@
 }
 
 .medicosVerTodos {
+  background-color: #fff;
   font-size: 13px;
   color: #3b82f6;
   font-weight: 400;
+  font-weight: bold;
   cursor: pointer;
+  border: none;
 }
 
 .medicosEmpty {

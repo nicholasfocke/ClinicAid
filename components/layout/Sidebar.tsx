@@ -21,61 +21,10 @@ const Sidebar = () => {
             agendamentos: data.agendamentos || '', // Se não houver, ficará vazio
           };
         });
-        // Adiciona 4 profissionais fakes para visualização
-        arr.unshift(
-          {
-            nome: 'Dr. Emílio',
-            especialidade: 'Clínico Geral',
-            foto: '',
-            agendamentos: 12,
-          },
-          {
-            nome: 'Dra. Patricia Stankowich',
-            especialidade: 'Dermatologista',
-            foto: '',
-            agendamentos: 8,
-          },
-          {
-            nome: 'Dr. Daniel Silva',
-            especialidade: 'Cardiologista',
-            foto: '',
-            agendamentos: 15,
-          },
-          {
-            nome: 'Dra. Ana Paula',
-            especialidade: 'Pediatra',
-            foto: '',
-            agendamentos: 10,
-          }
-        );
+        arr.unshift();
         setMedicos(arr);
       } catch {
-        setMedicos([
-          {
-            nome: 'Dr. Exemplo',
-            especialidade: 'Clínico Geral',
-            foto: '',
-            agendamentos: 12,
-          },
-          {
-            nome: 'Dra. Maria Souza',
-            especialidade: 'Dermatologista',
-            foto: '',
-            agendamentos: 8,
-          },
-          {
-            nome: 'Dr. João Silva',
-            especialidade: 'Cardiologista',
-            foto: '',
-            agendamentos: 15,
-          },
-          {
-            nome: 'Dra. Ana Paula',
-            especialidade: 'Pediatra',
-            foto: '',
-            agendamentos: 10,
-          }
-        ]);
+        setMedicos([]);
       }
     };
     fetchMedicos();
@@ -87,7 +36,11 @@ const Sidebar = () => {
       <div className={styles.medicosSection}>
         <div className={styles.medicosHeader}>
           <span className={styles.medicosTitle}>Médicos</span>
-          <span className={styles.medicosVerTodos}>Ver todos</span>
+          <Link href="/admin/medicos" passHref legacyBehavior>
+            <button className={styles.medicosVerTodos}>
+              Ver todos
+            </button>
+          </Link>
         </div>
         <div>
           {medicos.length === 0 && (
