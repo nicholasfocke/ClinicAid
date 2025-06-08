@@ -1,4 +1,4 @@
-import { addDoc, collection, getDocs, query, where, deleteDoc, doc } from 'firebase/firestore';
+import { addDoc, collection, getDocs, query, where, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 
 export interface MedicoData {
@@ -13,6 +13,7 @@ export interface MedicoData {
   convenio: string;
   valorConsulta: string;
   foto?: string;
+  fotoPath?: string;
 }
 
 export const buscarMedicos = async () => {
@@ -36,4 +37,8 @@ export const criarMedico = async (data: MedicoData) => {
 
 export const excluirMedico = async (id: string) => {
   await deleteDoc(doc(firestore, 'profissionais', id));
+};
+
+export const atualizarMedico = async (id: string, data: Partial<MedicoData>) => {
+  await updateDoc(doc(firestore, 'profissionais', id), data);
 };

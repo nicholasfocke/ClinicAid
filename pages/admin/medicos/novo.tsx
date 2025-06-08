@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { criarMedico, medicoExiste } from '@/functions/medicosFunctions';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/novoMedico.module.css';
 import { useRouter } from 'next/router';
@@ -60,6 +61,8 @@ interface MedicoForm {
   email: string;
   convenio: string;
   valorConsulta: string;
+  foto?: string;
+  fotoPath?: string;
 }
 
 const NovoMedico = () => {
@@ -77,6 +80,8 @@ const NovoMedico = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [foto, setFoto] = useState<string | null>(null);
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,6 +93,13 @@ const NovoMedico = () => {
     if (name === 'valorConsulta') newValue = formatValor(value);
     setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
+
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if(e.target.files && e.target.files[0]) {
+      setFoto(URL.createObjectURL(e.target.files[0]));
+      setFotoFile(e.target.files[0]);
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,7 +147,20 @@ const NovoMedico = () => {
         return;
       }
 
-      await criarMedico(formData);
+      let fotoUrl = '';
+      let fotoPath = '';
+      
+      if(fotoFile) {
+        const storage = getStorage();
+        const uniqueName = `${formData.cpf.replace(/\D/g, '')}_${Date.now()}`;
+        const storageRef = ref(storage, `medico_photos/${uniqueName}`);
+        await uploadBytes(storageRef, fotoFile);
+        fotoUrl = await getDownloadURL(storageRef);
+        fotoPath = storageRef.fullPath;
+      }
+
+      await criarMedico({ ...formData, foto: fotoUrl, fotoPath });
+
       router.push('/admin/medicos');
     } catch (err) {
       console.error('Erro ao cadastrar médico:', err);
@@ -164,6 +189,21 @@ const NovoMedico = () => {
         <input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Email" className={styles.input} />
         <input name="convenio" value={formData.convenio} onChange={handleChange} placeholder="Convênio" className={styles.input} />
         <input name="valorConsulta" value={formData.valorConsulta} onChange={handleChange} placeholder="Valor da consulta" className={styles.input} />
+        <div className={styles.fotoBox}>
+          {foto ? (
+            <img src={foto} alt="Foto do médico" className={styles.fotoPreview} />
+          ) : (
+            <svg className={styles.fotoPreview} width="120" height="120" viewBox="0 0 120 120" fill="none">
+              <circle cx="60" cy="60" r="60" fill="#E5E7EB" />
+              <circle cx="60" cy="54" r="28" fill="#D1D5DB" />
+              <ellipse cx="60" cy="94" rx="36" ry="22" fill="#D1D5DB" />
+            </svg>
+          )}
+          <label className={styles.fotoBtn}>
+            Carregar foto
+            <input type="file" accept="image/*" onChange={handleFotoChange} style={{ display: 'none' }} />
+          </label>
+        </div>
         {error && <p style={{ color: 'red' }}>{error}</p>}
         <button type="submit" className={styles.buttonSalvar} disabled={loading}>
           {loading ? 'Salvando...' : 'Salvar'}

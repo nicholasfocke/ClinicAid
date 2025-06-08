@@ -47,6 +47,9 @@ const Medicos = () => {
             onDelete={(id) =>
               setMedicos((prev) => prev.filter((m) => m.id !== id))
             }
+            onUpdate={(m) =>
+              setMedicos((prev) => prev.map((p) => (p.id === m.id ? m : p)))
+            }
           />
         ))}
       </div>
