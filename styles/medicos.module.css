@@ -1,0 +1,250 @@
+/* File: styles/medicos.module.css */
+
+.container {
+  /* desloca conteúdo para a direita, liberando espaço para o sidebar */
+  margin-left: 260px;      /* ajuste para a largura real do seu sidebar */
+  padding: 2rem 3rem;
+  max-width: calc(100% - 260px - 3rem);
+  min-height: 80vh;
+  background-color: #f3f4f6;
+}
+
+.breadcrumbWrapper {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.titleMedicos {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 18px 0 0 0;
+  letter-spacing: -1px;
+  text-align: left;
+  line-height: 2.5rem;
+}
+
+.subtitleMedicos {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #6b7280;
+  margin: 0.1rem 0 2rem 0;
+}
+
+.actionButtonsWrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 2rem;
+}
+
+.buttonAdicionar {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: inline-block;
+  text-align: center;
+  min-width: 180px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.buttonAdicionar:hover {
+  background: #1746a2;
+}
+
+.medicosList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.medicoCard {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(16, 30, 54, 0.08);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.medicoFoto {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e7eb;
+  margin-bottom: 1rem;
+}
+
+.medicoInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.medicoNome {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.medicoEspecialidade {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.medicoDias,
+.medicoHorario,
+.medicoValor {
+  font-size: 0.875rem;
+  color: #3b4a60;
+  margin-bottom: 0.5rem;
+}
+
+.verDetalhes {
+  margin-top: auto;
+  align-self: flex-end;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.verDetalhes:hover {
+  background: #1e40af;
+}
+
+.medicoCardWrapper {
+  position: relative;
+}
+
+.detalhesOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.detalhesCard {
+  position: relative;
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(16, 30, 54, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detalhesButtons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.buttonExcluir {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.buttonEditar {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  font-weight: bold;
+}
+
+.buttonFechar {
+  position: absolute; 
+  top: 8px;
+  right: 8px;
+
+  background: none;
+  border: none;
+  color: #615f5f;
+  font-size: 19px; /* tamanho do X */
+  font-weight: 900; 
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.buttonFechar:hover {
+  color: #111827; /* muda a cor ao passar o mouse */
+}
+
+.confirmOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirmCard {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.confirmButtons {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.buttonConfirm {
+  background: #e53e3e;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.buttonCancel {
+  background: #aaa;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
