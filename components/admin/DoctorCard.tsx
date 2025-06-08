@@ -103,7 +103,7 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                   Confirmar
                 </button>
                 <button
-                  className={styles.buttonFechar}
+                  className={styles.buttonEditar}
                   onClick={() => setConfirmDelete(false)}
                 >
                   Cancelar
