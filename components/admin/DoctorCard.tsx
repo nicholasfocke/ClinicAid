@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import styles from '@/styles/medicos.module.css';
+import styles from '@/styles/admin/medicos.module.css';
 import { excluirMedico, atualizarMedico } from '@/functions/medicosFunctions';
 
 export interface Medico {

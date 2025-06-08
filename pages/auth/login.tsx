@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, firestore } from '../../firebase/firebaseConfig';
-import styles from "@/styles/login.module.css";
+import styles from "@/styles/auth/login.module.css";
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const Login = () => {

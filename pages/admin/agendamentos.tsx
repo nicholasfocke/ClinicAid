@@ -3,7 +3,7 @@ import { collection, query, where, getDocs, doc, deleteDoc, getDoc } from 'fireb
 import { auth, firestore } from '../../firebase/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/router';
-import styles from "@/styles/agendamentos.module.css";
+import styles from "@/styles/admin/agendamentos.module.css";
 import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
 import { format, isAfter } from 'date-fns';
 import { ExternalLink, CheckCircle2 } from 'lucide-react';

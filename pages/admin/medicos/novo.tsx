@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { criarMedico, medicoExiste } from '@/functions/medicosFunctions';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
-import styles from '@/styles/novoMedico.module.css';
+import styles from '@/styles/admin/novoMedico.module.css';
 import { useRouter } from 'next/router';
 
 const formatCPF = (value: string) => {

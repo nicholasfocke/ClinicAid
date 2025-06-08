@@ -4,7 +4,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, firestore } from '../../firebase/firebaseConfig';
 import bcrypt from 'bcryptjs';
-import styles from "@/styles/register.module.css";
+import styles from "@/styles/auth/register.module.css";
 import Image from 'next/image';
 
 const formatCPF = (value: string) => {
