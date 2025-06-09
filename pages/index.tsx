@@ -4,10 +4,10 @@ import { useRouter } from 'next/router';
 import Calendar from 'react-calendar';
 import Modal from 'react-modal';
 import 'react-calendar/dist/Calendar.css';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { auth, firestore } from '../firebase/firebaseConfig';
 import { buscarAgendamentosDeHoje, buscarHorariosDisponiveis, buscarDiasBloqueados, bloquearDiaParaFuncionario, buscarHorariosBloqueados,
-  criarAgendamento, bloquearDia, bloquearHorario, enviarEmailDeConfirmacao} from '@/functions/agendamentosFunction';
+  criarAgendamento, bloquearDia, bloquearHorario, enviarEmailDeConfirmacao, statusAgendamento } from '@/functions/agendamentosFunction';
 import { onAuthStateChanged } from 'firebase/auth';
 import styles from "@/styles/Home.module.css";
 import { format, getYear } from 'date-fns';
@@ -55,6 +55,7 @@ const Index = () => {
   const [blockedDays, setBlockedDays] = useState<string[]>([]);
   const [blockedTimes, setBlockedTimes] = useState<{ date: string; time: string; profissional: string }[]>([]);
   const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
+  const [allTodayAppointments, setAllTodayAppointments] = useState<any[]>([]);
   const [profissionais, setProfissionais] = useState<Profissional[]>([
     { id: 'emilio', nome: 'Emilio', empresaId: 'default' }
   ]);
@@ -78,7 +79,8 @@ const Index = () => {
   const fetchHoje = async () => {
     try {
       const appointments = await buscarAgendamentosDeHoje();
-      setTodayAppointments(appointments);
+      setAllTodayAppointments(appointments);
+      setTodayAppointments(appointments.slice(0, 5));
     } catch (error) {
       console.error('Erro ao buscar agendamentos:', error);
     }
@@ -406,6 +408,16 @@ const Index = () => {
     setDetailsOpen(false);
   };
 
+  const handleComplete = async (id: string) => {
+    try {
+      await updateDoc(doc(firestore, 'agendamentos', id), { status: statusAgendamento.CONCLUIDO });
+      await fetchHoje();
+      closeDetails();
+    } catch (error) {
+      console.error('Erro ao concluir agendamento:', error);
+    }
+  };
+
   useEffect(() => {
     if (user && user.tipo !== 'admin') {
       router.replace('/indexCliente');
@@ -523,7 +535,7 @@ const Index = () => {
                   </thead>
                   <tbody>
                     {todayAppointments.length > 0 ? (
-                      todayAppointments.slice(0, 4).map((appointment) => (
+                      todayAppointments.map((appointment) => (
                         <tr key={appointment.id}>
                           <td className={styles.upcomingPacienteCell}>
                             {appointment.nomePaciente
@@ -728,6 +740,7 @@ const Index = () => {
         appointment={selectedAppointment}
         isOpen={detailsOpen}
         onClose={closeDetails}
+        onComplete={handleComplete}
       />
     </ProtectedRoute>
   );
