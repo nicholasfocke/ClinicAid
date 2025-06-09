@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styles from './SidebarAdmin.module.css';
-import { Home, Calendar, User, LogOut, Stethoscope, Bot } from 'lucide-react';
+import { Home, Calendar, User, LogOut, Stethoscope, Bot, FilePlus, ChevronDown, ChevronRight,} from 'lucide-react';
 import Link from 'next/link';
 import { auth, firestore } from '../../firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
@@ -11,6 +11,7 @@ const SidebarAdmin = () => {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [cadastroOpen, setCadastroOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -39,6 +40,10 @@ const SidebarAdmin = () => {
     }
   };
 
+  const toggleCadastro = () => {
+    setCadastroOpen((prev) => !prev);
+  };
+
   if (!isAuthenticated || !isAdmin) {
     return null;
   }
@@ -53,6 +58,25 @@ const SidebarAdmin = () => {
           <Home className={styles.icon} />
           <span>Dashboard</span>
         </Link>
+         <button type="button" onClick={toggleCadastro} className={`${styles.navItem} ${styles.cadastroButton}`}>
+          <FilePlus className={styles.icon} />
+          <span>Cadastros</span>
+          {cadastroOpen ? (
+            <ChevronDown className={styles.chevronIcon} size={16} />
+          ) : (
+            <ChevronRight className={styles.chevronIcon} size={16} />
+          )}
+        </button>
+        {cadastroOpen && (
+          <div className={styles.subNav}>
+            <Link href="/admin/cadastros/convenios" className={styles.subNavItem}>
+              Convênios
+            </Link>
+            <Link href="/admin/cadastros/procedimentos" className={styles.subNavItem}>
+              Procedimentos
+            </Link>
+          </div>
+        )}
         <Link href="/admin/agendamentos" className={styles.navItem}>
           <Calendar className={styles.icon} />
           <span>Agendamentos</span>

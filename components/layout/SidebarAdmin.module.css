@@ -29,7 +29,7 @@
 
 .navItem {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   padding: 10px 15px;
   text-decoration: none;
@@ -72,4 +72,41 @@
 
 .logoutButton:hover {
   background-color: #e74c3c;
+}
+
+.cadastroButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: 16px;
+  transition: background-color 0.3s;
+  font-family: 'Inter', sans-serif;
+}
+
+.chevronIcon {
+  margin-left: 20px; /* altera a distancia daquela seta do lado de cadastros */ 
+}
+
+.subNav {
+  display: flex;
+  flex-direction: column;
+}
+
+.subNavItem {
+  display: flex;
+  align-items: center;
+  padding: 8px 15px 8px 35px;
+  text-decoration: none;
+  color: white;
+  font-size: 14px;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.subNavItem:hover {
+  background-color: #34495e;
 }
