@@ -43,6 +43,26 @@
   background: #1746a2;
 }
 
+.buttonCancelar {
+  background: #e5e7eb;
+  color: #111827;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  width: 100%; /* Mesma largura do botão salvar */
+  margin-top: 10px;
+}
+
+.buttonCancelar:hover {
+  background: #d1d5db;
+}
+
+
+
 .fotoBox {
   display: flex;
   flex-direction: column;

@@ -214,16 +214,19 @@ const Agendamentos = () => {
     if (!confirmDelete) return;
 
     try {
-      // Busca o agendamento antes de remover
       const agendamentoDoc = await getDoc(doc(firestore, 'agendamentos', id));
       const agendamentoData = agendamentoDoc.exists() ? agendamentoDoc.data() : null;
 
+      //  Excluir do Firestore
       await deleteDoc(doc(firestore, 'agendamentos', id));
-      setAgendamentos((prev) => prev.filter((agendamento) => agendamento.id !== id));
-      setTodayAppointments((prev) => prev.filter((agendamento) => agendamento.id !== id));
-      setUpcomingAppointments((prev) => prev.filter((agendamento) => agendamento.id !== id));
 
-      // Envia e-mail de exclusão se dados disponíveis
+      //  Atualiza todos os estados locais de forma sincronizada
+      setAllAgendamentos(prev => prev.filter(ag => ag.id !== id));
+      setAgendamentos(prev => prev.filter(ag => ag.id !== id));
+      setTodayAppointments(prev => prev.filter(ag => ag.id !== id));
+      setUpcomingAppointments(prev => prev.filter(ag => ag.id !== id));
+
+      // Envia email, se aplicável
       if (agendamentoData && user?.email) {
         await fetch('/api/send-email', {
           method: 'POST',
@@ -241,11 +244,13 @@ const Agendamentos = () => {
           }),
         });
       }
+
     } catch (error) {
       console.error('Erro ao remover agendamento: ', error);
       setError('Erro ao remover o agendamento.');
     }
   };
+
 
   if (loading) {
     return <p>Carregando agendamentos...</p>;
@@ -300,11 +305,18 @@ const Agendamentos = () => {
                     : ''}
                 </td>
                 <td>{ag.profissional}</td>
-                <td>
+                <td style={{ display: 'flex', alignItems: 'center' }}>
                   <span className={styles.statusConfirmado}>
-                    <CheckCircle2 size={16} style={{ marginRight: 6, color: '#22c55e', verticalAlign: 'middle' }} />
+                    <CheckCircle2 size={16} style={{ color: '#22c55e' }} />
                     Confirmado
                   </span>
+                  <button
+                    onClick={() => handleRemove(ag.id)}
+                    className={styles.statusExcluido}
+                    title="Excluir agendamento"
+                  >
+                    Excluir
+                  </button>
                 </td>
                 <td>
                   <a href="#" className={styles.externalLink} title="Ver detalhes">

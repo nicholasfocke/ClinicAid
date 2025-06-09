@@ -142,3 +142,36 @@
 .externalLink:hover {
   color: #2563eb;
 }
+.statusConfirmado {
+  display: inline-flex;
+  align-items: center;
+  background: #e7f9ef;
+  color: #22c55e !important;
+  font-weight: 700;
+  font-size: 0.97rem;
+  border-radius: 16px;
+  padding: 5px 12px;
+  gap: 6px;
+}
+
+.statusExcluido {
+  display: inline-flex;
+  align-items: center;
+  background: #fef2f2;
+  color: #dc2626 !important;
+  font-weight: 700;
+  font-size: 0.97rem;
+  border-radius: 16px;
+  padding: 5px 12px;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  border: none;
+  margin-left: 12px;
+}
+
+.statusExcluido:hover {
+  background: #fee2e2;
+  color: #b91c1c !important;
+}
+

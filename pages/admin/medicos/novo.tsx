@@ -4,6 +4,8 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/novoMedico.module.css';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
+
 
 const formatCPF = (value: string) => {
   return value
@@ -208,6 +210,11 @@ const NovoMedico = () => {
         <button type="submit" className={styles.buttonSalvar} disabled={loading}>
           {loading ? 'Salvando...' : 'Salvar'}
         </button>
+         <Link href="/admin/medicos" passHref>
+          <button type="button" className={styles.buttonCancelar}>
+            Cancelar
+          </button>
+        </Link>
       </form>
     </div>
   );

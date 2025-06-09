@@ -35,7 +35,7 @@ const Sidebar = () => {
       {/* Seção de Médicos acima dos cards */}
       <div className={styles.medicosSection}>
         <div className={styles.medicosHeader}>
-          <span className={styles.medicosTitle}>Médicos</span>
+          <span className={styles.medicosTitle}>Profissionais</span>
           <Link href="/admin/medicos" passHref legacyBehavior>
             <button className={styles.medicosVerTodos}>
               Ver todos
