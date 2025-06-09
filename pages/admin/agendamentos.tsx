@@ -60,7 +60,7 @@ const Agendamentos = () => {
       const q = query(
         collection(firestore, 'agendamentos'),
         where('usuarioId', '==', user.uid),
-        where('status', '==', 'agendado')
+        where('status', '==', statusAgendamento.CONFIRMADO)
       );
 
       try {
