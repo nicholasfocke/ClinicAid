@@ -56,75 +56,77 @@ const Agendamentos = () => {
   const [allAgendamentos, setAllAgendamentos] = useState<Agendamento[]>([]);
 
 const fetchAgendamentos = async () => {
-    try {
-      const q = query(collection(firestore, 'agendamentos'));
-      const querySnapshot = await getDocs(q);
+  try {
+    const q = query(
+      collection(firestore, 'agendamentos'),
+      where('status', '==', statusAgendamento.CONFIRMADO)
+    );
 
-      const fetchedAgendamentos: Agendamento[] = [];
-      querySnapshot.forEach((doc) => {
-        const agendamentoData = doc.data();
-        if (!agendamentoData.data || !agendamentoData.hora) return;
+    const querySnapshot = await getDocs(q);
+    const fetchedAgendamentos: Agendamento[] = [];
 
-        fetchedAgendamentos.push({
-          id: doc.id,
-          data: agendamentoData.data,
-          hora: agendamentoData.hora,
-          profissional: agendamentoData.profissional,
-          nomePaciente: agendamentoData.nomePaciente,
-          status: agendamentoData.status || 'agendado',
-          detalhes: agendamentoData.detalhes || '',
-          usuarioId: agendamentoData.usuarioId || '',
-        });
+    querySnapshot.forEach((doc) => {
+      const agendamentoData = doc.data();
+      if (!agendamentoData.data || !agendamentoData.hora) return;
+
+      fetchedAgendamentos.push({
+        id: doc.id,
+        data: agendamentoData.data,
+        hora: agendamentoData.hora,
+        profissional: agendamentoData.profissional,
+        nomePaciente: agendamentoData.nomePaciente,
+        status: agendamentoData.status || 'confirmado',
+        detalhes: agendamentoData.detalhes || '',
+        usuarioId: agendamentoData.usuarioId || '',
       });
+    });
 
-      // Organiza por data
-      fetchedAgendamentos.sort((a, b) => {
-        const dateA = new Date(`${a.data}T${a.hora}`);
-        const dateB = new Date(`${b.data}T${b.hora}`);
-        return dateA.getTime() - dateB.getTime();
-      });
+    // Ordena por data/hora
+    fetchedAgendamentos.sort((a, b) => {
+      const dateA = new Date(`${a.data}T${a.hora}`);
+      const dateB = new Date(`${b.data}T${b.hora}`);
+      return dateA.getTime() - dateB.getTime();
+    });
 
-      setAgendamentos(fetchedAgendamentos);
+    setAgendamentos(fetchedAgendamentos);
 
-      const today = new Date();
-      const todayList: Agendamento[] = [];
-      const futureByDay: { [date: string]: Agendamento[] } = {};
+    const today = new Date();
+    const todayList: Agendamento[] = [];
+    const futureByDay: { [date: string]: Agendamento[] } = {};
 
-      fetchedAgendamentos.forEach((ag) => {
-        const agDate = new Date(`${ag.data}T${ag.hora}`);
-        if (
-          agDate.getDate() === today.getDate() &&
-          agDate.getMonth() === today.getMonth() &&
-          agDate.getFullYear() === today.getFullYear()
-        ) {
-          todayList.push(ag);
-        } else if (isAfter(agDate, today)) {
-          const dateKey = ag.data;
-          if (!futureByDay[dateKey]) futureByDay[dateKey] = [];
-          futureByDay[dateKey].push(ag);
-        }
-      });
+    fetchedAgendamentos.forEach((ag) => {
+      const agDate = new Date(`${ag.data}T${ag.hora}`);
+      const isToday =
+        agDate.getDate() === today.getDate() &&
+        agDate.getMonth() === today.getMonth() &&
+        agDate.getFullYear() === today.getFullYear();
 
-      const futureDates = Object.keys(futureByDay).sort();
-
-      let finalList: Agendamento[] = [];
-
-      if (todayList.length > 0) {
-        finalList = todayList;
-      } else if (futureDates.length > 0) {
-        finalList = futureByDay[futureDates[0]];
+      if (isToday) {
+        todayList.push(ag);
+      } else if (isAfter(agDate, today)) {
+        const dateKey = ag.data;
+        if (!futureByDay[dateKey]) futureByDay[dateKey] = [];
+        futureByDay[dateKey].push(ag);
       }
+    });
 
-      setTodayAppointments(finalList.slice(0, 5));
-      setUpcomingAppointments([]);
-      setLoading(false);
-    } catch (error) {
-      console.error('Erro ao buscar agendamentos:', error);
-      setError('Erro ao buscar agendamentos.');
+    const futureDates = Object.keys(futureByDay).sort();
+    let finalList: Agendamento[] = [];
+
+    if (todayList.length > 0) {
+      finalList = todayList;
+    } else if (futureDates.length > 0) {
+      finalList = futureByDay[futureDates[0]];
     }
-  };
 
-
+    setTodayAppointments(finalList); // Exibe todos do dia selecionado
+    setUpcomingAppointments([]); // Pode ser usado depois se quiser mostrar outros dias
+    setLoading(false);
+  } catch (error) {
+    console.error('Erro ao buscar agendamentos:', error);
+    setError('Erro ao buscar agendamentos.');
+  }
+};
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
