@@ -7,6 +7,7 @@ import styles from "@/styles/admin/agendamentos.module.css";
 import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
 import { format, isAfter } from 'date-fns';
 import { ExternalLink, CheckCircle2 } from 'lucide-react';
+import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
 
 interface Agendamento {
   id: string;
@@ -16,6 +17,7 @@ interface Agendamento {
   nomePaciente: string;
   status: string;
   detalhes: string;
+  usuarioId: string;
 }
 
 interface Profissional {
@@ -41,6 +43,9 @@ const Agendamentos = () => {
   const [profissionais, setProfissionais] = useState<Profissional[]>([
     { id: 'emilio', nome: 'Emilio', empresaId: 'default' }
   ]);
+
+  const [selectedAppointment, setSelectedAppointment] = useState<Agendamento | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   // Novos estados para calendário/modal
   // const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -85,7 +90,8 @@ const Agendamentos = () => {
             profissional: agendamentoData.profissional,
             nomePaciente: agendamentoData.nomePaciente,
             status: agendamentoData.status,
-            detalhes: agendamentoData.detalhes || ''
+            detalhes: agendamentoData.detalhes || '',
+            usuarioId: agendamentoData.usuarioId || ''
             // especialidade e valor removidos
           });
         });
@@ -154,6 +160,7 @@ const Agendamentos = () => {
               nomePaciente: agendamentoData.nomePaciente,
               status: agendamentoData.status,
               detalhes: agendamentoData.detalhes || '',
+              usuarioId: agendamentoData.usuarioId || '',
             });
           });
 
@@ -251,6 +258,16 @@ const Agendamentos = () => {
     }
   };
 
+  const openDetails = (ag: Agendamento) => {
+    setSelectedAppointment(ag);
+    setDetailsOpen(true);
+  };
+
+  const closeDetails = () => {
+    setSelectedAppointment(null);
+    setDetailsOpen(false);
+  };
+
 
   if (loading) {
     return <p>Carregando agendamentos...</p>;
@@ -319,9 +336,9 @@ const Agendamentos = () => {
                   </button>
                 </td>
                 <td>
-                  <a href="#" className={styles.externalLink} title="Ver detalhes">
+                  <button onClick={() => openDetails(ag)} className={styles.externalLink} title="Ver detalhes">
                     <ExternalLink size={16} />
-                  </a>
+                  </button>
                 </td>
               </tr>
             ))}
@@ -329,6 +346,11 @@ const Agendamentos = () => {
         </table>
       </div>
       {/* Calendário removido */}
+      <AppointmentDetailsModal
+        appointment={selectedAppointment}
+        isOpen={detailsOpen}
+        onClose={closeDetails}
+      />
     </div>
   );
 };
