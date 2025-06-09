@@ -210,3 +210,23 @@ export const enviarEmailDeConfirmacao = async (
     throw new Error('Erro ao enviar email de confirmação: ' + errText);
   }
 };
+
+export const buscarAgendamentosPorData = async (data: string) => {
+  const q = query(
+    collection(firestore, 'agendamentos'),
+    where('data', '==', data),
+    where('status', '==', statusAgendamento.CONFIRMADO)
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    data: doc.data().data,
+    hora: doc.data().hora,
+    profissional: doc.data().profissional,
+    nomePaciente: doc.data().nomePaciente,
+    status: doc.data().status,
+    detalhes: doc.data().detalhes,
+    usuarioId: doc.data().usuarioId
+  }));
+};

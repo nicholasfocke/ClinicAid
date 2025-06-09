@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, deleteDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, firestore } from '../../firebase/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -8,7 +8,13 @@ import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
 import { format, isAfter } from 'date-fns';
 import { ExternalLink, CheckCircle2 } from 'lucide-react';
 import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
-import { statusAgendamento } from '@/functions/agendamentosFunction';
+import Modal from 'react-modal';
+import homeStyles from '@/styles/Home.module.css';
+import { statusAgendamento, buscarAgendamentosPorData, criarAgendamento } from '@/functions/agendamentosFunction';
+import CreateAppointment from '@/components/modals/CreateAppointment';
+
+
+Modal.setAppElement('#__next');
 
 interface Agendamento {
   id: string;
@@ -48,6 +54,25 @@ const Agendamentos = () => {
   const [selectedAppointment, setSelectedAppointment] = useState<Agendamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
+  const [selectedDateFilter, setSelectedDateFilter] = useState('');
+  const [showDateSelector, setShowDateSelector] = useState(false);
+
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [appointmentData, setAppointmentData] = useState({
+    date: '',
+    time: '',
+    nomePaciente: '',
+    profissional: '',
+    detalhes: '',
+  });
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+
+  const standardTimes = [
+    '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+    '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
+    '17:00', '17:30', '18:00', '18:30',
+  ];
+
   // Novos estados para calendário/modal
   // const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   // const [isModalOpen, setIsModalOpen] = useState(false);
@@ -56,77 +81,80 @@ const Agendamentos = () => {
   const [allAgendamentos, setAllAgendamentos] = useState<Agendamento[]>([]);
 
 const fetchAgendamentos = async () => {
-  try {
-    const q = query(
-      collection(firestore, 'agendamentos'),
-      where('status', '==', statusAgendamento.CONFIRMADO)
-    );
+    try {
+      const q = query(collection(firestore, 'agendamentos'));
+      const querySnapshot = await getDocs(q);
 
-    const querySnapshot = await getDocs(q);
-    const fetchedAgendamentos: Agendamento[] = [];
+      const fetchedAgendamentos: Agendamento[] = [];
+      querySnapshot.forEach((doc) => {
+        const agendamentoData = doc.data();
+        if (!agendamentoData.data || !agendamentoData.hora) return;
 
-    querySnapshot.forEach((doc) => {
-      const agendamentoData = doc.data();
-      if (!agendamentoData.data || !agendamentoData.hora) return;
-
-      fetchedAgendamentos.push({
-        id: doc.id,
-        data: agendamentoData.data,
-        hora: agendamentoData.hora,
-        profissional: agendamentoData.profissional,
-        nomePaciente: agendamentoData.nomePaciente,
-        status: agendamentoData.status || 'confirmado',
-        detalhes: agendamentoData.detalhes || '',
-        usuarioId: agendamentoData.usuarioId || '',
+        fetchedAgendamentos.push({
+          id: doc.id,
+          data: agendamentoData.data,
+          hora: agendamentoData.hora,
+          profissional: agendamentoData.profissional,
+          nomePaciente: agendamentoData.nomePaciente,
+          status: agendamentoData.status || 'agendado',
+          detalhes: agendamentoData.detalhes || '',
+          usuarioId: agendamentoData.usuarioId || '',
+        });
       });
-    });
 
-    // Ordena por data/hora
-    fetchedAgendamentos.sort((a, b) => {
-      const dateA = new Date(`${a.data}T${a.hora}`);
-      const dateB = new Date(`${b.data}T${b.hora}`);
-      return dateA.getTime() - dateB.getTime();
-    });
+      // Organiza por data
+      fetchedAgendamentos.sort((a, b) => {
+        const dateA = new Date(`${a.data}T${a.hora}`);
+        const dateB = new Date(`${b.data}T${b.hora}`);
+        return dateA.getTime() - dateB.getTime();
+      });
 
-    setAgendamentos(fetchedAgendamentos);
+      setAgendamentos(fetchedAgendamentos);
 
-    const today = new Date();
-    const todayList: Agendamento[] = [];
-    const futureByDay: { [date: string]: Agendamento[] } = {};
+      const today = new Date();
+      const todayList: Agendamento[] = [];
+      const futureByDay: { [date: string]: Agendamento[] } = {};
 
-    fetchedAgendamentos.forEach((ag) => {
-      const agDate = new Date(`${ag.data}T${ag.hora}`);
-      const isToday =
-        agDate.getDate() === today.getDate() &&
-        agDate.getMonth() === today.getMonth() &&
-        agDate.getFullYear() === today.getFullYear();
+      fetchedAgendamentos.forEach((ag) => {
+        const agDate = new Date(`${ag.data}T${ag.hora}`);
+        if (
+          agDate.getDate() === today.getDate() &&
+          agDate.getMonth() === today.getMonth() &&
+          agDate.getFullYear() === today.getFullYear()
+        ) {
+          todayList.push(ag);
+        } else if (isAfter(agDate, today)) {
+          const dateKey = ag.data;
+          if (!futureByDay[dateKey]) futureByDay[dateKey] = [];
+          futureByDay[dateKey].push(ag);
+        }
+      });
 
-      if (isToday) {
-        todayList.push(ag);
-      } else if (isAfter(agDate, today)) {
-        const dateKey = ag.data;
-        if (!futureByDay[dateKey]) futureByDay[dateKey] = [];
-        futureByDay[dateKey].push(ag);
+      const futureDates = Object.keys(futureByDay).sort();
+
+      let finalList: Agendamento[] = [];
+
+      if (todayList.length > 0) {
+        finalList = todayList;
+      } else if (futureDates.length > 0) {
+        finalList = futureByDay[futureDates[0]];
       }
-    });
 
-    const futureDates = Object.keys(futureByDay).sort();
-    let finalList: Agendamento[] = [];
-
-    if (todayList.length > 0) {
-      finalList = todayList;
-    } else if (futureDates.length > 0) {
-      finalList = futureByDay[futureDates[0]];
+      setTodayAppointments(finalList.slice(0, 5));
+      setUpcomingAppointments([]);
+      if (finalList.length > 0) {
+        setSelectedDateFilter(finalList[0].data);
+      } else {
+        setSelectedDateFilter(format(today, 'yyyy-MM-dd'));
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Erro ao buscar agendamentos:', error);
+      setError('Erro ao buscar agendamentos.');
     }
+  };
 
-    setTodayAppointments(finalList); // Exibe todos do dia selecionado
-    setUpcomingAppointments([]); // Pode ser usado depois se quiser mostrar outros dias
-    setLoading(false);
-  } catch (error) {
-    console.error('Erro ao buscar agendamentos:', error);
-    setError('Erro ao buscar agendamentos.');
-  }
-};
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -283,6 +311,53 @@ const fetchAgendamentos = async () => {
     setDetailsOpen(false);
   };
 
+  const fetchAvailableTimes = async (date: string, profissional: string) => {
+    if (!date || !profissional) {
+      setAvailableTimes([]);
+      return;
+    }
+    try {
+      const ags = await buscarAgendamentosPorData(date);
+      const reserved = ags
+        .filter(ag => ag.profissional === profissional)
+        .map(ag => ag.hora.trim());
+      setAvailableTimes(standardTimes.filter(t => !reserved.includes(t)));
+    } catch (e) {
+      console.error('Erro ao buscar horários:', e);
+      setAvailableTimes([]);
+    }
+  };
+
+  const handleDateFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSelectedDateFilter(value);
+    const filtered = allAgendamentos.filter(ag => ag.data === value);
+    setTodayAppointments(filtered);
+  };
+
+  const handleCreateAppointment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    try {
+      await criarAgendamento(
+        {
+          date: appointmentData.date,
+          times: [appointmentData.time],
+          nomesPacientes: [appointmentData.nomePaciente],
+          profissional: appointmentData.profissional,
+          detalhes: appointmentData.detalhes,
+        },
+        { uid: user.uid, email: user.email }
+      );
+      setCreateModalOpen(false);
+      setAppointmentData({ date: '', time: '', nomePaciente: '', profissional: '', detalhes: '' });
+      await fetchAgendamentos();
+    } catch (err) {
+      console.error('Erro ao criar agendamento:', err);
+      setError('Erro ao criar agendamento');
+    }
+  };
+
 
   if (loading) {
     return <p>Carregando agendamentos...</p>;
@@ -307,12 +382,20 @@ const fetchAgendamentos = async () => {
 
       {/* Botões de ação alinhados à direita */}
       <div className={styles.actionButtonsWrapper}>
-        <button className={styles.buttonAgendar}>
+        <button className={styles.buttonAgendar} onClick={() => setCreateModalOpen(true)}>
           + Agendar consulta
         </button>
-        <button className={styles.buttonAgendar}>
+        <button className={styles.buttonAgendar} onClick={() => setShowDateSelector(!showDateSelector)}>
           Visualizar agendamentos
         </button>
+        {showDateSelector && (
+          <input
+            type="date"
+            value={selectedDateFilter}
+            onChange={handleDateFilterChange}
+            className={styles.datePicker}
+          />
+        )}
       </div>
 
       {/* Tabela de agendamentos */}
@@ -360,6 +443,17 @@ const fetchAgendamentos = async () => {
           </tbody>
         </table>
       </div>
+      <CreateAppointment
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSubmit={handleCreateAppointment}
+        appointmentData={appointmentData}
+        setAppointmentData={setAppointmentData}
+        availableTimes={availableTimes}
+        profissionais={profissionais}
+        fetchAvailableTimes={fetchAvailableTimes}
+      />
+
       {/* Calendário removido */}
       <AppointmentDetailsModal
         appointment={selectedAppointment}
