@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, deleteDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, firestore } from '../../firebase/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -8,7 +8,11 @@ import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
 import { format, isAfter } from 'date-fns';
 import { ExternalLink, CheckCircle2 } from 'lucide-react';
 import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
-import { statusAgendamento } from '@/functions/agendamentosFunction';
+import Modal from 'react-modal';
+import homeStyles from '@/styles/Home.module.css';
+import { statusAgendamento, buscarAgendamentosPorData, criarAgendamento } from '@/functions/agendamentosFunction';
+
+Modal.setAppElement('#__next');
 
 interface Agendamento {
   id: string;
@@ -47,6 +51,25 @@ const Agendamentos = () => {
 
   const [selectedAppointment, setSelectedAppointment] = useState<Agendamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const [selectedDateFilter, setSelectedDateFilter] = useState('');
+  const [showDateSelector, setShowDateSelector] = useState(false);
+
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [appointmentData, setAppointmentData] = useState({
+    date: '',
+    time: '',
+    nomePaciente: '',
+    profissional: '',
+    detalhes: '',
+  });
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+
+  const standardTimes = [
+    '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+    '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
+    '17:00', '17:30', '18:00', '18:30',
+  ];
 
   // Novos estados para calendário/modal
   // const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -117,6 +140,11 @@ const fetchAgendamentos = async () => {
 
       setTodayAppointments(finalList.slice(0, 5));
       setUpcomingAppointments([]);
+      if (finalList.length > 0) {
+        setSelectedDateFilter(finalList[0].data);
+      } else {
+        setSelectedDateFilter(format(today, 'yyyy-MM-dd'));
+      }
       setLoading(false);
     } catch (error) {
       console.error('Erro ao buscar agendamentos:', error);
@@ -281,6 +309,53 @@ const fetchAgendamentos = async () => {
     setDetailsOpen(false);
   };
 
+  const fetchAvailableTimes = async (date: string, profissional: string) => {
+    if (!date || !profissional) {
+      setAvailableTimes([]);
+      return;
+    }
+    try {
+      const ags = await buscarAgendamentosPorData(date);
+      const reserved = ags
+        .filter(ag => ag.profissional === profissional)
+        .map(ag => ag.hora.trim());
+      setAvailableTimes(standardTimes.filter(t => !reserved.includes(t)));
+    } catch (e) {
+      console.error('Erro ao buscar horários:', e);
+      setAvailableTimes([]);
+    }
+  };
+
+  const handleDateFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSelectedDateFilter(value);
+    const filtered = allAgendamentos.filter(ag => ag.data === value);
+    setTodayAppointments(filtered);
+  };
+
+  const handleCreateAppointment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    try {
+      await criarAgendamento(
+        {
+          date: appointmentData.date,
+          times: [appointmentData.time],
+          nomesPacientes: [appointmentData.nomePaciente],
+          profissional: appointmentData.profissional,
+          detalhes: appointmentData.detalhes,
+        },
+        { uid: user.uid, email: user.email }
+      );
+      setCreateModalOpen(false);
+      setAppointmentData({ date: '', time: '', nomePaciente: '', profissional: '', detalhes: '' });
+      await fetchAgendamentos();
+    } catch (err) {
+      console.error('Erro ao criar agendamento:', err);
+      setError('Erro ao criar agendamento');
+    }
+  };
+
 
   if (loading) {
     return <p>Carregando agendamentos...</p>;
@@ -305,12 +380,20 @@ const fetchAgendamentos = async () => {
 
       {/* Botões de ação alinhados à direita */}
       <div className={styles.actionButtonsWrapper}>
-        <button className={styles.buttonAgendar}>
+        <button className={styles.buttonAgendar} onClick={() => setCreateModalOpen(true)}>
           + Agendar consulta
         </button>
-        <button className={styles.buttonAgendar}>
+        <button className={styles.buttonAgendar} onClick={() => setShowDateSelector(!showDateSelector)}>
           Visualizar agendamentos
         </button>
+        {showDateSelector && (
+          <input
+            type="date"
+            value={selectedDateFilter}
+            onChange={handleDateFilterChange}
+            className={styles.datePicker}
+          />
+        )}
       </div>
 
       {/* Tabela de agendamentos */}
@@ -358,6 +441,84 @@ const fetchAgendamentos = async () => {
           </tbody>
         </table>
       </div>
+      <Modal
+        isOpen={createModalOpen}
+        onRequestClose={() => setCreateModalOpen(false)}
+        className={homeStyles.modalContent}
+        overlayClassName={homeStyles.modalOverlay}
+      >
+        <h3>Novo Agendamento</h3>
+        <form onSubmit={handleCreateAppointment} className={homeStyles.form}>
+          <div className={homeStyles.inputGroup}>
+            <input
+              type="date"
+              value={appointmentData.date}
+              onChange={e => {
+                setAppointmentData(prev => ({ ...prev, date: e.target.value }));
+                fetchAvailableTimes(e.target.value, appointmentData.profissional);
+              }}
+              required
+              className={homeStyles.inputoption}
+            />
+          </div>
+          <div className={homeStyles.inputGroup}>
+            <select
+              value={appointmentData.profissional}
+              onChange={e => {
+                setAppointmentData(prev => ({ ...prev, profissional: e.target.value }));
+                fetchAvailableTimes(appointmentData.date, e.target.value);
+              }}
+              required
+              className={homeStyles.inputoption}
+            >
+              <option value="">Selecione um profissional</option>
+              {profissionais.map((p) => (
+                <option key={p.id} value={p.nome}>{p.nome}</option>
+              ))}
+            </select>
+          </div>
+          <div className={homeStyles.inputGroup}>
+            <input
+              type="text"
+              value={appointmentData.nomePaciente}
+              onChange={e => setAppointmentData(prev => ({ ...prev, nomePaciente: e.target.value }))}
+              placeholder="Nome do paciente"
+              className={homeStyles.inputnome}
+              required
+            />
+          </div>
+          <div className={homeStyles.inputGroup}>
+            <textarea
+              value={appointmentData.detalhes}
+              onChange={e => setAppointmentData(prev => ({ ...prev, detalhes: e.target.value }))}
+              placeholder="Detalhes"
+              className={homeStyles.inputoption}
+              rows={3}
+            />
+          </div>
+          {availableTimes.length > 0 && (
+            <div>
+              <strong>Horários Disponíveis:</strong>
+              <div className={homeStyles.times}>
+                {availableTimes.map((time) => (
+                  <button
+                    key={time}
+                    type="button"
+                    className={`${homeStyles.timeButton} ${appointmentData.time === time ? homeStyles.activeTime : ''}`}
+                    onClick={() => setAppointmentData(prev => ({ ...prev, time }))}
+                  >
+                    {time}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className={homeStyles.modalFooter}>
+            <button type="button" onClick={() => setCreateModalOpen(false)} className={homeStyles.buttonSecondary}>Cancelar</button>
+            <button type="submit" className={homeStyles.button}>Salvar</button>
+          </div>
+        </form>
+      </Modal>
       {/* Calendário removido */}
       <AppointmentDetailsModal
         appointment={selectedAppointment}
