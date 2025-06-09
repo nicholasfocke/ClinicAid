@@ -142,3 +142,15 @@
 .externalLink:hover {
   color: #2563eb;
 }
+
+.deleteButton {
+  background: none;
+  border: none;
+  color: #e53e3e;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.deleteButton:hover {
+  color: #9b1c1c;
+}

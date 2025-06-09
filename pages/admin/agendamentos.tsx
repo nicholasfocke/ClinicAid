@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import styles from "@/styles/agendamentos.module.css";
 import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
 import { format, isAfter } from 'date-fns';
-import { ExternalLink, CheckCircle2 } from 'lucide-react';
+import { ExternalLink, CheckCircle2, Trash2 } from 'lucide-react';
 
 interface Agendamento {
   id: string;
@@ -307,6 +307,13 @@ const Agendamentos = () => {
                   </span>
                 </td>
                 <td>
+                  <button
+                    className={styles.deleteButton}
+                    onClick={() => handleRemove(ag.id)}
+                    title="Excluir agendamento"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                   <a href="#" className={styles.externalLink} title="Ver detalhes">
                     <ExternalLink size={16} />
                   </a>
