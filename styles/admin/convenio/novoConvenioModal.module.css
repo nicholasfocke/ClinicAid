@@ -56,3 +56,13 @@
 .buttonSalvar:hover {
   background: #1746a2;
 }
+
+.label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.850rem;
+  font-weight: 400;
+  font-weight: bold;
+  color: #000000;
+  margin-bottom: auto;
+}

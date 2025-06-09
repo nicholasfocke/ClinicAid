@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
-import layoutStyles from '@/styles/admin/medicos.module.css';
-import tableStyles from '@/styles/admin/convenios.module.css';
-import modalStyles from '@/styles/admin/novoConvenioModal.module.css';
+import layoutStyles from '@/styles/admin/medico/medicos.module.css';
+import tableStyles from '@/styles/admin/convenio/convenios.module.css';
+import modalStyles from '@/styles/admin/convenio/novoConvenioModal.module.css';
 import { buscarConvenios, excluirConvenio, atualizarConvenio, criarConvenio } from '@/functions/conveniosFunctions';
 
 interface Convenio {
@@ -62,18 +62,16 @@ const Convenios = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value: raw } = e.target;
     let value = raw;
+    if (name === 'telefone') { value = formatTelefone(raw); }
 
-    if (name === 'telefone') {
-      value = formatTelefone(raw);
-    }
     setFormData(prev => ({ ...prev, [name]: name === 'numeroPacientes' || name === 'comissao' ? Number(value) : value }));
   };
 
-const saveEdit = async (id: string) => {
-  const nomeTrim = formData.nome.trim();
-  if (!nomeTrim || /^\d+$/.test(nomeTrim)) {
-    setError('O nome do convênio não pode ser vazio nem apenas números');
-    return;  // <-- impede de continuar
+  const saveEdit = async (id: string) => {
+    const nomeTrim = formData.nome.trim();
+    if (!nomeTrim || /^\d+$/.test(nomeTrim)) {
+        setError('O nome do convênio não pode ser vazio nem apenas números');
+        return;  // <-- impede de continuar
   } 
 
     await atualizarConvenio(id, formData);
@@ -86,10 +84,7 @@ const saveEdit = async (id: string) => {
   const handleNewChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value: raw } = e.target;
     let value = raw;
-
-    if (name === 'telefone') {
-      value = formatTelefone(raw);
-    }
+    if (name === 'telefone') { value = formatTelefone(raw); }
 
     setNewConvenio(prev => ({ ...prev, [name]: name === 'comissao' ? Number(value) : value }));
   }
@@ -146,7 +141,7 @@ const saveEdit = async (id: string) => {
                       <input name="numeroPacientes" type="number" value={formData.numeroPacientes} onChange={handleChange} />
                     </td>
                     <td>
-                      <input name="comissao" type="number" step="0.01" value={formData.comissao} onChange={handleChange} />
+                      <input name="comissao" type="number" step="1.00" value={formData.comissao} onChange={handleChange} />
                     </td>
                     <td>
                       <input name="telefone" value={formData.telefone} onChange={handleChange} />
@@ -179,6 +174,8 @@ const saveEdit = async (id: string) => {
         <div className={modalStyles.modal} onClick={e => e.stopPropagation()}>
           <button className={modalStyles.closeButton} onClick={() => setShowModal(false)}>X</button>
           <h3>Novo Convênio</h3>
+          
+          <label htmlFor="nome" className={modalStyles.label}>Nome</label>
           <input
             name="nome"
             className={modalStyles.input}
@@ -186,15 +183,17 @@ const saveEdit = async (id: string) => {
             value={newConvenio.nome}
             onChange={handleNewChange}
           />
+          <label htmlFor="comissao" className={modalStyles.label}>Comissão da clínica (%)</label>
           <input
             name="comissao"
             type="number"
-            step="0.01"
+            step="1.00"
             className={modalStyles.input}
-            placeholder="Comissão (%)"
+            placeholder="Comissão(%)"
             value={newConvenio.comissao}
             onChange={handleNewChange}
           />
+          <label htmlFor="telefone" className={modalStyles.label}>Telefone</label>
           <input
             name="telefone"
             className={modalStyles.input}

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { buscarMedicos } from '@/functions/medicosFunctions';
 import DoctorCard, { Medico } from '@/components/admin/DoctorCard';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
-import styles from '@/styles/admin/medicos.module.css';
+import styles from '@/styles/admin/medico/medicos.module.css';
 import Link from 'next/link';
 
 const Medicos = () => {
