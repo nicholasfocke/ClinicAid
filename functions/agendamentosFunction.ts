@@ -58,6 +58,16 @@ export const buscarAgendamentosDeHoje = async () => {
   return [];
 };
 
+export const buscarAgendamentosPorData = async (date: string) => {
+  const q = query(
+    collection(firestore, 'agendamentos'),
+    where('data', '==', date),
+    orderBy('hora', 'asc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
 export const buscarHorariosDisponiveis = async (
   date: Date | null,
   profissional: string,
