@@ -24,9 +24,10 @@ interface Props {
   appointment: Appointment | null;
   isOpen: boolean;
   onClose: () => void;
+  onComplete?: (id: string) => void;
 }
 
-const AppointmentDetailsModal = ({ appointment, isOpen, onClose }: Props) => {
+const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: Props) => {
   const [userData, setUserData] = useState<UserData | null>(null);
 
   useEffect(() => {
@@ -71,6 +72,14 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose }: Props) => {
             <p><strong>CPF:</strong> {userData.cpf}</p>
             <p><strong>Telefone:</strong> {userData.telefone}</p>
           </div>
+        )}
+        {onComplete && (
+          <button
+            className={styles.completeButton}
+            onClick={() => onComplete(appointment.id)}
+          >
+            Marcar como concluído
+          </button>
         )}
       </div>
     </div>
