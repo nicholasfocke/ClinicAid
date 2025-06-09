@@ -18,6 +18,7 @@ import Breadcrumb from '@/components/Breadcrumb';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
+import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
 
 Modal.setAppElement('#__next');
 
@@ -57,6 +58,8 @@ const Index = () => {
   const [profissionais, setProfissionais] = useState<Profissional[]>([
     { id: 'emilio', nome: 'Emilio', empresaId: 'default' }
   ]);
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const [pacientesPorDia, setPacientesPorDia] = useState<{ [dia: string]: number }>({});
 
@@ -393,6 +396,16 @@ const Index = () => {
     setModalIsOpen(false);
   };
 
+  const openDetails = (ag: any) => {
+    setSelectedAppointment(ag);
+    setDetailsOpen(true);
+  };
+
+  const closeDetails = () => {
+    setSelectedAppointment(null);
+    setDetailsOpen(false);
+  };
+
   useEffect(() => {
     if (user && user.tipo !== 'admin') {
       router.replace('/indexCliente');
@@ -537,13 +550,13 @@ const Index = () => {
                             </span>
                           </td>
                           <td>
-                            <a href="#" className={styles.externalLink} title="Ver detalhes">
+                            <button onClick={() => openDetails(appointment)} className={styles.externalLink} title="Ver detalhes">
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24">
                                 <path d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <polyline points="15 3 21 3 21 9" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <line x1="10" y1="14" x2="21" y2="3" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
-                            </a>
+                            </button>
                           </td>
                         </tr>
                       ))
@@ -711,6 +724,11 @@ const Index = () => {
           </div>
         </form>
       </Modal>
+      <AppointmentDetailsModal
+        appointment={selectedAppointment}
+        isOpen={detailsOpen}
+        onClose={closeDetails}
+      />
     </ProtectedRoute>
   );
 };
