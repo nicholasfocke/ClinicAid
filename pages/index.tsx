@@ -552,9 +552,9 @@ const Index = () => {
                           <td>
                             <button onClick={() => openDetails(appointment)} className={styles.externalLink} title="Ver detalhes">
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <polyline points="15 3 21 3 21 9" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <line x1="10" y1="14" x2="21" y2="3" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <polyline points="15 3 21 3 21 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <line x1="10" y1="14" x2="21" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                             </button>
                           </td>

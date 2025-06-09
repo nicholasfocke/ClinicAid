@@ -170,6 +170,18 @@
   margin-left: 12px;
 }
 
+.externalLink {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.externalLink:hover {
+  transform: scale(1.1);
+}
+
 .statusExcluido:hover {
   background: #fee2e2;
   color: #b91c1c !important;

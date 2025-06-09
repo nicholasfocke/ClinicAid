@@ -212,6 +212,20 @@
   margin-right: auto;
 }
 
+.externalLink {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: #8b98a9;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.externalLink:hover {
+  color: #2563eb;
+  transform: scale(1.1);
+}
+
 .formContainer {
   background-color: transparent;
   padding: 0;
