@@ -26,6 +26,7 @@ export interface BlockedTime {
 
 export const statusAgendamento = {
     AGENDADO: 'agendado',
+    CONFIRMADO: 'confirmado',
     CANCELADO: 'cancelado',
     CONCLUIDO: 'concluído',
     PENDENTE: 'pendente',
@@ -162,7 +163,7 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
         hora: data.times[i],
         usuarioId: user.uid,
         usuarioEmail: user.email,
-        status: statusAgendamento.AGENDADO,
+        status: statusAgendamento.CONFIRMADO,
         profissional: data.profissional,
         detalhes: data.detalhes,
       });
