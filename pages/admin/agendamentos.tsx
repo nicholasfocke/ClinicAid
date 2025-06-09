@@ -312,7 +312,8 @@ const Agendamentos = () => {
                     onClick={() => handleRemove(ag.id)}
                     title="Excluir agendamento"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={16} style={{ marginRight: 4 }} />
+                    Excluir
                   </button>
                   <a href="#" className={styles.externalLink} title="Ver detalhes">
                     <ExternalLink size={16} />
