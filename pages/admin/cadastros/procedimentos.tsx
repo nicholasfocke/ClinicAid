@@ -1,5 +1,5 @@
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
-import pageStyles from '@/styles/admin/medicos.module.css';
+import pageStyles from '@/styles/admin/medico/medicos.module.css';
 
 const Procedimentos = () => {
   return (
