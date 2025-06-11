@@ -1,77 +1,59 @@
-/* CreateAppointment.module.css */
+/* Modal used for creating appointments */
 
 .modalContent {
   background: #fff;
-  border-radius: 16px;
-  padding: 32px;
-  max-width: 640px;
+  border-radius: 12px;
+  padding: 24px;
   width: 100%;
-  margin: auto;
+  max-width: 480px;
+  margin: 0 auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   outline: none;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .modalOverlay {
-  background-color: rgba(0, 0, 0, 0.4);
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 9999;
 }
 
 .modalHeader {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .modalHeader h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 600;
   color: #111827;
 }
 
-.section {
-  margin-bottom: 24px;
-}
-
-.inputGroup {
+.formStyled {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 18px;
+  gap: 16px;
 }
 
-.input,
-.select {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  font-size: 1rem;
-  background: #fff;
-  width: 100%;
-}
-
-.timesRow {
+.timeSelectorWrapper {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 12px;
+  gap: 8px;
+  justify-content: center;
 }
 
 .timeButton {
-  padding: 10px 16px;
+  padding: 8px 14px;
+  border-radius: 6px;
   border: 1px solid #2563eb;
-  background: white;
+  background: #fff;
   color: #2563eb;
-  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.2s ease-in-out;
+  transition: background 0.2s;
 }
 
 .timeButton:hover {
@@ -80,47 +62,75 @@
 
 .activeTime {
   background: #2563eb;
-  color: white;
+  color: #fff;
 }
 
-.summaryBox {
+.noTime {
+  text-align: center;
+  color: #6b7280;
+  width: 100%;
+}
+
+.summaryBoxStyled {
   background: #f9fafb;
-  border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
   font-size: 0.95rem;
   color: #374151;
-  line-height: 1.6;
-  border: 1px solid #e5e7eb;
+}
+
+.selectGroup {
+  margin-top: 8px;
+}
+
+.selectStyled {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+}
+
+.inputDescricao {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  resize: vertical;
 }
 
 .modalFooter {
   display: flex;
-  justify-content: space-between;
-  margin-top: 28px;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
 }
 
-.cancelButton {
+.buttonSecondary {
   background: #f3f4f6;
   border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 8px 18px;
+  border-radius: 6px;
   font-weight: 600;
   color: #374151;
   cursor: pointer;
 }
 
-.continueButton {
+.buttonStyled {
   background: #2563eb;
-  color: white;
+  color: #fff;
   border: none;
-  padding: 10px 24px;
-  border-radius: 8px;
+  padding: 8px 22px;
+  border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
 }
 
-.continueButton:disabled {
+.buttonStyled:disabled {
   background: #93c5fd;
   cursor: not-allowed;
 }
+
