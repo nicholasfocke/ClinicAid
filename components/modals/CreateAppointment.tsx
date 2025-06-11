@@ -1,8 +1,12 @@
+import React, { useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import styles from '@/styles/CreateAppointment.module.css';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-interface CreateAppointmentProps {
+
+
+interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -18,7 +22,7 @@ interface CreateAppointmentProps {
   fetchAvailableTimes: (date: string, profissional: string) => void;
 }
 
-export default function CreateAppointmentModal({
+const CreateAppointmentModal: React.FC<Props> = ({
   isOpen,
   onClose,
   onSubmit,
@@ -27,7 +31,21 @@ export default function CreateAppointmentModal({
   availableTimes,
   profissionais,
   fetchAvailableTimes,
-}: CreateAppointmentProps) {
+}) => {
+  const [days, setDays] = useState<Date[]>([]);
+
+  useEffect(() => {
+    const today = new Date();
+    const upcomingDays = Array.from({ length: 10 }, (_, i) => addDays(today, i));
+    setDays(upcomingDays);
+  }, []);
+
+  const handleDayClick = (date: Date) => {
+    const formatted = format(date, 'yyyy-MM-dd');
+    setAppointmentData((prev: any) => ({ ...prev, date: formatted, time: '' }));
+    fetchAvailableTimes(formatted, appointmentData.profissional);
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -35,7 +53,20 @@ export default function CreateAppointmentModal({
       className={styles.modalContent}
       overlayClassName={styles.modalOverlay}
     >
-      <div className={styles.modalHeader}><h2>Junho 2025</h2></div>
+      <div className={styles.modalHeader}><h2>Agendamento</h2></div>
+
+      <div className={styles.daysContainer}>
+        {days.map((day) => (
+          <button
+            key={day.toDateString()}
+            onClick={() => handleDayClick(day)}
+            className={`${styles.dayCard} ${appointmentData.date === format(day, 'yyyy-MM-dd') ? styles.activeDay : ''}`}
+          >
+            <div className={styles.dayName}>{format(day, 'EEE', { locale: ptBR })}</div>
+            <div className={styles.dayNumber}>{format(day, 'dd')}</div>
+          </button>
+        ))}
+      </div>
 
       <form onSubmit={onSubmit} className={styles.formStyled}>
         <div className={styles.timeSelectorWrapper}>
@@ -62,7 +93,9 @@ export default function CreateAppointmentModal({
               value={appointmentData.profissional}
               onChange={(e) => {
                 setAppointmentData((prev: any) => ({ ...prev, profissional: e.target.value }));
-                fetchAvailableTimes(appointmentData.date, e.target.value);
+                if (appointmentData.date) {
+                  fetchAvailableTimes(appointmentData.date, e.target.value);
+                }
               }}
               required
               className={styles.selectStyled}
@@ -83,13 +116,7 @@ export default function CreateAppointmentModal({
         />
 
         <div className={styles.modalFooter}>
-          <button
-            type="button"
-            onClick={onClose}
-            className={styles.buttonSecondary}
-          >
-            Cancelar
-          </button>
+          <button type="button" onClick={onClose} className={styles.buttonSecondary}>Cancelar</button>
           <button
             type="submit"
             className={styles.buttonStyled}
@@ -101,4 +128,6 @@ export default function CreateAppointmentModal({
       </form>
     </Modal>
   );
-}
+};
+
+export default CreateAppointmentModal;

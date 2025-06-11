@@ -1,20 +1,18 @@
-/* Modal used for creating appointments */
-
 .modalContent {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 24px;
   width: 100%;
-  max-width: 480px;
+  max-width: 520px;
   margin: 0 auto;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
   outline: none;
 }
 
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -23,13 +21,13 @@
 
 .modalHeader {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .modalHeader h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1f2937;
 }
 
 .formStyled {
@@ -41,19 +39,24 @@
 .timeSelectorWrapper {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   justify-content: center;
+  margin-top: 4px;
+  margin-bottom: 8px;
 }
 
 .timeButton {
-  padding: 8px 14px;
-  border-radius: 6px;
-  border: 1px solid #2563eb;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1.5px solid #2563eb;
   background: #fff;
   color: #2563eb;
   font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s ease-in-out;
+  min-width: 78px;
+  text-align: center;
 }
 
 .timeButton:hover {
@@ -63,12 +66,15 @@
 .activeTime {
   background: #2563eb;
   color: #fff;
+  border-color: #2563eb;
 }
 
 .noTime {
   text-align: center;
   color: #6b7280;
   width: 100%;
+  margin-top: 6px;
+  font-size: 0.92rem;
 }
 
 .summaryBoxStyled {
@@ -86,32 +92,35 @@
 
 .selectStyled {
   width: 100%;
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-radius: 6px;
   border: 1px solid #d1d5db;
   background: #fff;
+  font-size: 0.95rem;
 }
 
 .inputDescricao {
   width: 100%;
-  min-height: 80px;
-  padding: 10px;
+  min-height: 100px;
+  padding: 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
+  font-size: 0.95rem;
   resize: vertical;
+  background: #fff;
 }
 
 .modalFooter {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 24px;
 }
 
 .buttonSecondary {
   background: #f3f4f6;
   border: none;
-  padding: 8px 18px;
+  padding: 10px 20px;
   border-radius: 6px;
   font-weight: 600;
   color: #374151;
@@ -122,15 +131,90 @@
   background: #2563eb;
   color: #fff;
   border: none;
-  padding: 8px 22px;
+  padding: 10px 22px;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
 }
 
+.buttonStyled:hover {
+  background: #1e40af;
+}
+
 .buttonStyled:disabled {
   background: #93c5fd;
   cursor: not-allowed;
 }
+.daysContainer {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+  scroll-snap-type: x mandatory;
+}
 
+.dayCard {
+  min-width: 64px;
+  text-align: center;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background-color: #fff;
+  color: #111827;
+  scroll-snap-align: start;
+  transition: all 0.2s ease;
+}
+
+.dayCard:hover {
+  border-color: #2563eb;
+}
+
+.activeDay {
+  background-color: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.dayName {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.dayNumber {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.periodFilter {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.periodButton {
+  border: none;
+  background: #f3f4f6;
+  color: #374151;
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.periodButton:hover {
+  background: #e5e7eb;
+}
+
+.activePeriod {
+  background: #2563eb;
+  color: #fff;
+}
