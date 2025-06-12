@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { criarMedico, medicoExiste } from '@/functions/medicosFunctions';
 import { criarHorario } from '@/functions/scheduleFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
+import { buscarConsultas } from '@/functions/procedimentosFunctions';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
@@ -65,6 +66,11 @@ interface Convenio {
   nome: string;
 }
 
+interface ConsultaProc {
+  id: string;
+  nome: string;
+}
+
 const NovoMedico = () => {
   const [formData, setFormData] = useState<MedicoForm>({
     nome: '',
@@ -82,6 +88,7 @@ const NovoMedico = () => {
   const [error, setError] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [consultas, setConsultas] = useState<ConsultaProc[]>([])
   const router = useRouter();
 
   const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
@@ -91,8 +98,10 @@ const NovoMedico = () => {
       try {
         const fetchedConvenios = await buscarConvenios();
         setConvenios(fetchedConvenios);
+        const fetchedConsultas = await buscarConsultas();
+        setConsultas(fetchedConsultas);
       } catch (error) {
-        console.error('Erro ao buscar convênios:', error);
+        console.error('Erro ao buscar consultas ou convênios:', error);
       }
     })();
   }, []);
@@ -240,7 +249,20 @@ const NovoMedico = () => {
       <h1 className={styles.title}>Novo Profissional</h1>
       <form onSubmit={handleSubmit} className={styles.form}>
         <input name="nome" value={formData.nome} onChange={handleChange} placeholder="Nome" className={styles.input} required />
-        <input name="especialidade" value={formData.especialidade} onChange={handleChange} placeholder="Especialidade" className={styles.input} required />
+        <select
+          name="especialidade"
+          value={formData.especialidade}
+          onChange={handleChange}
+          className={styles.input}
+          required
+        >
+          <option value="">Selecione a especialidade</option>
+          {consultas.map((c) => (
+            <option key={c.id} value={c.nome}>
+              {c.nome}
+            </option>
+          ))}
+        </select>
         <div className={styles.convenioHeader}>Selecione os dias de atendimento:</div>
         <div className={styles.diasBox}>
           {diasSemana.map((dia) => (

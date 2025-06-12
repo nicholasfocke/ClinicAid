@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc, query, where } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 
 export interface ProcedimentoData {
@@ -24,4 +24,10 @@ export const excluirProcedimento = async (id: string) => {
 
 export const atualizarProcedimento = async (id: string, data: Partial<ProcedimentoData>) => {
   await updateDoc(doc(firestore, 'procedimentos', id), data);
+};
+
+export const buscarConsultas = async () => {
+  const q = query(collection(firestore, 'procedimentos'), where('tipo', '==', 'consulta'));
+  const snap = await getDocs(q);
+  return snap.docs.map(doc => ({ id: doc.id, ...(doc.data() as ProcedimentoData) }));
 };

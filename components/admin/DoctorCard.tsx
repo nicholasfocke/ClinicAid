@@ -3,6 +3,7 @@ import Link from 'next/link';
 import styles from '@/styles/admin/medico/medicos.module.css';
 import { excluirMedico, atualizarMedico } from '@/functions/medicosFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
+import { buscarConsultas } from '@/functions/procedimentosFunctions';
 
 export interface Medico {
   id: string;
@@ -23,12 +24,18 @@ interface DoctorCardProps {
   onUpdate?: (medico: Medico) => void;
 }
 
+interface ConsultaProc {
+  id: string;
+  nome: string;
+}
+
 const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Medico>({ ...medico });
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
+  const [consultas, setConsultas] = useState<ConsultaProc[]>([]);
 
   const diasSemana = [
     'Segunda',
@@ -41,15 +48,17 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
   ];
 
   useEffect(() => {
-    const fetchConvenios = async () => {
+    const fetchData = async () => {
       try {
         const list = await buscarConvenios();
         setConvenios(list);
+        const consultasList = await buscarConsultas();
+        setConsultas(consultasList);
       } catch (err) {
-        console.error('Erro ao buscar convênios:', err);
+        console.error('Erro ao buscar dados:', err);
       }
     };
-    fetchConvenios();
+    fetchData();
   }, []);
 
   const handleDelete = async () => {
@@ -79,7 +88,9 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
     if (onUpdate) onUpdate({ ...formData, id: medico.id });
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -193,13 +204,19 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                 className={styles.inputEditar}
                 placeholder="Nome"
               />
-              <input
+              <select
                 name="especialidade"
                 value={formData.especialidade}
                 onChange={handleChange}
                 className={styles.inputEditar}
-                placeholder="Especialidade"
-              />
+              >
+                <option value="">Selecione a especialidade</option>
+                {consultas.map((c) => (
+                  <option key={c.id} value={c.nome}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
               <div className={styles.convenioHeader}>Dias de atendimento:</div>
               <div className={styles.diasBox}>
                 {diasSemana.map((dia) => (
