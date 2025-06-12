@@ -1,0 +1,157 @@
+.container {
+  margin-left: 260px;
+  padding: 2rem 3rem;
+  max-width: calc(100% - 260px - 3rem);
+  min-height: 80vh;
+  background-color: #f3f4f6;
+}
+
+.titleProcedimentos {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 18px 0 0 0;
+  letter-spacing: -1px;
+  text-align: left;
+}
+
+.subtitleProcedimentos {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #6b7280;
+  margin: 0.1rem 0 2rem 0;
+}
+
+.tabsWrapper {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.tabButton {
+  background: #e5e7eb;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.activeTab {
+  background: #2563eb;
+  color: #fff;
+}
+
+.procedimentosTableWrapper {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(16, 30, 54, 0.08);
+  padding: 0;
+  margin-bottom: 32px;
+  margin-top: 18px;
+  width: 100%;
+  max-width: 1600px;
+  min-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.procedimentosTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 800px;
+}
+
+.procedimentosTable th {
+  text-align: left;
+  font-size: 1.05rem;
+  color: #8b98a9;
+  font-weight: 700;
+  padding: 18px 0 12px 32px;
+  border-bottom: 1px solid #f1f1f1;
+  background: #f9fafb;
+  letter-spacing: 0.5px;
+}
+
+.procedimentosTable th,
+.procedimentosTable td {
+  padding-left: 32px;
+  padding-right: 16px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.procedimentosTable th:first-child,
+.procedimentosTable td:first-child {
+  padding-left: 40px;
+}
+
+.procedimentosTable th:last-child,
+.procedimentosTable td:last-child {
+  padding-right: 24px;
+}
+
+.procedimentosTable td {
+  font-size: 1.08rem;
+  color: #222;
+  padding: 18px 0 18px 32px;
+  border-bottom: 1px solid #f6f6f6;
+  vertical-align: middle;
+}
+
+.procedimentosTable td:first-child {
+  padding-left: 40px;
+}
+
+.procedimentosTable td:last-child {
+  padding-right: 24px;
+}
+
+.buttonAcao {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 8px;
+}
+
+.buttonAcao:hover {
+  background: #1746a2;
+}
+
+.buttonExcluir {
+  background: #dc2626;
+  color: #fff;
+}
+
+.buttonExcluir:hover {
+  background: #b91c1c;
+}
+
+.tipoQuad {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 6px;
+}
+
+.consulta {
+  background: #2563eb;
+}
+
+.exame {
+  background: #22c55e;
+}
+
+.inputEdit {
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}

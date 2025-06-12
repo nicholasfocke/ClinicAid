@@ -69,11 +69,14 @@ const SidebarAdmin = () => {
         </button>
         {cadastroOpen && (
           <div className={styles.subNav}>
+            <Link href="/admin/cadastros/procedimentos" className={styles.subNavItem}>
+              Procedimentos
+            </Link>
             <Link href="/admin/cadastros/convenios" className={styles.subNavItem}>
               Convênios
             </Link>
-            <Link href="/admin/cadastros/procedimentos" className={styles.subNavItem}>
-              Procedimentos
+            <Link href="/admin/cadastros/formas-pagamento" className={styles.subNavItem}>
+              Formas de Pagamento
             </Link>
           </div>
         )}
