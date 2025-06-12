@@ -292,7 +292,7 @@ const NovoMedico = () => {
         <button type="submit" className={styles.buttonSalvar} disabled={loading}>
           {loading ? 'Salvando...' : 'Salvar'}
         </button>
-         <Link href="/admin/medicos" passHref>
+         <Link href="/admin/profissionais" passHref>
           <button type="button" className={styles.buttonCancelar}>
             Cancelar
           </button>
