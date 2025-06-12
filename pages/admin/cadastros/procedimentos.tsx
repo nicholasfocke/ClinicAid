@@ -5,12 +5,16 @@ import tableStyles from '@/styles/admin/procedimento/procedimentos.module.css';
 import modalStyles from '@/styles/admin/procedimento/novoProcedimentoModal.module.css';
 import { buscarProcedimentos, criarProcedimento, excluirProcedimento, atualizarProcedimento,ProcedimentoData, } from '@/functions/procedimentosFunctions';
 
+const formatValor = (valor: number) =>
+  valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const parseValor = (valor: string) => {
+  const digits = valor.replace(/\D/g, '');
+  return Number(digits) / 100;
+};
+
 interface Procedimento extends ProcedimentoData {
   id: string;
-}
-
-const formatValor = (valor: number) => {
-  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 const Procedimentos = () => {
@@ -31,8 +35,15 @@ const Procedimentos = () => {
     convenio: false,
     tipo: 'consulta',
   });
+  const [valorInput, setValorInput] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'todos' | 'consultas' | 'exames'>('todos');
+
+  useEffect(() => {
+    if (showModal) {
+      setValorInput(formatValor(newProc.valor));
+    }
+  }, [showModal, newProc.valor]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,10 +89,16 @@ const Procedimentos = () => {
 
   const handleNewChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type, checked } = e.target as HTMLInputElement;
-    setNewProc(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : name === 'valor' || name === 'duracao' ? Number(value) : value,
-    }));
+    if (name === 'valor') {
+      const numeric = parseValor(value);
+      setValorInput(formatValor(numeric));
+      setNewProc(prev => ({ ...prev, valor: numeric }));
+    } else {
+      setNewProc(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : name === 'duracao' ? Number(value) : value,
+      }));
+    }
   };
 
   const createProcedimento = async () => {
@@ -96,6 +113,7 @@ const Procedimentos = () => {
     setProcedimentos(prev => [...prev, { id: Date.now().toString(), ...newProc }]);
     setShowModal(false);
     setNewProc({ nome: '', valor: 0, duracao: 0, convenio: false, tipo: 'consulta' });
+    setValorInput('');
     setError(null);
   };
 
@@ -217,9 +235,21 @@ const Procedimentos = () => {
         </table>
       </div>
       {showModal && (
-        <div className={modalStyles.overlay} onClick={() => setShowModal(false)}>
+        <div
+          className={modalStyles.overlay}
+          onClick={() => {
+            setShowModal(false);
+            setValorInput('');
+          }}
+        >
           <div className={modalStyles.modal} onClick={e => e.stopPropagation()}>
-            <button className={modalStyles.closeButton} onClick={() => setShowModal(false)}>
+            <button
+              className={modalStyles.closeButton}
+              onClick={() => {
+                setShowModal(false);
+                setValorInput('');
+              }}
+            >
               X
             </button>
             <h3>Novo Procedimento</h3>
@@ -232,11 +262,12 @@ const Procedimentos = () => {
             />
             <label className={modalStyles.label}>Valor</label>
             <input
-              type="number"
+              type="text"
               name="valor"
               className={modalStyles.input}
-              value={newProc.valor}
+              value={valorInput}
               onChange={handleNewChange}
+              inputMode="numeric"
             />
             <label className={modalStyles.label}>Duração (minutos)</label>
             <input
