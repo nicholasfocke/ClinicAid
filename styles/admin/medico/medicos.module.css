@@ -1,5 +1,3 @@
-/* File: styles/medicos.module.css */
-
 .container {
   /* desloca conteúdo para a direita, liberando espaço para o sidebar */
   margin-left: 260px;      /* ajuste para a largura real do seu sidebar */
@@ -34,6 +32,7 @@
 .actionButtonsWrapper {
   display: flex;
   justify-content: flex-start;
+  gap: 12px;
   margin-bottom: 2rem;
 }
 
@@ -250,4 +249,36 @@
 
 .buttonRemoverFoto:hover {
   background-color: #c53030;
+}
+
+.diasBox {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.diaItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+.conveniosBox {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.conveniosItem {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.convenioHeader {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
 }

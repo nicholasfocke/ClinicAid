@@ -1,20 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from '@/styles/admin/medico/medicos.module.css';
 import { excluirMedico, atualizarMedico } from '@/functions/medicosFunctions';
+import { buscarConvenios } from '@/functions/conveniosFunctions';
 
 export interface Medico {
   id: string;
   nome: string;
   especialidade: string;
-  diasAtendimento: string;
-  horaInicio: string;
-  horaFim: string;
-  valorConsulta?: string;
+  diasAtendimento: string[];
   telefone?: string;
   cpf?: string;
   email?: string;
-  convenio?: string;
+  convenio: string[];
   foto?: string;
   fotoPath?: string;
 }
@@ -30,6 +28,29 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Medico>({ ...medico });
+  const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
+
+  const diasSemana = [
+    'Segunda',
+    'Terça',
+    'Quarta',
+    'Quinta',
+    'Sexta',
+    'Sábado',
+    'Domingo',
+  ];
+
+  useEffect(() => {
+    const fetchConvenios = async () => {
+      try {
+        const list = await buscarConvenios();
+        setConvenios(list);
+      } catch (err) {
+        console.error('Erro ao buscar convênios:', err);
+      }
+    };
+    fetchConvenios();
+  }, []);
 
   const handleDelete = async () => {
     await excluirMedico(medico.id);
@@ -42,12 +63,13 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
       nome: formData.nome,
       especialidade: formData.especialidade,
       diasAtendimento: formData.diasAtendimento,
-      horaInicio: formData.horaInicio,
-      horaFim: formData.horaFim,
       telefone: formData.telefone || '',
       email: formData.email || '',
-      convenio: formData.convenio || '',
-      valorConsulta: formData.valorConsulta || '',
+      convenio: formData.convenio
+        ? Array.isArray(formData.convenio)
+          ? formData.convenio
+          : [formData.convenio]
+        : [],
       foto: formData.foto || '', // garantir que nunca seja undefined
       fotoPath: formData.fotoPath || '',
       cpf: medico.cpf || '',
@@ -59,8 +81,33 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  const toggleDia = (dia: string) => {
+    setFormData(prev => {
+      const existe = prev.diasAtendimento.includes(dia);
+      const dias = existe
+        ? prev.diasAtendimento.filter(d => d !== dia)
+        : [...prev.diasAtendimento, dia];
+      return { ...prev, diasAtendimento: dias };
+    });
+  };
+
+  const handleCheckConvenio = (value: string, checked: boolean) => {
+    setFormData(prev => {
+      const atual = new Set(prev.convenio);
+      if (checked) atual.add(value);
+      else atual.delete(value);
+      return { ...prev, convenio: Array.from(atual) };
+    });
+  };
+
+  const diasText = Array.isArray(medico.diasAtendimento)
+  ? medico.diasAtendimento.join(', ')
+  : typeof medico.diasAtendimento === 'string'
+    ? medico.diasAtendimento
+    : '';
 
   return (
     <div className={styles.medicoCardWrapper}>
@@ -77,13 +124,7 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
         <div className={styles.medicoInfo}>
           <div className={styles.medicoNome}>{medico.nome}</div>
           <div className={styles.medicoEspecialidade}>{medico.especialidade}</div>
-          <div className={styles.medicoDias}>{medico.diasAtendimento}</div>
-          <div className={styles.medicoHorario}>
-            {medico.horaInicio} - {medico.horaFim}
-          </div>
-          {medico.valorConsulta && (
-            <div className={styles.medicoValor}>Valor: {medico.valorConsulta}</div>
-          )}
+          <div className={styles.medicoDias}>{diasText}</div>
         </div>
         <button
           className={styles.verDetalhes}
@@ -159,27 +200,19 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                 className={styles.inputEditar}
                 placeholder="Especialidade"
               />
-              <input
-                name="diasAtendimento"
-                value={formData.diasAtendimento}
-                onChange={handleChange}
-                className={styles.inputEditar}
-                placeholder="Dias"
-              />
-              <input
-                name="horaInicio"
-                value={formData.horaInicio}
-                onChange={handleChange}
-                className={styles.inputEditar}
-                placeholder="Hora início"
-              />
-              <input
-                name="horaFim"
-                value={formData.horaFim}
-                onChange={handleChange}
-                className={styles.inputEditar}
-                placeholder="Hora fim"
-              />
+              <div className={styles.convenioHeader}>Dias de atendimento:</div>
+              <div className={styles.diasBox}>
+                {diasSemana.map((dia) => (
+                  <label key={dia} className={styles.diaItem}>
+                    <input
+                      type="checkbox"
+                      checked={formData.diasAtendimento.includes(dia)}
+                      onChange={() => toggleDia(dia)}
+                    />
+                    {dia}
+                  </label>
+                ))}
+              </div>
               <input
                 name="telefone"
                 value={formData.telefone || ''}
@@ -194,20 +227,22 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                 className={styles.inputEditar}
                 placeholder="Email"
               />
-              <input
-                name="convenio"
-                value={formData.convenio || ''}
-                onChange={handleChange}
-                className={styles.inputEditar}
-                placeholder="Convênio"
-              />
-              <input
-                name="valorConsulta"
-                value={formData.valorConsulta || ''}
-                onChange={handleChange}
-                className={styles.inputEditar}
-                placeholder="Valor da consulta"
-              />
+              <div className={styles.convenioHeader}>Convênios:</div>
+              <div className={styles.conveniosBox}>
+                {convenios.map((c) => (
+                  <label key={c.id} className={styles.conveniosItem}>
+                    <input
+                      type="checkbox"
+                      value={c.nome}
+                      checked={formData.convenio.includes(c.nome)}
+                      onChange={(e) =>
+                        handleCheckConvenio(e.target.value, e.target.checked)
+                      }
+                    />
+                    {c.nome}
+                  </label>
+                ))}
+              </div>
               {medico.cpf && (
                 <div className={styles.medicoValor}>CPF: {medico.cpf}</div>
               )}
@@ -239,10 +274,7 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
               )}
               <div className={styles.medicoNome}>{medico.nome}</div>
               <div className={styles.medicoEspecialidade}>{medico.especialidade}</div>
-              <div className={styles.medicoDias}>{medico.diasAtendimento}</div>
-              <div className={styles.medicoHorario}>
-                {medico.horaInicio} - {medico.horaFim}
-              </div>
+              <div className={styles.medicoDias}>{diasText}</div>
               {medico.telefone && (
                 <div className={styles.medicoValor}>Telefone: {medico.telefone}</div>
               )}
@@ -253,10 +285,8 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                 <div className={styles.medicoValor}>Email: {medico.email}</div>
               )}
               {medico.convenio && (
-                <div className={styles.medicoValor}>Convênio: {medico.convenio}</div>
-              )}
-              {medico.valorConsulta && (
-                <div className={styles.medicoValor}>Valor: {medico.valorConsulta}</div>
+                <div className={styles.medicoValor}>Convênios: {' '} {Array.isArray(medico.convenio) ? medico.convenio.join(', ' ) 
+                  : medico.convenio}</div>
               )}
               <div className={styles.detalhesButtons}>
                 <button className={styles.buttonExcluir} onClick={() => setConfirmDelete(true)}>

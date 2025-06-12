@@ -36,7 +36,7 @@ const Sidebar = () => {
       <div className={styles.medicosSection}>
         <div className={styles.medicosHeader}>
           <span className={styles.medicosTitle}>Profissionais</span>
-          <Link href="/admin/medicos" passHref legacyBehavior>
+          <Link href="/admin/profissionais" passHref legacyBehavior>
             <button className={styles.medicosVerTodos}>
               Ver todos
             </button>

@@ -37,7 +37,10 @@ const Medicos = () => {
       <h1 className={styles.titleMedicos}>Profissionais</h1>
       <div className={styles.subtitleMedicos}>Lista de profissionais cadastrados</div>
       <div className={styles.actionButtonsWrapper}>
-        <Link href="/admin/medicos/novo" className={styles.buttonAdicionar}>+ Adicionar médico</Link>
+        <Link href="/admin/profissionais/novo" className={styles.buttonAdicionar}>+ Adicionar médico</Link>
+        <Link href="/admin/profissionais/horarios" className={styles.buttonAdicionar}>
+          Dias/Horários
+        </Link>
       </div>
       <div className={styles.medicosList}>
         {medicos.map((med) => (

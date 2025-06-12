@@ -95,3 +95,38 @@
 .fotoBtn:hover {
   background: #0056d6;
 }
+
+.diasBox {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.diaItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+.conveniosBox {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.conveniosItem {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+.checkboxItem input {
+  margin-right: 0.25rem;
+}
+
+.convenioHeader {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}

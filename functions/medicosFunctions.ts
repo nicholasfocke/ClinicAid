@@ -4,14 +4,11 @@ import { firestore } from '@/firebase/firebaseConfig';
 export interface MedicoData {
   nome: string;
   especialidade: string;
-  diasAtendimento: string;
-  horaInicio: string;
-  horaFim: string;
+  diasAtendimento: string[];
   telefone: string;
   cpf: string;
   email: string;
-  convenio: string;
-  valorConsulta: string;
+  convenio: string[];
   foto?: string;
   fotoPath?: string;
 }
@@ -32,7 +29,8 @@ export const medicoExiste = async (cpf: string, email: string) => {
 };
 
 export const criarMedico = async (data: MedicoData) => {
-  await addDoc(collection(firestore, 'profissionais'), data);
+  const ref = await addDoc(collection(firestore, 'profissionais'), data);
+  return ref;
 };
 
 export const excluirMedico = async (id: string) => {

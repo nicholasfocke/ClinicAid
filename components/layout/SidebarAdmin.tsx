@@ -85,9 +85,9 @@ const SidebarAdmin = () => {
           <Bot className={styles.icon} color="#fff" />
           <span>Assistente IA</span>
         </Link>
-        <Link href="/admin/medicos" className={styles.navItem}>
+        <Link href="/admin/profissionais" className={styles.navItem}>
           <Stethoscope className={styles.icon} color="#fff" />
-          <span>Médicos</span>
+          <span>Profissionais</span>
         </Link>
         <Link href="/admin/pacientes" className={styles.navItem}>
           <span className={styles.icon} style={{width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
