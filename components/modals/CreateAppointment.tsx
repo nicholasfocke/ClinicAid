@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from 'react-modal';
 import styles from '@/styles/CreateAppointment.module.css';
-import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay } from 'date-fns';
+import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const getPeriod = (time: string) => {
@@ -64,8 +64,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
   // Atualiza o dia selecionado ao abrir o modal
   useEffect(() => {
     if (appointmentData.date) {
-      setSelectedDate(new Date(appointmentData.date));
-      // Remova: setCurrentMonth(new Date(appointmentData.date));
+      setSelectedDate(parse(appointmentData.date, 'yyyy-MM-dd', new Date()));
     } else {
       setSelectedDate(new Date());
       setCurrentMonth(new Date());
@@ -192,6 +191,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
       className={styles.modalContent}
       overlayClassName={styles.modalOverlay}
     >
+      <form onSubmit={onSubmit} className={styles.form}>
       {/* Header com mês/ano e botões de navegação centralizados */}
       <div
         className={styles.modalHeader}
@@ -255,6 +255,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
         </button>
       </div>
 
+      <div className={styles.modalBody}>
       {/* Linha dos dias com scroll visual e botões de navegação */}
       <div style={{ display: 'flex', alignItems: 'center', position: 'relative', marginBottom: 8, marginTop: 8 }}>
         <button
@@ -478,6 +479,8 @@ const CreateAppointmentModal: React.FC<Props> = ({
           Continuar
         </button>
       </div>
+      </div>
+      </form>
     </Modal>
   );
 };
