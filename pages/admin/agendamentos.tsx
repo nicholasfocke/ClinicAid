@@ -68,6 +68,7 @@ const Agendamentos = () => {
     procedimento: '',
   });
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const standardTimes = [
     '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -340,6 +341,8 @@ const fetchAgendamentos = async () => {
   const handleCreateAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       await criarAgendamento(
         {
@@ -359,6 +362,8 @@ const fetchAgendamentos = async () => {
     } catch (err) {
       console.error('Erro ao criar agendamento:', err);
       setError('Erro ao criar agendamento');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -451,6 +456,7 @@ const fetchAgendamentos = async () => {
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         onSubmit={handleCreateAppointment}
+        isSubmitting={isSubmitting}
         appointmentData={appointmentData}
         setAppointmentData={setAppointmentData}
         availableTimes={availableTimes}
