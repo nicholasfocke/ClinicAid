@@ -1,72 +1,252 @@
 .modalContent {
   background: #fff;
-  border-radius: 14px;
-  padding: 24px;
+  border-radius: 22px;
+  padding: 0;
   width: 100%;
-  max-width: 520px;
+  max-width: 540px;
+  max-height: 98vh;
   margin: 0 auto;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px rgba(16, 30, 54, 0.13);
   outline: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  border: none;
 }
 
 .modalOverlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  z-index: 1000;
+}
+
+.form {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
+  flex-direction: column;
+}
+
+.modalBody {
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+@media (min-width: 700px) {
+  .modalContent {
+    max-width: 600px;
+  }
 }
 
 .modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 38px 24px 0 24px;
+  margin-bottom: 0;
+}
+
+.modalTitle {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: #222;
   text-align: center;
-  margin-bottom: 18px;
+  flex: 1;
+  letter-spacing: -1px;
+  font-family: 'Inter', sans-serif;
 }
 
-.modalHeader h2 {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #1f2937;
+.modalCloseBtn {
+  position: absolute;
+  right: 24px;
+  top: 32px;
+  background: none;
+  border: none;
+  font-size: 2.2rem;
+  color: #222;
+  cursor: pointer;
+  font-weight: 400;
+  line-height: 1;
+  z-index: 2;
+  transition: color 0.18s cubic-bezier(.4,0,.2,1), transform 0.18s cubic-bezier(.4,0,.2,1);
+  outline: none;
+  padding: 0 8px;
+  border-radius: 50%;
+}
+.modalCloseBtn:hover, .modalCloseBtn:focus {
+  color: #1992b7;
+  background: #eaf6fa;
+  transform: rotate(90deg) scale(1.15);
+  box-shadow: 0 2px 8px #1992b733;
 }
 
-.formStyled {
+.daysContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  padding: 24px 0 0 0;
+  margin-bottom: 0;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb #fff;
+  transition: box-shadow 0.18s cubic-bezier(.4,0,.2,1);
+}
+.daysContainer::-webkit-scrollbar {
+  height: 6px;
+  background: #fff;
+}
+.daysContainer::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 8px;
+}
+
+.dayCard {
+  min-width: 74px;
+  max-width: 74px;
+  text-align: center;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 12px 0 10px 0;
+  font-weight: 600;
+  font-size: 1.08rem;
+  cursor: pointer;
+  background-color: #fff;
+  color: #111827;
+  scroll-snap-align: start;
+  transition: all 0.18s cubic-bezier(.4,0,.2,1);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  gap: 2px;
+  position: relative;
+  box-shadow: none;
+  outline: none;
+  user-select: none;
+  will-change: transform, box-shadow, background, color;
+}
+.dayCard:not(.activeDay):hover, .dayCard:not(.activeDay):focus {
+  border-color: #1992b7;
+  background: #f3fafd;
+  color: #1992b7;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 2px 8px #1992b722;
+}
+.dayCard:active {
+  background: #eaf6fa;
+  color: #1992b7;
+  transform: scale(0.97);
+  box-shadow: 0 2px 8px #1992b744;
+}
+.activeDay {
+  background-color: #1992b7;
+  color: #fff;
+  border-color: #1992b7;
+  box-shadow: 0 2px 8px #1992b722;
+  transform: scale(1.08);
+}
+.dayName {
+  font-size: 0.93rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
+}
+.dayNumber {
+  font-size: 1.22rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.periodFilter {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 28px 0 0 0;
+  padding: 0 24px;
+}
+.periodButton {
+  border: none;
+  background: #f3f4f6;
+  color: #374151;
+  padding: 10px 32px;
+  border-radius: 18px;
+  font-size: 1.08rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.18s cubic-bezier(.4,0,.2,1);
+  margin-bottom: 0;
+  outline: none;
+}
+.periodButton:hover, .periodButton:focus {
+  background: #eaf6fa;
+  color: #1992b7;
+}
+.activePeriod {
+  background: #1992b7;
+  color: #fff;
+  box-shadow: 0 2px 8px #1992b722;
 }
 
 .timeSelectorWrapper {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 10px;
-  justify-content: center;
-  margin-top: 4px;
-  margin-bottom: 8px;
+  justify-content: flex-start;
+  margin: 24px 0 0 0;
+  padding: 0 24px;
+  overflow-x: auto;
+  max-width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb #fff;
+}
+.timeSelectorWrapper::-webkit-scrollbar {
+  height: 6px;
+  background: #fff;
+}
+.timeSelectorWrapper::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 8px;
 }
 
 .timeButton {
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: 1.5px solid #2563eb;
+  padding: 13px 0;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
   background: #fff;
-  color: #2563eb;
-  font-weight: 600;
-  font-size: 0.95rem;
+  color: #222;
+  font-weight: 700;
+  font-size: 1.08rem;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  min-width: 78px;
+  min-width: 74px;
+  max-width: 74px;
   text-align: center;
+  transition: all 0.18s cubic-bezier(.4,0,.2,1);
+  box-shadow: none;
+  outline: none;
 }
-
-.timeButton:hover {
-  background: #e0ecff;
+.timeButton:not(.activeTime):hover, .timeButton:not(.activeTime):focus {
+  background: #f3fafd;
+  color: #1992b7;
+  border-color: #1992b7;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 2px 8px #1992b722;
 }
-
 .activeTime {
-  background: #2563eb;
+  background: #1992b7;
   color: #fff;
-  border-color: #2563eb;
+  font-weight: 800;
+  border-color: #1992b7;
+  box-shadow: 0 2px 8px #1992b722;
+  transform: scale(1.08);
 }
 
 .noTime {
@@ -79,11 +259,33 @@
 
 .summaryBoxStyled {
   background: #f9fafb;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 24px;
+  border-radius: 14px;
   border: 1px solid #e5e7eb;
-  font-size: 0.95rem;
+  font-size: 1.08rem;
   color: #374151;
+  margin: 0;
+  box-shadow: 0 2px 8px #00000008;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.08rem;
+}
+
+.summaryLabel {
+  color: #b0b0b0;
+  font-weight: 600;
+}
+
+.summaryValue {
+  color: #222;
+  font-weight: 700;
 }
 
 .selectGroup {
@@ -92,129 +294,119 @@
 
 .selectStyled {
   width: 100%;
-  padding: 10px 14px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #d1d5db;
   background: #fff;
-  font-size: 0.95rem;
+  font-size: 1.08rem;
+  font-weight: 600;
 }
 
 .inputDescricao {
   width: 100%;
-  min-height: 100px;
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.95rem;
+  min-height: 80px;
+  padding: 14px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1.08rem;
   resize: vertical;
   background: #fff;
+  margin: 0;
 }
 
 .modalFooter {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
+  gap: 16px;
+  margin: 0;
+  padding-bottom: 24px;
 }
 
 .buttonSecondary {
   background: #f3f4f6;
   border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: 600;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-weight: 700;
   color: #374151;
   cursor: pointer;
+  font-size: 1.08rem;
+  transition: background 0.18s cubic-bezier(.4,0,.2,1);
+}
+.buttonSecondary:hover, .buttonSecondary:focus {
+  background: #eaf6fa;
+  color: #1992b7;
 }
 
 .buttonStyled {
-  background: #2563eb;
+  background: #1992b7;
   color: #fff;
   border: none;
-  padding: 10px 22px;
-  border-radius: 6px;
-  font-weight: 600;
+  padding: 16px 0;
+  border-radius: 10px;
+  font-weight: 800;
   cursor: pointer;
-  transition: background 0.2s;
+  font-size: 1.18rem;
+  width: 100%;
+  margin: 0 auto;
+  margin-top: 28px;
+  margin-bottom: 8px;
+  transition: background 0.18s cubic-bezier(.4,0,.2,1), box-shadow 0.18s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 2px 8px #1992b722;
+  letter-spacing: 0.5px;
+  outline: none;
+  display: block;
 }
-
-.buttonStyled:hover {
-  background: #1e40af;
+.buttonStyled:hover, .buttonStyled:focus {
+  background: #107ca1;
+  box-shadow: 0 4px 16px #1992b744;
 }
 
 .buttonStyled:disabled {
   background: #93c5fd;
   cursor: not-allowed;
-}
-.daysContainer {
-  display: flex;
-  overflow-x: auto;
-  gap: 10px;
-  padding-bottom: 8px;
-  margin-bottom: 16px;
-  scroll-snap-type: x mandatory;
-}
-
-.dayCard {
-  min-width: 64px;
-  text-align: center;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 10px 6px;
-  font-weight: 500;
-  font-size: 0.9rem;
-  cursor: pointer;
-  background-color: #fff;
-  color: #111827;
-  scroll-snap-align: start;
-  transition: all 0.2s ease;
-}
-
-.dayCard:hover {
-  border-color: #2563eb;
-}
-
-.activeDay {
-  background-color: #2563eb;
   color: #fff;
-  border-color: #2563eb;
 }
 
-.dayName {
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.dayNumber {
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.periodFilter {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin: 12px 0;
-}
-
-.periodButton {
-  border: none;
-  background: #f3f4f6;
-  color: #374151;
-  padding: 6px 18px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.periodButton:hover {
-  background: #e5e7eb;
-}
-
-.activePeriod {
-  background: #2563eb;
-  color: #fff;
+@media (max-width: 600px) {
+  .modalContent {
+    max-width: 98vw;
+    max-height: 98vh;
+    padding: 0;
+  }
+  .modalHeader,
+  .daysContainer,
+  .periodFilter,
+  .timeSelectorWrapper,
+  .modalBody,
+  .modalBody,
+  .summaryBoxStyled,
+  .inputDescricao,
+  .modalFooter {
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .summaryBoxStyled,
+  .inputDescricao,
+  .modalFooter {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .modalTitle {
+    font-size: 1.3rem;
+  }
+  .dayCard {
+    min-width: 54px;
+    max-width: 54px;
+    font-size: 0.95rem;
+    padding: 8px 0 7px 0;
+  }
+  .timeButton {
+    min-width: 54px;
+    max-width: 54px;
+    font-size: 0.95rem;
+    padding: 8px 0;
+  }
 }
