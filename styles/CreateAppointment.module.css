@@ -317,7 +317,7 @@
 .modalFooter {
   display: flex;
   justify-content: flex-end;
-  gap: 16px;
+  gap: 0;
   margin: 0;
   padding-bottom: 24px;
 }
@@ -325,13 +325,18 @@
 .buttonSecondary {
   background: #f3f4f6;
   border: none;
-  padding: 12px 28px;
-  border-radius: 8px;
+  padding: 10px 0;
+  border-radius: 10px 0 0 10px;
   font-weight: 700;
   color: #374151;
   cursor: pointer;
-  font-size: 1.08rem;
+  font-size: 1rem;
   transition: background 0.18s cubic-bezier(.4,0,.2,1);
+  width: 100%;
+  outline: none;
+  margin: 0;
+  min-width: 0;
+  display: block;
 }
 .buttonSecondary:hover, .buttonSecondary:focus {
   background: #eaf6fa;
@@ -342,19 +347,18 @@
   background: #1992b7;
   color: #fff;
   border: none;
-  padding: 16px 0;
-  border-radius: 10px;
+  padding: 10px 0;
+  border-radius: 0 10px 10px 0;
   font-weight: 800;
   cursor: pointer;
-  font-size: 1.18rem;
+  font-size: 1rem;
   width: 100%;
-  margin: 0 auto;
-  margin-top: 28px;
-  margin-bottom: 8px;
+  margin: 0;
   transition: background 0.18s cubic-bezier(.4,0,.2,1), box-shadow 0.18s cubic-bezier(.4,0,.2,1);
   box-shadow: 0 2px 8px #1992b722;
   letter-spacing: 0.5px;
   outline: none;
+  min-width: 0;
   display: block;
 }
 .buttonStyled:hover, .buttonStyled:focus {

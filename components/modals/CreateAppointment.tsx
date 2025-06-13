@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from 'react-modal';
 import styles from '@/styles/CreateAppointment.module.css';
-import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, parse } from 'date-fns';
+import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const getPeriod = (time: string) => {
@@ -26,6 +26,7 @@ interface Props {
     time: string;
     profissional: string;
     detalhes: string;
+    paciente: string;
   };
   setAppointmentData: React.Dispatch<React.SetStateAction<any>>;
   availableTimes: string[];
@@ -64,7 +65,8 @@ const CreateAppointmentModal: React.FC<Props> = ({
   // Atualiza o dia selecionado ao abrir o modal
   useEffect(() => {
     if (appointmentData.date) {
-      setSelectedDate(parse(appointmentData.date, 'yyyy-MM-dd', new Date()));
+      setSelectedDate(new Date(appointmentData.date));
+      // Remova: setCurrentMonth(new Date(appointmentData.date));
     } else {
       setSelectedDate(new Date());
       setCurrentMonth(new Date());
@@ -191,7 +193,6 @@ const CreateAppointmentModal: React.FC<Props> = ({
       className={styles.modalContent}
       overlayClassName={styles.modalOverlay}
     >
-      <form onSubmit={onSubmit} className={styles.form}>
       {/* Header com mês/ano e botões de navegação centralizados */}
       <div
         className={styles.modalHeader}
@@ -255,7 +256,6 @@ const CreateAppointmentModal: React.FC<Props> = ({
         </button>
       </div>
 
-      <div className={styles.modalBody}>
       {/* Linha dos dias com scroll visual e botões de navegação */}
       <div style={{ display: 'flex', alignItems: 'center', position: 'relative', marginBottom: 8, marginTop: 8 }}>
         <button
@@ -428,7 +428,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
         </button>
       </div>
 
-      {/* Box de resumo e seleção de profissional */}
+      {/* Box de resumo, seleção de profissional e paciente */}
       <div className={styles.summaryBoxStyled}>
         <div className={styles.summaryRow}>
           <span className={styles.summaryLabel}>Profissional:</span>
@@ -452,35 +452,52 @@ const CreateAppointmentModal: React.FC<Props> = ({
             ))}
           </select>
         </div>
+        {/* Input de paciente */}
+        <div className={styles.selectGroup}>
+          <input
+            type="text"
+            placeholder="Paciente"
+            value={appointmentData.paciente || ''}
+            onChange={e => setAppointmentData((prev: any) => ({ ...prev, paciente: e.target.value }))}
+            className={styles.selectStyled}
+            required
+          />
+        </div>
       </div>
 
-      {/* Descrição */}
+      {/* Descrição menor */}
       <textarea
         placeholder="Descrição"
         value={appointmentData.detalhes}
         onChange={(e) => setAppointmentData((prev: any) => ({ ...prev, detalhes: e.target.value }))}
         className={styles.inputDescricao}
+        style={{ minHeight: 40, maxHeight: 60 }}
       />
 
-      {/* Footer com botões */}
+      {/* Footer com botões lado a lado e do mesmo tamanho */}
       <div className={styles.modalFooter}>
         <button
           type="button"
           onClick={handleClose}
           className={styles.buttonSecondary}
+          style={{ flex: 1, borderRadius: "10px 0 0 10px", margin: 0, minWidth: 0 }}
         >
           Cancelar
         </button>
         <button
           type="submit"
           className={styles.buttonStyled}
-          disabled={!appointmentData.date || !appointmentData.profissional || !appointmentData.time}
+          style={{ flex: 1, borderRadius: "0 10px 10px 0", margin: 0, minWidth: 0 }}
+          disabled={
+            !appointmentData.date ||
+            !appointmentData.profissional ||
+            !appointmentData.time ||
+            !appointmentData.paciente
+          }
         >
           Continuar
         </button>
       </div>
-      </div>
-      </form>
     </Modal>
   );
 };
