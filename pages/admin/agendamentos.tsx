@@ -9,7 +9,6 @@ import { format, isAfter } from 'date-fns';
 import { ExternalLink, CheckCircle2 } from 'lucide-react';
 import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
 import Modal from 'react-modal';
-import homeStyles from '@/styles/Home.module.css';
 import { statusAgendamento, buscarAgendamentosPorData, criarAgendamento } from '@/functions/agendamentosFunction';
 import CreateAppointment from '@/components/modals/CreateAppointment';
 
