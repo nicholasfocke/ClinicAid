@@ -3,6 +3,10 @@ import Modal from 'react-modal';
 import styles from '@/styles/CreateAppointment.module.css';
 import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { auth, firestore } from '@/firebase/firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
+import { buscarConvenios } from '@/functions/conveniosFunctions';
+import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 
 const getPeriod = (time: string) => {
   const [h, m] = time.split(':').map(Number);
@@ -26,7 +30,9 @@ interface Props {
     time: string;
     profissional: string;
     detalhes: string;
-    paciente: string;
+    nomePaciente: string;
+    convenio: string;
+    procedimento: string;
   };
   setAppointmentData: React.Dispatch<React.SetStateAction<any>>;
   availableTimes: string[];
@@ -88,6 +94,9 @@ const CreateAppointmentModal: React.FC<Props> = ({
       time: '',
       profissional: '',
       detalhes: '',
+      nomePaciente: '',
+      convenio: '',
+      procedimento: '',
     });
     setSelectedPeriod('Manhã');
     onClose();
@@ -152,11 +161,43 @@ const CreateAppointmentModal: React.FC<Props> = ({
 
   // Novo estado para controlar o índice de scroll dos horários
   const [timesScrollIndex, setTimesScrollIndex] = useState(0);
+  const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
+  const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
+  const [userInfo, setUserInfo] = useState<{ nome: string } | null>(null);
 
   // Atualiza o índice de scroll dos horários ao mudar o período
   useEffect(() => {
     setTimesScrollIndex(0);
   }, [selectedPeriod, availableTimes]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (isOpen) {
+        try {
+          const [convDocs, procDocs] = await Promise.all([
+            buscarConvenios(),
+            buscarProcedimentos(),
+          ]);
+          setConvenios(convDocs as any);
+          setProcedimentos(procDocs as any);
+
+          const current = auth.currentUser;
+          if (current) {
+            const snap = await getDoc(doc(firestore, 'users', current.uid));
+            if (snap.exists()) {
+              const data = snap.data();
+              const nome = data.nome || '';
+              setUserInfo({ nome });
+              setAppointmentData(prev => ({ ...prev, nomePaciente: nome }));
+            }
+          }
+        } catch (err) {
+          console.error('Erro ao buscar dados:', err);
+        }
+      }
+    };
+    fetchData();
+  }, [isOpen, setAppointmentData]);
 
   // Navegação dos horários
   const scrollTimes = (direction: 'left' | 'right') => {
@@ -452,16 +493,40 @@ const CreateAppointmentModal: React.FC<Props> = ({
             ))}
           </select>
         </div>
-        {/* Input de paciente */}
         <div className={styles.selectGroup}>
           <input
             type="text"
-            placeholder="Paciente"
-            value={appointmentData.paciente || ''}
-            onChange={e => setAppointmentData((prev: any) => ({ ...prev, paciente: e.target.value }))}
+            value={userInfo?.nome || appointmentData.nomePaciente || ''}
+            readOnly
             className={styles.selectStyled}
-            required
           />
+        </div>
+
+        <div className={styles.selectGroup}>
+          <select
+            value={appointmentData.convenio}
+            onChange={e => setAppointmentData(prev => ({ ...prev, convenio: e.target.value }))}
+            className={styles.selectStyled}
+          >
+            <option value="">Selecione o convênio</option>
+            <option value="Particular">Particular</option>
+            {convenios.map(c => (
+              <option key={c.id} value={c.nome}>{c.nome}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className={styles.selectGroup}>
+          <select
+            value={appointmentData.procedimento}
+            onChange={e => setAppointmentData(prev => ({ ...prev, procedimento: e.target.value }))}
+            className={styles.selectStyled}
+          >
+            <option value="">Selecione o procedimento</option>
+            {procedimentos.map(p => (
+              <option key={p.id} value={p.nome}>{p.nome}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -492,7 +557,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
             !appointmentData.date ||
             !appointmentData.profissional ||
             !appointmentData.time ||
-            !appointmentData.paciente
+            !appointmentData.nomePaciente
           }
         >
           Continuar

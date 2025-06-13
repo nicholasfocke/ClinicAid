@@ -11,6 +11,8 @@ export interface AppointmentData { //mudar a estrutura para incluir ao nosso nov
   nomesPacientes: string[];
   profissional: string;
   detalhes: string;
+  convenio?: string;
+  procedimento?: string;
 }
 
 export interface UserLike {
@@ -166,6 +168,8 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
         status: statusAgendamento.CONFIRMADO,
         profissional: data.profissional,
         detalhes: data.detalhes,
+        convenio: data.convenio || 'Particular',
+        procedimento: data.procedimento || '',
       });
     }
   });
