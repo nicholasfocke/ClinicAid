@@ -25,6 +25,8 @@ interface Agendamento {
   status: string;
   detalhes: string;
   usuarioId: string;
+  convenio?: string;
+  procedimento?: string;
 }
 
 interface Profissional {
@@ -102,6 +104,8 @@ const fetchAgendamentos = async () => {
           status: agendamentoData.status || 'agendado',
           detalhes: agendamentoData.detalhes || '',
           usuarioId: agendamentoData.usuarioId || '',
+          convenio: agendamentoData.convenio || '',
+          procedimento: agendamentoData.procedimento || '',
         });
       });
 
@@ -200,7 +204,9 @@ const fetchAgendamentos = async () => {
             nomePaciente: agendamentoData.nomePaciente,
             status: agendamentoData.status,
             detalhes: agendamentoData.detalhes || '',
-            usuarioId: agendamentoData.usuarioId || ''
+            usuarioId: agendamentoData.usuarioId || '',
+            convenio: agendamentoData.convenio || '',
+            procedimento: agendamentoData.procedimento || ''
             // especialidade e valor removidos
           });
         });

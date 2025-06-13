@@ -231,6 +231,8 @@ export const buscarAgendamentosPorData = async (data: string) => {
     nomePaciente: doc.data().nomePaciente,
     status: doc.data().status,
     detalhes: doc.data().detalhes,
-    usuarioId: doc.data().usuarioId
+    usuarioId: doc.data().usuarioId,
+    convenio: doc.data().convenio,
+    procedimento: doc.data().procedimento
   }));
 };
