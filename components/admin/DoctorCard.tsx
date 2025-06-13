@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import styles from '@/styles/admin/medico/medicos.module.css';
 import { excluirMedico, atualizarMedico } from '@/functions/medicosFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';

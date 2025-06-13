@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { criarMedico, medicoExiste } from '@/functions/medicosFunctions';
 import { criarHorario } from '@/functions/scheduleFunctions';
-import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarConsultas } from '@/functions/procedimentosFunctions';
+import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
@@ -27,9 +27,6 @@ const formatTelefone = (value: string) => {
     .slice(0, 15);
 };
 
-const formatHora = (value: string) => {
-  return value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1:$2').slice(0, 5);
-};
 
 function isValidCPF(cpf: string): boolean {
   cpf = cpf.replace(/\D/g, '');
@@ -53,6 +50,8 @@ interface MedicoForm {
   diasAtendimento: string[];
   horaInicio: string;
   horaFim: string;
+  almocoInicio: string;
+  almocoFim: string;
   telefone: string;
   cpf: string;
   email: string;
@@ -66,11 +65,6 @@ interface Convenio {
   nome: string;
 }
 
-interface ConsultaProc {
-  id: string;
-  nome: string;
-}
-
 const NovoMedico = () => {
   const [formData, setFormData] = useState<MedicoForm>({
     nome: '',
@@ -78,17 +72,19 @@ const NovoMedico = () => {
     diasAtendimento: [],
     horaInicio: '',
     horaFim: '',
+    almocoInicio: '',
+    almocoFim: '',
     telefone: '',
     cpf: '',
     email: '',
     convenio: []
   });
   const [convenios, setConvenios] = useState<Convenio[]>([])
+  const [consultas, setConsultas] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
-  const [consultas, setConsultas] = useState<ConsultaProc[]>([])
   const router = useRouter();
 
   const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
@@ -101,7 +97,7 @@ const NovoMedico = () => {
         const fetchedConsultas = await buscarConsultas();
         setConsultas(fetchedConsultas);
       } catch (error) {
-        console.error('Erro ao buscar consultas ou convênios:', error);
+        console.error('Erro ao buscar convênios ou consultas:', error);
       }
     })();
   }, []);
@@ -116,12 +112,13 @@ const NovoMedico = () => {
     });
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     let newValue = value;
     if (name === 'cpf') newValue = formatCPF(value);
     if (name === 'telefone') newValue = formatTelefone(value);
-    if (name === 'horaInicio' || name === 'horaFim') newValue = formatHora(value);
     setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
 
@@ -147,12 +144,6 @@ const NovoMedico = () => {
     setError('');
     setLoading(true);
 
-    if (formData.convenio.length === 0) {
-      setError('Selecione um convênio.');
-      setLoading(false);
-      return;
-    }
-
     const telefoneNumeros = formData.telefone.replace(/\D/g, '');
     if (telefoneNumeros.length !== 11) {
       setError('O telefone deve conter exatamente 11 dígitos.');
@@ -170,6 +161,24 @@ const NovoMedico = () => {
     const horaRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
     if (!horaRegex.test(formData.horaInicio) || !horaRegex.test(formData.horaFim)) {
       setError('Horário inválido. Use o formato HH:MM.');
+      setLoading(false);
+      return;
+    }
+
+    if ((formData.almocoInicio && !formData.almocoFim) || (!formData.almocoInicio && formData.almocoFim)) {
+      setError('Preencha início e fim do intervalo de almoço.');
+      setLoading(false);
+      return;
+    }
+
+    if ((formData.almocoInicio && !horaRegex.test(formData.almocoInicio)) || (formData.almocoFim && !horaRegex.test(formData.almocoFim))) {
+      setError('Horário de almoço inválido.');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.almocoInicio && formData.almocoFim && formData.almocoInicio >= formData.almocoFim) {
+      setError('Fim do almoço deve ser após o início.');
       setLoading(false);
       return;
     }
@@ -224,13 +233,13 @@ const NovoMedico = () => {
             dia,
             horaInicio: formData.horaInicio,
             horaFim: formData.horaFim,
-            almocoInicio: '',
-            almocoFim: '',
+            almocoInicio: formData.almocoInicio,
+            almocoFim: formData.almocoFim,
           });
         }
       }
 
-      router.push('/admin/medicos');
+      router.push('/admin/profissionais');
     } catch (err) {
       console.error('Erro ao cadastrar médico:', err);
       setError('Erro ao cadastrar médico.');
@@ -249,13 +258,7 @@ const NovoMedico = () => {
       <h1 className={styles.title}>Novo Profissional</h1>
       <form onSubmit={handleSubmit} className={styles.form}>
         <input name="nome" value={formData.nome} onChange={handleChange} placeholder="Nome" className={styles.input} required />
-        <select
-          name="especialidade"
-          value={formData.especialidade}
-          onChange={handleChange}
-          className={styles.input}
-          required
-        >
+        <select name="especialidade" value={formData.especialidade} onChange={handleChange} className={styles.input} required>
           <option value="">Selecione a especialidade</option>
           {consultas.map((c) => (
             <option key={c.id} value={c.nome}>
@@ -276,8 +279,42 @@ const NovoMedico = () => {
             </label>
           ))}
         </div>
-        <input name="horaInicio" value={formData.horaInicio} onChange={handleChange} placeholder="Hora início" className={styles.input} required />
-        <input name="horaFim" value={formData.horaFim} onChange={handleChange} placeholder="Hora fim" className={styles.input} required />
+        <div className={styles.convenioHeader}>Horário de Ínicio/Fim</div>
+        <input
+          type="time"
+          name="horaInicio"
+          value={formData.horaInicio}
+          onChange={handleChange}
+          placeholder="Hora início"
+          className={styles.input}
+          required
+        />
+        <input
+          type="time"
+          name="horaFim"
+          value={formData.horaFim}
+          onChange={handleChange}
+          placeholder="Hora fim"
+          className={styles.input}
+          required
+        />
+        <div className={styles.convenioHeader}>Intervalo Almoço</div>
+        <input
+          type="time"
+          name="almocoInicio"
+          value={formData.almocoInicio}
+          onChange={handleChange}
+          placeholder="Intervalo almoço início"
+          className={styles.input}
+        />
+        <input
+          type="time"
+          name="almocoFim"
+          value={formData.almocoFim}
+          onChange={handleChange}
+          placeholder="Intervalo almoço fim"
+          className={styles.input}
+        />
         <input name="telefone" value={formData.telefone} onChange={handleChange} placeholder="Telefone" className={styles.input} />
         <input name="cpf" value={formData.cpf} onChange={handleChange} placeholder="CPF" className={styles.input} />
         <input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Email" className={styles.input} />

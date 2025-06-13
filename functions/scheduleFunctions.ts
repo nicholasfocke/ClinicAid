@@ -1,3 +1,6 @@
+import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { firestore } from '@/firebase/firebaseConfig';
+
 export interface ScheduleData {
   dia: string; // YYYY-MM-DD or nome do dia
   horaInicio: string;
@@ -6,8 +9,6 @@ export interface ScheduleData {
   almocoFim: string;
 }
 
-import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
-import { firestore } from '@/firebase/firebaseConfig';
 export const criarHorario = async (medicoId: string, data: ScheduleData) => {
   await addDoc(collection(firestore, `profissionais/${medicoId}/horarios`), data);
 };
