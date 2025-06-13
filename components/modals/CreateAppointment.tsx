@@ -25,6 +25,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
+  isSubmitting: boolean;
   appointmentData: {
     date: string;
     time: string;
@@ -44,6 +45,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
   isOpen,
   onClose,
   onSubmit,
+  isSubmitting,
   appointmentData,
   setAppointmentData,
   availableTimes,
@@ -257,13 +259,20 @@ const CreateAppointmentModal: React.FC<Props> = ({
       className={styles.modalContent}
       overlayClassName={styles.modalOverlay}
     >
-      {/* Header com mês/ano e botões de navegação centralizados */}
-      <div
-        className={styles.modalHeader}
-        style={{
-          justifyContent: "center",
-          gap: 24,
-          position: "relative",
+      <form onSubmit={onSubmit} className={styles.form} style={{ position: 'relative' }}>
+        {isSubmitting && (
+          <div className={styles.modalLoadingOverlay}>
+            <div className={styles.modalSpinner}></div>
+            <span className={styles.modalLoadingText}>Aguarde...</span>
+          </div>
+        )}
+        {/* Header com mês/ano e botões de navegação centralizados */}
+        <div
+          className={styles.modalHeader}
+          style={{
+            justifyContent: "center",
+            gap: 24,
+            position: "relative",
           display: "flex",
           alignItems: "center",
         }}
@@ -569,6 +578,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
           onClick={handleClose}
           className={styles.buttonSecondary}
           style={{ flex: 1, borderRadius: "10px 0 0 10px", margin: 0, minWidth: 0 }}
+          disabled={isSubmitting}
         >
           Cancelar
         </button>
@@ -577,15 +587,17 @@ const CreateAppointmentModal: React.FC<Props> = ({
           className={styles.buttonStyled}
           style={{ flex: 1, borderRadius: "0 10px 10px 0", margin: 0, minWidth: 0 }}
           disabled={
+            isSubmitting ||
             !appointmentData.date ||
             !appointmentData.profissional ||
             !appointmentData.time ||
             !appointmentData.nomePaciente
           }
         >
-          Continuar
+          {isSubmitting ? 'Aguarde...' : 'Confirmar'}
         </button>
       </div>
+      </form>
     </Modal>
   );
 };
