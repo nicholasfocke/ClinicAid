@@ -64,6 +64,8 @@ const Agendamentos = () => {
     nomePaciente: '',
     profissional: '',
     detalhes: '',
+    convenio: '',
+    procedimento: '',
   });
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
 
@@ -346,11 +348,13 @@ const fetchAgendamentos = async () => {
           nomesPacientes: [appointmentData.nomePaciente],
           profissional: appointmentData.profissional,
           detalhes: appointmentData.detalhes,
+          convenio: appointmentData.convenio,
+          procedimento: appointmentData.procedimento,
         },
         { uid: user.uid, email: user.email }
       );
       setCreateModalOpen(false);
-      setAppointmentData({ date: '', time: '', nomePaciente: '', profissional: '', detalhes: '' });
+      setAppointmentData({ date: '', time: '', nomePaciente: '', profissional: '', detalhes: '', convenio: '', procedimento: '' });
       await fetchAgendamentos();
     } catch (err) {
       console.error('Erro ao criar agendamento:', err);
