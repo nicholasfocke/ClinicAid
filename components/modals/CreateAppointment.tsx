@@ -4,7 +4,7 @@ import styles from '@/styles/CreateAppointment.module.css';
 import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { auth, firestore } from '@/firebase/firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 
@@ -188,7 +188,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
               const data = snap.data();
               const nome = data.nome || '';
               setUserInfo({ nome });
-              setAppointmentData(prev => ({ ...prev, nomePaciente: nome }));
+              setAppointmentData((prev: typeof appointmentData) => ({ ...prev, nomePaciente: nome }));
             }
           }
         } catch (err) {
@@ -226,6 +226,29 @@ const CreateAppointmentModal: React.FC<Props> = ({
       }
     }, 0);
   };
+
+  // Estado para profissionais cadastrados no sistema
+  const [profissionaisCadastrados, setProfissionaisCadastrados] = useState<{ id: string; nome: string }[]>([]);
+
+  // Buscar profissionais do Firestore ao abrir o modal
+  useEffect(() => {
+    const fetchProfissionais = async () => {
+      try {
+        const snap = await getDocs(collection(firestore, 'profissionais'));
+        const list: { id: string; nome: string }[] = [];
+        snap.forEach(doc => {
+          const data = doc.data();
+          if (data.nome) {
+            list.push({ id: doc.id, nome: data.nome });
+          }
+        });
+        setProfissionaisCadastrados(list);
+      } catch (err) {
+        setProfissionaisCadastrados([]);
+      }
+    };
+    if (isOpen) fetchProfissionais();
+  }, [isOpen]);
 
   return (
     <Modal
@@ -488,7 +511,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
             className={styles.selectStyled}
           >
             <option value="">Selecione um profissional</option>
-            {profissionais.map((p) => (
+            {profissionaisCadastrados.map((p) => (
               <option key={p.id} value={p.nome}>{p.nome}</option>
             ))}
           </select>
@@ -505,7 +528,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
         <div className={styles.selectGroup}>
           <select
             value={appointmentData.convenio}
-            onChange={e => setAppointmentData(prev => ({ ...prev, convenio: e.target.value }))}
+            onChange={e => setAppointmentData((prev: typeof appointmentData) => ({ ...prev, convenio: e.target.value }))}
             className={styles.selectStyled}
           >
             <option value="">Selecione o convênio</option>
@@ -519,7 +542,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
         <div className={styles.selectGroup}>
           <select
             value={appointmentData.procedimento}
-            onChange={e => setAppointmentData(prev => ({ ...prev, procedimento: e.target.value }))}
+            onChange={e => setAppointmentData((prev: typeof appointmentData) => ({ ...prev, procedimento: e.target.value }))}
             className={styles.selectStyled}
           >
             <option value="">Selecione o procedimento</option>
