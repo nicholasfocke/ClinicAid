@@ -79,7 +79,7 @@ const SidebarAdmin = () => {
               Formas de Pagamento
             </Link>
             <Link href="/admin/cadastros/remedios" className={styles.subNavItem}>
-              Remedios / Receitas
+              Remédios / Receitas
             </Link>
             <Link href="/admin/cadastros/salas" className={styles.subNavItem}>
               Salas
