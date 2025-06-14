@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from 'react-modal';
 import styles from '@/styles/CreateAppointment.module.css';
-import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay } from 'date-fns';
+import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { auth, firestore } from '@/firebase/firebaseConfig';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
@@ -73,8 +73,10 @@ const CreateAppointmentModal: React.FC<Props> = ({
   // Atualiza o dia selecionado ao abrir o modal
   useEffect(() => {
     if (appointmentData.date) {
-      setSelectedDate(new Date(appointmentData.date));
-      // Remova: setCurrentMonth(new Date(appointmentData.date));
+      // Ao converter a string (yyyy-MM-dd) para Date, use parse para evitar
+      // o deslocamento de fuso horário causado por new Date('yyyy-MM-dd').
+      const parsed = parse(appointmentData.date, 'yyyy-MM-dd', new Date());
+      setSelectedDate(parsed);
     } else {
       setSelectedDate(new Date());
       setCurrentMonth(new Date());
