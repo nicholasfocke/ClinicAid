@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import styles from '@/styles/admin/medico/medicos.module.css';
 import { excluirMedico, atualizarMedico } from '@/functions/medicosFunctions';
+import { excluirHorario, buscarHorariosPorMedico } from '@/functions/scheduleFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarConsultas } from '@/functions/procedimentosFunctions';
+import { on } from 'events';
 
 export interface Medico {
   id: string;
@@ -62,9 +64,17 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
   }, []);
 
   const handleDelete = async () => {
-    await excluirMedico(medico.id);
-    if (onDelete) onDelete(medico.id);
-    setShowDetails(false);
+    try{
+      await excluirMedico(medico.id);
+      const horarios = await buscarHorariosPorMedico(medico.id);
+      await Promise.all(horarios.map(h => excluirHorario(medico.id, h.id)));
+
+      if(onDelete) onDelete(medico.id);
+      setShowDetails(false);
+    }
+    catch (err){
+      console.error('Erro ao excluir médico:', err);
+    }
   };
 
   const handleSave = async () => {
