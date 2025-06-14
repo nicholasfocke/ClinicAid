@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import layoutStyles from '@/styles/admin/medico/medicos.module.css';
-import tableStyles from '@/styles/admin/procedimento/procedimentos.module.css';
-import modalStyles from '@/styles/admin/procedimento/novoProcedimentoModal.module.css';
+import tableStyles from '@/styles/admin/cadastros/procedimento/procedimentos.module.css';
+import modalStyles from '@/styles/admin/cadastros/procedimento/novoProcedimentoModal.module.css';
 import { buscarProcedimentos, criarProcedimento, excluirProcedimento, atualizarProcedimento,ProcedimentoData, } from '@/functions/procedimentosFunctions';
 
 const formatValor = (valor: number) =>

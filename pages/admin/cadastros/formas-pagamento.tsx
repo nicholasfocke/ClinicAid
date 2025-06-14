@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import layoutStyles from '@/styles/admin/medico/medicos.module.css';
-import tableStyles from '@/styles/admin/formapagamentos/formasPagamento.module.css';
-import modalStyles from '@/styles/admin/formapagamentos/novoFormaPagamentoModal.module.css';
+import tableStyles from '@/styles/admin/cadastros/formapagamentos/formasPagamento.module.css';
+import modalStyles from '@/styles/admin/cadastros/formapagamentos/novoFormaPagamentoModal.module.css';
 import {
   buscarFormasPagamento,
   criarFormaPagamento,

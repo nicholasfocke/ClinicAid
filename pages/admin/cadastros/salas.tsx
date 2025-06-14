@@ -1,0 +1,190 @@
+import { useEffect, useState } from 'react';
+import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
+import layoutStyles from '@/styles/admin/medico/medicos.module.css';
+import tableStyles from '@/styles/admin/cadastros/salas/salas.module.css';
+import modalStyles from '@/styles/admin/cadastros/salas/novoSalaModal.module.css';
+import { buscarSalas, criarSala, excluirSala, atualizarSala } from '@/functions/salasFunctions';
+import { buscarMedicos } from '@/functions/medicosFunctions';
+
+interface Sala {
+  id: string;
+  nome: string;
+  profissionalId: string | null;
+  ativo: boolean;
+}
+
+interface Medico {
+  id: string;
+  nome: string;
+}
+
+const Salas = () => {
+  const [salas, setSalas] = useState<Sala[]>([]);
+  const [medicos, setMedicos] = useState<Medico[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<{ nome: string; profissionalId: string | null }>({ nome: '', profissionalId: null });
+  const [showModal, setShowModal] = useState(false);
+  const [newSala, setNewSala] = useState<{ nome: string; profissionalId: string | null }>({ nome: '', profissionalId: null });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const s = await buscarSalas();
+      setSalas(s as Sala[]);
+      const m = await buscarMedicos();
+      setMedicos(m.map((med: any) => ({ id: med.id, nome: med.nome })));
+    };
+    fetchData();
+  }, []);
+
+  const startEdit = (s: Sala) => {
+    setEditingId(s.id);
+    setFormData({ nome: s.nome, profissionalId: s.profissionalId });
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const saveEdit = async (id: string) => {
+    await atualizarSala(id, { nome: formData.nome, profissionalId: formData.profissionalId });
+    setSalas(prev => prev.map(s => (s.id === id ? { ...s, nome: formData.nome, profissionalId: formData.profissionalId } : s)));
+    setEditingId(null);
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const handleNewChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewSala(prev => ({ ...prev, [name]: value }));
+  };
+
+  const createSala = async () => {
+    await criarSala({ nome: newSala.nome, profissionalId: newSala.profissionalId, ativo: true });
+    setSalas(prev => [...prev, { id: Date.now().toString(), nome: newSala.nome, profissionalId: newSala.profissionalId, ativo: true }]);
+    setShowModal(false);
+    setNewSala({ nome: '', profissionalId: null });
+  };
+
+  const handleDelete = async (id: string) => {
+    const confirm = window.confirm('Deseja excluir esta sala?');
+    if (!confirm) return;
+    await excluirSala(id);
+    setSalas(prev => prev.filter(s => s.id !== id));
+  };
+
+  const toggleAtivo = async (s: Sala) => {
+    await atualizarSala(s.id, { ativo: !s.ativo });
+    setSalas(prev => prev.map(p => (p.id === s.id ? { ...p, ativo: !s.ativo } : p)));
+  };
+
+  const getNomeMedico = (id: string | null) => {
+    const med = medicos.find(m => m.id === id);
+    return med ? med.nome : '-';
+  };
+
+  return (
+    <>
+      <div className={layoutStyles.container}>
+        <div className={breadcrumbStyles.breadcrumbWrapper}>
+          <span className={breadcrumbStyles.breadcrumb}>
+            Menu Principal &gt; <span className={breadcrumbStyles.breadcrumb}>Cadastros &gt; </span>
+            <span className={breadcrumbStyles.breadcrumbActive}>Salas</span>
+          </span>
+        </div>
+        <h1 className={tableStyles.titleSalas}>Salas</h1>
+        <div className={tableStyles.subtitleSalas}>Lista de salas cadastradas</div>
+        <div className={tableStyles.actionButtonsWrapper}>
+          <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>
+            + Adicionar sala
+          </button>
+        </div>
+        <div className={tableStyles.salasTableWrapper}>
+          <table className={tableStyles.salasTable}>
+            <thead>
+              <tr>
+                <th>NOME</th>
+                <th>PROFISSIONAL</th>
+                <th>ATIVA</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {salas.map(s => (
+                <tr key={s.id}>
+                  {editingId === s.id ? (
+                    <>
+                      <td>
+                        <input name="nome" value={formData.nome} onChange={handleChange} />
+                      </td>
+                      <td>
+                        <select name="profissionalId" value={formData.profissionalId || ''} onChange={handleChange}>
+                          <option value="">Selecione</option>
+                          {medicos.map(m => (
+                            <option key={m.id} value={m.id}>
+                              {m.nome}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>{s.ativo ? 'Sim' : 'Não'}</td>
+                      <td>
+                        <button className={tableStyles.buttonAcao} onClick={() => saveEdit(s.id)}>
+                          Salvar
+                        </button>
+                        <button className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`} onClick={cancelEdit}>
+                          Cancelar
+                        </button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td>{s.nome}</td>
+                      <td>{getNomeMedico(s.profissionalId)}</td>
+                      <td>{s.ativo ? 'Sim' : 'Não'}</td>
+                      <td>
+                        <button className={tableStyles.buttonAcao} onClick={() => startEdit(s)}>
+                          Editar
+                        </button>
+                        <button className={tableStyles.buttonAcao} onClick={() => toggleAtivo(s)}>
+                          {s.ativo ? 'Desativar' : 'Ativar'}
+                        </button>
+                        <button className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`} onClick={() => handleDelete(s.id)}>
+                          Excluir
+                        </button>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {showModal && (
+        <div className={modalStyles.overlay} onClick={() => setShowModal(false)}>
+          <div className={modalStyles.modal} onClick={e => e.stopPropagation()}>
+            <button className={modalStyles.closeButton} onClick={() => setShowModal(false)}>
+              X
+            </button>
+            <h3>Nova Sala</h3>
+            <label className={modalStyles.label}>Nome</label>
+            <input name="nome" className={modalStyles.input} value={newSala.nome} onChange={handleNewChange} />
+            <label className={modalStyles.label}>Profissional</label>
+            <select name="profissionalId" className={modalStyles.input} value={newSala.profissionalId || ''} onChange={handleNewChange}>
+              <option value="">Selecione</option>
+              {medicos.map(m => (
+                <option key={m.id} value={m.id}>
+                  {m.nome}
+                </option>
+              ))}
+            </select>
+            <button className={modalStyles.buttonSalvar} onClick={createSala}>Salvar</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default Salas;

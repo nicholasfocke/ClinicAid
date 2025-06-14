@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import layoutStyles from '@/styles/admin/medico/medicos.module.css';
-import tableStyles from '@/styles/admin/convenio/convenios.module.css';
-import modalStyles from '@/styles/admin/convenio/novoConvenioModal.module.css';
+import tableStyles from '@/styles/admin/cadastros/convenio/convenios.module.css';
+import modalStyles from '@/styles/admin/cadastros/convenio/novoConvenioModal.module.css';
 import { buscarConvenios, excluirConvenio, atualizarConvenio, criarConvenio } from '@/functions/conveniosFunctions';
 
 interface Convenio {

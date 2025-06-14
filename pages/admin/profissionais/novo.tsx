@@ -52,6 +52,7 @@ interface MedicoForm {
   horaFim: string;
   almocoInicio: string;
   almocoFim: string;
+  intervaloConsultas: number;
   telefone: string;
   cpf: string;
   email: string;
@@ -74,6 +75,7 @@ const NovoMedico = () => {
     horaFim: '',
     almocoInicio: '',
     almocoFim: '',
+    intervaloConsultas: 0,
     telefone: '',
     cpf: '',
     email: '',
@@ -116,10 +118,11 @@ const NovoMedico = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    let newValue = value;
+    let newValue: string | number = value;
     if (name === 'cpf') newValue = formatCPF(value);
     if (name === 'telefone') newValue = formatTelefone(value);
-    setFormData((prev) => ({ ...prev, [name]: newValue }));
+    if (name === 'intervaloConsultas') { newValue = Number(value); }
+    setFormData((prev) => ({ ...prev, [name]: newValue as any }));
   };
 
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -223,6 +226,7 @@ const NovoMedico = () => {
         cpf: formData.cpf,
         email: formData.email,
         convenio: formData.convenio,
+        intervaloConsultas: formData.intervaloConsultas,
         foto: fotoUrl,
         fotoPath,
       });
@@ -313,6 +317,15 @@ const NovoMedico = () => {
           value={formData.almocoFim}
           onChange={handleChange}
           placeholder="Intervalo almoço fim"
+          className={styles.input}
+        />
+        <div className={styles.convenioHeader}>Intervalo entre consultas</div>
+        <input
+          type="number"
+          name="intervaloConsultas"
+          value={formData.intervaloConsultas}
+          onChange={handleChange}
+          placeholder="Intervalo das consultas (min)"
           className={styles.input}
         />
         <input name="telefone" value={formData.telefone} onChange={handleChange} placeholder="Telefone" className={styles.input} />

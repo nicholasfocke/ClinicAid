@@ -9,6 +9,7 @@ export interface Medico {
   nome: string;
   especialidade: string;
   diasAtendimento: string[];
+  intervaloConsultas?: number; // em minutos
   telefone?: string;
   cpf?: string;
   email?: string;
@@ -71,6 +72,7 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
       nome: formData.nome,
       especialidade: formData.especialidade,
       diasAtendimento: formData.diasAtendimento,
+      intervaloConsultas: formData.intervaloConsultas || 0, 
       telefone: formData.telefone || '',
       email: formData.email || '',
       convenio: formData.convenio
@@ -91,7 +93,8 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const newValue = name === 'intervaloConsultas' ? Number(value) : value;
+    setFormData(prev => ({ ...prev, [name]: newValue }));
   };
 
   const toggleDia = (dia: string) => {
@@ -243,6 +246,15 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                 className={styles.inputEditar}
                 placeholder="Email"
               />
+              <div className={styles.convenioHeader}>Intervalo entre consultas</div>
+              <input
+                type="number"
+                name="intervaloConsultas"
+                value={formData.intervaloConsultas}
+                onChange={handleChange}
+                className={styles.inputEditar}
+                placeholder="Intervalo das consultas (min)"
+              />
               <div className={styles.convenioHeader}>Convênios:</div>
               <div className={styles.conveniosBox}>
                 {convenios.map((c) => (
@@ -299,6 +311,11 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
               )}
               {medico.email && (
                 <div className={styles.medicoValor}>Email: {medico.email}</div>
+              )}
+              {medico.intervaloConsultas && (
+                <div className={styles.medicoValor}>
+                  Intervalo: {medico.intervaloConsultas} min
+                </div>
               )}
               {medico.convenio && (
                 <div className={styles.medicoValor}>Convênios: {' '} {Array.isArray(medico.convenio) ? medico.convenio.join(', ' ) 
