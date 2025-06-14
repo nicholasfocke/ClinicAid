@@ -6,11 +6,13 @@ import { useRouter } from 'next/router';
 import styles from "@/styles/admin/agendamentos.module.css";
 import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
 import { format, isAfter } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { ExternalLink, CheckCircle2 } from 'lucide-react';
 import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
 import Modal from 'react-modal';
 import { statusAgendamento, buscarAgendamentosPorData, criarAgendamento } from '@/functions/agendamentosFunction';
 import CreateAppointment from '@/components/modals/CreateAppointment';
+import { buscarHorariosPorMedico, ScheduleData } from '@/functions/scheduleFunctions';
 
 
 Modal.setAppElement('#__next');
@@ -69,11 +71,10 @@ const Agendamentos = () => {
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const standardTimes = [
-    '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '13:00', '13:30', '14:00', '14:30', '15:00',
-    '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30',
-  ];
+  const [horariosProfissional, setHorariosProfissional] = useState<ScheduleData[]>([]);
+  const [diasDisponiveis, setDiasDisponiveis] = useState<string[]>([]);
+
+
 
   // Novos estados para calendário/modal
   // const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -246,6 +247,31 @@ const fetchAgendamentos = async () => {
   }, [user]);
 
   useEffect(() => {
+    const loadSchedule = async () => {
+      if (!appointmentData.profissional) {
+        setHorariosProfissional([]);
+        setDiasDisponiveis([]);
+        return;
+      }
+      try {
+        const prof = profissionais.find(p => p.nome === appointmentData.profissional);
+        if (!prof) return;
+        const horarios = await buscarHorariosPorMedico(prof.id);
+        setHorariosProfissional(horarios as ScheduleData[]);
+        setDiasDisponiveis(horarios.map(h => h.dia));
+        if (appointmentData.date) {
+          fetchAvailableTimes(appointmentData.date, appointmentData.profissional);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar horários do profissional:', err);
+        setHorariosProfissional([]);
+        setDiasDisponiveis([]);
+      }
+    };
+    loadSchedule();
+  }, [appointmentData.profissional]);
+
+  useEffect(() => {
     fetchAgendamentos();
   }, [user]);
 
@@ -312,17 +338,86 @@ const fetchAgendamentos = async () => {
     setDetailsOpen(false);
   };
 
+  const getDayName = (dateStr: string) => {
+    const dateObj = new Date(dateStr + 'T00:00');
+    const name = format(dateObj, 'eeee', { locale: ptBR }).toLowerCase();
+    const map: Record<string, string> = {
+      'segunda-feira': 'Segunda',
+      'terça-feira': 'Terça',
+      'quarta-feira': 'Quarta',
+      'quinta-feira': 'Quinta',
+      'sexta-feira': 'Sexta',
+      'sábado': 'Sábado',
+      'domingo': 'Domingo',
+    };
+    return map[name];
+  };
+
+  const generateTimes = (
+    inicio: string,
+    fim: string,
+    almocoInicio?: string,
+    almocoFim?: string,
+    step = 30
+  ) => {
+    const times: string[] = [];
+    const [sh, sm] = inicio.split(':').map(Number);
+    const [eh, em] = fim.split(':').map(Number);
+    const start = new Date();
+    start.setHours(sh, sm, 0, 0);
+    const end = new Date();
+    end.setHours(eh, em, 0, 0);
+    let breakStart: Date | null = null;
+    let breakEnd: Date | null = null;
+    if (almocoInicio && almocoFim) {
+      breakStart = new Date();
+      breakEnd = new Date();
+      const [bsh, bsm] = almocoInicio.split(':').map(Number);
+      const [beh, bem] = almocoFim.split(':').map(Number);
+      breakStart.setHours(bsh, bsm, 0, 0);
+      breakEnd.setHours(beh, bem, 0, 0);
+    }
+    for (let d = new Date(start); d <= end; d.setMinutes(d.getMinutes() + step)) {
+      if (breakStart && breakEnd && d >= breakStart && d < breakEnd) {
+        continue;
+      }
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      times.push(`${hh}:${mm}`);
+    }
+    return times;
+  };
+
+  const getScheduleForDate = (dateStr: string) => {
+    const dayName = getDayName(dateStr);
+    return (
+      horariosProfissional.find(h => h.dia === dateStr) ||
+      horariosProfissional.find(h => h.dia === dayName)
+    );
+  };
+
   const fetchAvailableTimes = async (date: string, profissional: string) => {
     if (!date || !profissional) {
       setAvailableTimes([]);
       return;
     }
     try {
+      const schedule = getScheduleForDate(date);
+      if (!schedule) {
+        setAvailableTimes([]);
+        return;
+      }
       const ags = await buscarAgendamentosPorData(date);
       const reserved = ags
         .filter(ag => ag.profissional === profissional)
         .map(ag => ag.hora.trim());
-      setAvailableTimes(standardTimes.filter(t => !reserved.includes(t)));
+      const generated = generateTimes(
+        schedule.horaInicio,
+        schedule.horaFim,
+        schedule.almocoInicio,
+        schedule.almocoFim
+      );
+      setAvailableTimes(generated.filter(t => !reserved.includes(t)));
     } catch (e) {
       console.error('Erro ao buscar horários:', e);
       setAvailableTimes([]);
@@ -460,6 +555,7 @@ const fetchAgendamentos = async () => {
         availableTimes={availableTimes}
         profissionais={profissionais}
         fetchAvailableTimes={fetchAvailableTimes}
+        availableDays={diasDisponiveis}
       />
 
       {/* Calendário removido */}

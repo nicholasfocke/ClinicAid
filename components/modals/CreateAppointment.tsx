@@ -39,6 +39,7 @@ interface Props {
   availableTimes: string[];
   profissionais: { id: string; nome: string }[];
   fetchAvailableTimes: (date: string, profissional: string) => void;
+  availableDays: string[];
 }
 
 const CreateAppointmentModal: React.FC<Props> = ({
@@ -51,6 +52,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
   availableTimes,
   profissionais,
   fetchAvailableTimes,
+  availableDays,
 }) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedPeriod, setSelectedPeriod] = useState<'Manhã' | 'Tarde' | 'Noite'>('Manhã');
@@ -66,6 +68,26 @@ const CreateAppointmentModal: React.FC<Props> = ({
       days.push(d);
     }
     return days;
+  };
+
+  const getDayLabel = (day: Date) => {
+    const name = format(day, 'eeee', { locale: ptBR }).toLowerCase();
+    const map: Record<string, string> = {
+      'segunda-feira': 'Segunda',
+      'terça-feira': 'Terça',
+      'quarta-feira': 'Quarta',
+      'quinta-feira': 'Quinta',
+      'sexta-feira': 'Sexta',
+      'sábado': 'Sábado',
+      'domingo': 'Domingo',
+    };
+    return map[name];
+  };
+
+  const isDayEnabled = (day: Date) => {
+    const dateStr = format(day, 'yyyy-MM-dd');
+    const label = getDayLabel(day);
+    return availableDays.includes(dateStr) || availableDays.includes(label);
   };
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -134,6 +156,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
 
   // Corrija: use o índice correto do dia clicado em daysOfMonth
   const handleDayClick = (date: Date) => {
+    if (!isDayEnabled(date)) return;
     setSelectedDate(date);
     const formatted = format(date, 'yyyy-MM-dd');
     setAppointmentData((prev: any) => ({ ...prev, date: formatted, time: '' }));
@@ -375,7 +398,8 @@ const CreateAppointmentModal: React.FC<Props> = ({
               key={day.toDateString()}
               type="button"
               onClick={() => handleDayClick(day)}
-              className={`${styles.dayCard} ${isSameDay(day, selectedDate) ? styles.activeDay : ''}`}
+              disabled={!isDayEnabled(day)}
+              className={`${styles.dayCard} ${isSameDay(day, selectedDate) ? styles.activeDay : ''} ${!isDayEnabled(day) ? styles.disabledDay : ''}`}
             >
               <div className={styles.dayName}>{format(day, 'EEE', { locale: ptBR })}</div>
               <div className={styles.dayNumber}>{format(day, 'dd')}</div>
