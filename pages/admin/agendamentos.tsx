@@ -48,9 +48,7 @@ const Agendamentos = () => {
 
   const [todayAppointments, setTodayAppointments] = useState<Agendamento[]>([]);
   const [upcomingAppointments, setUpcomingAppointments] = useState<Agendamento[]>([]);
-  const [profissionais, setProfissionais] = useState<Profissional[]>([
-    { id: 'emilio', nome: 'Emilio', empresaId: 'default' }
-  ]);
+  const [profissionais, setProfissionais] = useState<Profissional[]>([]);
 
   const [selectedAppointment, setSelectedAppointment] = useState<Agendamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -241,11 +239,6 @@ const fetchAgendamentos = async () => {
         empresaId: doc.data().empresaId,
       }));
 
-      // Garante que Emilio sempre aparece na lista
-      const emilioExists = profs.some(p => p.nome === 'Emilio');
-      if (!emilioExists) {
-        profs.unshift({ id: 'emilio', nome: 'Emilio', empresaId });
-      }
       setProfissionais(profs);
     };
 
