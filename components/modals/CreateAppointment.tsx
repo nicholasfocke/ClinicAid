@@ -6,7 +6,6 @@ import { ptBR } from 'date-fns/locale';
 import { auth, firestore } from '@/firebase/firebaseConfig';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
-import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 
 const getPeriod = (time: string) => {
   const [h, m] = time.split(':').map(Number);
@@ -38,7 +37,8 @@ interface Props {
   setAppointmentData: React.Dispatch<React.SetStateAction<any>>;
   availableTimes: string[];
   profissionais: { id: string; nome: string }[];
-  fetchAvailableTimes: (date: string, profissional: string) => void;
+  procedimentos: { id: string; nome: string; duracao: number }[];
+  fetchAvailableTimes: (date: string, profissional: string, duracao?: number) => void;
 }
 
 const CreateAppointmentModal: React.FC<Props> = ({
@@ -50,6 +50,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
   setAppointmentData,
   availableTimes,
   profissionais,
+  procedimentos,
   fetchAvailableTimes,
 }) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
@@ -137,7 +138,8 @@ const CreateAppointmentModal: React.FC<Props> = ({
     setSelectedDate(date);
     const formatted = format(date, 'yyyy-MM-dd');
     setAppointmentData((prev: any) => ({ ...prev, date: formatted, time: '' }));
-    fetchAvailableTimes(formatted, appointmentData.profissional);
+    const proc = procedimentos.find(p => p.nome === appointmentData.procedimento);
+    fetchAvailableTimes(formatted, appointmentData.profissional, proc?.duracao);
     setSelectedPeriod('Manhã');
     setTimeout(() => {
       if (timesContainerRef.current) timesContainerRef.current.scrollTo({ left: 0 });
@@ -166,7 +168,6 @@ const CreateAppointmentModal: React.FC<Props> = ({
   // Novo estado para controlar o índice de scroll dos horários
   const [timesScrollIndex, setTimesScrollIndex] = useState(0);
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
-  const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
   const [userInfo, setUserInfo] = useState<{ nome: string } | null>(null);
 
   // Atualiza o índice de scroll dos horários ao mudar o período
@@ -178,12 +179,8 @@ const CreateAppointmentModal: React.FC<Props> = ({
     const fetchData = async () => {
       if (isOpen) {
         try {
-          const [convDocs, procDocs] = await Promise.all([
-            buscarConvenios(),
-            buscarProcedimentos(),
-          ]);
+          const convDocs = await buscarConvenios();
           setConvenios(convDocs as any);
-          setProcedimentos(procDocs as any);
 
           const current = auth.currentUser;
           if (current) {
@@ -515,7 +512,8 @@ const CreateAppointmentModal: React.FC<Props> = ({
             onChange={(e) => {
               setAppointmentData((prev: any) => ({ ...prev, profissional: e.target.value }));
               if (appointmentData.date) {
-                fetchAvailableTimes(appointmentData.date, e.target.value);
+                const proc = procedimentos.find(p => p.nome === appointmentData.procedimento);
+                fetchAvailableTimes(appointmentData.date, e.target.value, proc?.duracao);
               }
             }}
             required
@@ -553,7 +551,13 @@ const CreateAppointmentModal: React.FC<Props> = ({
         <div className={styles.selectGroup}>
           <select
             value={appointmentData.procedimento}
-            onChange={e => setAppointmentData((prev: typeof appointmentData) => ({ ...prev, procedimento: e.target.value }))}
+            onChange={e => {
+              setAppointmentData((prev: typeof appointmentData) => ({ ...prev, procedimento: e.target.value }));
+              const proc = procedimentos.find(p => p.nome === e.target.value);
+              if (appointmentData.date && appointmentData.profissional && proc) {
+                fetchAvailableTimes(appointmentData.date, appointmentData.profissional, proc.duracao);
+              }
+            }}
             className={styles.selectStyled}
           >
             <option value="">Selecione o procedimento</option>
