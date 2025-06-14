@@ -7,13 +7,10 @@ export interface ProcedimentoData {
   duracao: number;
   convenio: boolean;
   tipo: 'consulta' | 'exame';
-  profissionalId?: string;
 }
 
-export const buscarProcedimentos = async (profissionalId?: string) => {
-  const ref = collection(firestore, 'procedimentos');
-  const qRef = profissionalId ? query(ref, where('profissionalId', '==', profissionalId)) : ref;
-  const snap = await getDocs(qRef);
+export const buscarProcedimentos = async () => {
+  const snap = await getDocs(collection(firestore, 'procedimentos'));
   return snap.docs.map(doc => ({ id: doc.id, ...(doc.data() as ProcedimentoData) }));
 };
 
@@ -29,11 +26,8 @@ export const atualizarProcedimento = async (id: string, data: Partial<Procedimen
   await updateDoc(doc(firestore, 'procedimentos', id), data);
 };
 
-export const buscarConsultas = async (profissionalId?: string) => {
-  let qRef = query(collection(firestore, 'procedimentos'), where('tipo', '==', 'consulta'));
-  if (profissionalId) {
-    qRef = query(collection(firestore, 'procedimentos'), where('tipo', '==', 'consulta'), where('profissionalId', '==', profissionalId));
-  }
-  const snap = await getDocs(qRef);
+export const buscarConsultas = async () => {
+  const q = query(collection(firestore, 'procedimentos'), where('tipo', '==', 'consulta'));
+  const snap = await getDocs(q);
   return snap.docs.map(doc => ({ id: doc.id, ...(doc.data() as ProcedimentoData) }));
 };

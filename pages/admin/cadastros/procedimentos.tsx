@@ -7,7 +7,6 @@ import layoutStyles from '@/styles/admin/medico/medicos.module.css';
 import tableStyles from '@/styles/admin/cadastros/procedimento/procedimentos.module.css';
 import modalStyles from '@/styles/admin/cadastros/procedimento/novoProcedimentoModal.module.css';
 import { buscarProcedimentos, criarProcedimento, excluirProcedimento, atualizarProcedimento,ProcedimentoData, } from '@/functions/procedimentosFunctions';
-import { buscarMedicos } from '@/functions/medicosFunctions';
 
 const formatValor = (valor: number) =>
   valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -30,7 +29,6 @@ const Procedimentos = () => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [procedimentos, setProcedimentos] = useState<Procedimento[]>([]);
-  const [medicos, setMedicos] = useState<{ id: string; nome: string }[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProcedimentoData>({
@@ -39,7 +37,6 @@ const Procedimentos = () => {
     duracao: 0,
     convenio: false,
     tipo: 'consulta',
-    profissionalId: '',
   });
   const [newProc, setNewProc] = useState<ProcedimentoData>({
     nome: '',
@@ -47,7 +44,6 @@ const Procedimentos = () => {
     duracao: 0,
     convenio: false,
     tipo: 'consulta',
-    profissionalId: '',
   });
   const [valorInput, setValorInput] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -83,8 +79,6 @@ const Procedimentos = () => {
     const fetchData = async () => {
       const docs = await buscarProcedimentos();
       setProcedimentos(docs as Procedimento[]);
-      const meds = await buscarMedicos();
-      setMedicos(meds.map(m => ({ id: m.id, nome: m.nome })));
     };
     fetchData();
   }, []);
@@ -97,7 +91,7 @@ const Procedimentos = () => {
 
   const startEdit = (p: Procedimento) => {
     setEditingId(p.id);
-    setFormData({ nome: p.nome, valor: p.valor, duracao: p.duracao, convenio: p.convenio, tipo: p.tipo, profissionalId: p.profissionalId || '' });
+    setFormData({ nome: p.nome, valor: p.valor, duracao: p.duracao, convenio: p.convenio, tipo: p.tipo });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -148,7 +142,7 @@ const Procedimentos = () => {
     await criarProcedimento(newProc);
     setProcedimentos(prev => [...prev, { id: Date.now().toString(), ...newProc }]);
     setShowModal(false);
-    setNewProc({ nome: '', valor: 0, duracao: 0, convenio: false, tipo: 'consulta', profissionalId: '' });
+    setNewProc({ nome: '', valor: 0, duracao: 0, convenio: false, tipo: 'consulta' });
     setValorInput('');
     setError(null);
   };
@@ -203,7 +197,6 @@ const Procedimentos = () => {
               <th>NOME</th>
               <th>VALOR</th>
               <th>DURAÇÃO (min)</th>
-              <th>PROFISSIONAL</th>
               <th>CONVÊNIO</th>
               <th>TIPO</th>
               <th></th>
@@ -222,14 +215,6 @@ const Procedimentos = () => {
                     </td>
                     <td>
                       <input type="number" name="duracao" value={formData.duracao} onChange={handleChange} className={tableStyles.inputEdit} />
-                    </td>
-                    <td>
-                      <select name="profissionalId" value={formData.profissionalId} onChange={handleChange} className={tableStyles.inputEdit}>
-                        <option value="">Selecione</option>
-                        {medicos.map(m => (
-                          <option key={m.id} value={m.id}>{m.nome}</option>
-                        ))}
-                      </select>
                     </td>
                     <td>
                       <input type="checkbox" name="convenio" checked={formData.convenio} onChange={handleChange} />
@@ -252,7 +237,6 @@ const Procedimentos = () => {
                     <td>{p.nome}</td>
                     <td>{formatValor(p.valor)}</td>
                     <td>{p.duracao}</td>
-                    <td>{medicos.find(m => m.id === p.profissionalId)?.nome || '-'}</td>
                     <td>{p.convenio ? 'Sim' : 'Não'}</td>
                     <td>
                       <span
@@ -323,18 +307,6 @@ const Procedimentos = () => {
               value={newProc.duracao}
               onChange={handleNewChange}
             />
-            <label className={modalStyles.label}>Profissional</label>
-            <select
-              name="profissionalId"
-              className={modalStyles.input}
-              value={newProc.profissionalId}
-              onChange={handleNewChange}
-            >
-              <option value="">Selecione</option>
-              {medicos.map(m => (
-                <option key={m.id} value={m.id}>{m.nome}</option>
-              ))}
-            </select>
             <label className={modalStyles.label}>Convênio?</label>
             <input
               type="checkbox"

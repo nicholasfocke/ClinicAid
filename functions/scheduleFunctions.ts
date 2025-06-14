@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc, query, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 
 export interface ScheduleData {
@@ -16,14 +16,6 @@ export const criarHorario = async (medicoId: string, data: ScheduleData) => {
 export const buscarHorariosPorMedico = async (medicoId: string) => {
   const snap = await getDocs(collection(firestore, `profissionais/${medicoId}/horarios`));
   return snap.docs.map(doc => ({ id: doc.id, ...(doc.data() as ScheduleData) }));
-};
-
-export const buscarHorarioPorDia = async (medicoId: string, dia: string) => {
-  const q = query(collection(firestore, `profissionais/${medicoId}/horarios`), where('dia', '==', dia));
-  const snap = await getDocs(q);
-  if (snap.empty) return null;
-  const docData = snap.docs[0];
-  return { id: docData.id, ...(docData.data() as ScheduleData) };
 };
 
 export const excluirHorario = async (medicoId: string, id: string) => {

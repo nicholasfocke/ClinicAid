@@ -10,8 +10,6 @@ import { ExternalLink, CheckCircle2 } from 'lucide-react';
 import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
 import Modal from 'react-modal';
 import { statusAgendamento, buscarAgendamentosPorData, criarAgendamento } from '@/functions/agendamentosFunction';
-import { buscarHorarioPorDia } from '@/functions/scheduleFunctions';
-import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 import CreateAppointment from '@/components/modals/CreateAppointment';
 
 
@@ -70,12 +68,6 @@ const Agendamentos = () => {
   });
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [procedimentosProf, setProcedimentosProf] = useState<{
-    id: string;
-    nome: string;
-    duracao: number;
-    profissionalId?: string;
-  }[]>([]);
 
   const standardTimes = [
     '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -257,27 +249,6 @@ const fetchAgendamentos = async () => {
     fetchAgendamentos();
   }, [user]);
 
-  useEffect(() => {
-    const loadProcedimentos = async () => {
-      if (!createModalOpen || !appointmentData.profissional) {
-        setProcedimentosProf([]);
-        return;
-      }
-      const prof = profissionais.find(p => p.nome === appointmentData.profissional);
-      if (!prof) {
-        setProcedimentosProf([]);
-        return;
-      }
-      try {
-        const procs = await buscarProcedimentos(prof.id);
-        setProcedimentosProf(procs as any);
-      } catch {
-        setProcedimentosProf([]);
-      }
-    };
-    loadProcedimentos();
-  }, [appointmentData.profissional, createModalOpen]);
-
   const handleRemove = async (id: string) => {
     const confirmDelete = window.confirm('Deseja excluir o agendamento?');
     if (!confirmDelete) return;
@@ -341,43 +312,7 @@ const fetchAgendamentos = async () => {
     setDetailsOpen(false);
   };
 
-  const gerarSlots = (
-    inicio: string,
-    fim: string,
-    passo: number,
-    almocoInicio?: string,
-    almocoFim?: string
-  ) => {
-    const results: string[] = [];
-    const [hStart, mStart] = inicio.split(':').map(Number);
-    const [hEnd, mEnd] = fim.split(':').map(Number);
-    let current = new Date();
-    current.setHours(hStart, mStart, 0, 0);
-    const endDate = new Date();
-    endDate.setHours(hEnd, mEnd, 0, 0);
-    while (current <= endDate) {
-      const timeStr = `${current.getHours().toString().padStart(2, '0')}:${current
-        .getMinutes()
-        .toString()
-        .padStart(2, '0')}`;
-      const inAlmoco =
-        almocoInicio &&
-        almocoFim &&
-        timeStr >= almocoInicio &&
-        timeStr < almocoFim;
-      if (!inAlmoco && current < endDate) {
-        results.push(timeStr);
-      }
-      current = new Date(current.getTime() + passo * 60000);
-    }
-    return results;
-  };
-
-  const fetchAvailableTimes = async (
-    date: string,
-    profissional: string,
-    duracao?: number
-  ) => {
+  const fetchAvailableTimes = async (date: string, profissional: string) => {
     if (!date || !profissional) {
       setAvailableTimes([]);
       return;
@@ -387,31 +322,7 @@ const fetchAgendamentos = async () => {
       const reserved = ags
         .filter(ag => ag.profissional === profissional)
         .map(ag => ag.hora.trim());
-
-      const prof = profissionais.find(p => p.nome === profissional);
-      if (!prof) {
-        setAvailableTimes([]);
-        return;
-      }
-      const diaSemana = new Date(date).toLocaleDateString('pt-BR', {
-        weekday: 'long',
-      });
-      const dia = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
-      const horario = await buscarHorarioPorDia(prof.id, dia);
-      if (!horario) {
-        setAvailableTimes([]);
-        return;
-      }
-
-      const step = duracao || 30;
-      const generated = gerarSlots(
-        horario.horaInicio,
-        horario.horaFim,
-        step,
-        horario.almocoInicio,
-        horario.almocoFim
-      );
-      setAvailableTimes(generated.filter(t => !reserved.includes(t)));
+      setAvailableTimes(standardTimes.filter(t => !reserved.includes(t)));
     } catch (e) {
       console.error('Erro ao buscar horários:', e);
       setAvailableTimes([]);
@@ -548,7 +459,6 @@ const fetchAgendamentos = async () => {
         setAppointmentData={setAppointmentData}
         availableTimes={availableTimes}
         profissionais={profissionais}
-        procedimentos={procedimentosProf}
         fetchAvailableTimes={fetchAvailableTimes}
       />
 
