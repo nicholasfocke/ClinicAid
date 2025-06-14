@@ -273,17 +273,16 @@ const CreateAppointmentModal: React.FC<Props> = ({
     }
   };
 
-  // Ao clicar no período, faz scroll até o primeiro horário daquele período
+  // Botão de período: apenas faz scroll até o primeiro horário do período, não filtra
   const handlePeriodClick = (period: 'Manhã' | 'Tarde' | 'Noite') => {
     setSelectedPeriod(period);
     setTimeout(() => {
-      if (timesContainerRef.current && availableTimes.length > 0) {
-        const idx = getFirstIndexOfPeriod(availableTimes, period);
+      if (timesContainerRef.current && horariosGerados.length > 0) {
+        const idx = horariosGerados.findIndex((time) => getPeriod(time) === period);
         if (idx >= 0) {
-          const btns = timesContainerRef.current.querySelectorAll('button');
+          const btns = Array.from(timesContainerRef.current.querySelectorAll('button'));
           if (btns[idx]) {
-            const btn = btns[idx] as HTMLElement;
-            btn.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+            (btns[idx] as HTMLElement).scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
           }
         }
       }
@@ -291,25 +290,24 @@ const CreateAppointmentModal: React.FC<Props> = ({
   };
 
   // Estado para profissionais cadastrados no sistema
-  const [profissionaisCadastrados, setProfissionaisCadastrados] = useState<{ id: string; nome: string, horaInicio?: string, horaFim?: string, almocoInicio?: string, almocoFim?: string, intervaloConsultas?: number }[]>([]);
+  const [profissionaisCadastrados, setProfissionaisCadastrados] = useState<
+    { id: string; nome: string; procedimentos?: string[]; convenio?: string[] }[]
+  >([]);
 
   // Buscar profissionais do Firestore ao abrir o modal
   useEffect(() => {
     const fetchProfissionais = async () => {
       try {
         const snap = await getDocs(collection(firestore, 'profissionais'));
-        const list: { id: string; nome: string, horaInicio?: string, horaFim?: string, almocoInicio?: string, almocoFim?: string, intervaloConsultas?: number }[] = [];
+        const list: { id: string; nome: string; procedimentos?: string[]; convenio?: string[] }[] = [];
         snap.forEach(doc => {
           const data = doc.data();
           if (data.nome) {
             list.push({
               id: doc.id,
               nome: data.nome,
-              horaInicio: data.horaInicio || '',
-              horaFim: data.horaFim || '',
-              almocoInicio: data.almocoInicio || '',
-              almocoFim: data.almocoFim || '',
-              intervaloConsultas: Number(data.intervaloConsultas) || 15, // padrão 15 min
+              procedimentos: Array.isArray(data.procedimentos) ? data.procedimentos : [],
+              convenio: Array.isArray(data.convenio) ? data.convenio : [],
             });
           }
         });
@@ -321,15 +319,18 @@ const CreateAppointmentModal: React.FC<Props> = ({
     if (isOpen) fetchProfissionais();
   }, [isOpen]);
 
-  // Novo: buscar dados do profissional selecionado
-  const [profissionalSelecionado, setProfissionalSelecionado] = useState<any>(null);
+  // Novo: procedimentos e convenios do profissional selecionado
+  const [procedimentosProfissional, setProcedimentosProfissional] = useState<string[]>([]);
+  const [conveniosProfissional, setConveniosProfissional] = useState<string[]>([]);
 
   useEffect(() => {
     if (appointmentData.profissional) {
       const prof = profissionaisCadastrados.find(p => p.nome === appointmentData.profissional);
-      setProfissionalSelecionado(prof || null);
+      setProcedimentosProfissional(prof?.procedimentos || []);
+      setConveniosProfissional(prof?.convenio || []);
     } else {
-      setProfissionalSelecionado(null);
+      setProcedimentosProfissional([]);
+      setConveniosProfissional([]);
     }
   }, [appointmentData.profissional, profissionaisCadastrados]);
 
@@ -680,7 +681,12 @@ const CreateAppointmentModal: React.FC<Props> = ({
           <select
             value={appointmentData.profissional}
             onChange={(e) => {
-              setAppointmentData((prev: any) => ({ ...prev, profissional: e.target.value }));
+              setAppointmentData((prev: any) => ({
+                ...prev,
+                profissional: e.target.value,
+                convenio: '',
+                procedimento: '',
+              }));
               if (appointmentData.date) {
                 fetchAvailableTimes(appointmentData.date, e.target.value);
               }
@@ -703,32 +709,40 @@ const CreateAppointmentModal: React.FC<Props> = ({
           />
         </div>
 
-        <div className={styles.selectGroup}>
-          <select
-            value={appointmentData.convenio}
-            onChange={e => setAppointmentData((prev: typeof appointmentData) => ({ ...prev, convenio: e.target.value }))}
-            className={styles.selectStyled}
-          >
-            <option value="">Selecione o convênio</option>
-            <option value="Particular">Particular</option>
-            {convenios.map(c => (
-              <option key={c.id} value={c.nome}>{c.nome}</option>
-            ))}
-          </select>
-        </div>
+        {/* Convenio só aparece após selecionar profissional */}
+        {appointmentData.profissional && (
+          <div className={styles.selectGroup}>
+            <select
+              value={appointmentData.convenio}
+              onChange={e => setAppointmentData((prev: typeof appointmentData) => ({ ...prev, convenio: e.target.value }))
+              }
+              className={styles.selectStyled}
+            >
+              <option value="">Selecione o convênio</option>
+              <option value="Particular">Particular</option>
+              {conveniosProfissional.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
-        <div className={styles.selectGroup}>
-          <select
-            value={appointmentData.procedimento}
-            onChange={e => setAppointmentData((prev: typeof appointmentData) => ({ ...prev, procedimento: e.target.value }))}
-            className={styles.selectStyled}
-          >
-            <option value="">Selecione o procedimento</option>
-            {procedimentos.map(p => (
-              <option key={p.id} value={p.nome}>{p.nome}</option>
-            ))}
-          </select>
-        </div>
+        {/* Procedimento só aparece após selecionar profissional */}
+        {appointmentData.profissional && (
+          <div className={styles.selectGroup}>
+            <select
+              value={appointmentData.procedimento}
+              onChange={e => setAppointmentData((prev: typeof appointmentData) => ({ ...prev, procedimento: e.target.value }))
+              }
+              className={styles.selectStyled}
+            >
+              <option value="">Selecione o procedimento</option>
+              {procedimentosProfissional.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Descrição menor */}

@@ -12,6 +12,7 @@ export interface MedicoData {
   intervaloConsultas?: number; // em minutos
   foto?: string;
   fotoPath?: string;
+  procedimentos?: string[]; // garantir campo procedimentos
 }
 
 export const buscarMedicos = async () => {
@@ -30,7 +31,12 @@ export const medicoExiste = async (cpf: string, email: string) => {
 };
 
 export const criarMedico = async (data: MedicoData) => {
-  const ref = await addDoc(collection(firestore, 'profissionais'), data);
+  // Garante que procedimentos seja array (mesmo se vier undefined)
+  const dataToSave = {
+    ...data,
+    procedimentos: Array.isArray(data.procedimentos) ? data.procedimentos : [],
+  };
+  const ref = await addDoc(collection(firestore, 'profissionais'), dataToSave);
   return ref;
 };
 
@@ -39,5 +45,12 @@ export const excluirMedico = async (id: string) => {
 };
 
 export const atualizarMedico = async (id: string, data: Partial<MedicoData>) => {
-  await updateDoc(doc(firestore, 'profissionais', id), data);
+  // Garante que procedimentos seja array (mesmo se vier undefined)
+  const dataToUpdate = {
+    ...data,
+    ...(data.procedimentos !== undefined
+      ? { procedimentos: Array.isArray(data.procedimentos) ? data.procedimentos : [] }
+      : {}),
+  };
+  await updateDoc(doc(firestore, 'profissionais', id), dataToUpdate);
 };

@@ -18,6 +18,7 @@ export interface Medico {
   convenio: string[];
   foto?: string;
   fotoPath?: string;
+  procedimentos?: string[]; // novo campo opcional
 }
 
 interface DoctorCardProps {
@@ -344,6 +345,11 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
               {medico.convenio && (
                 <div className={styles.medicoValor}>Convênios: {' '} {Array.isArray(medico.convenio) ? medico.convenio.join(', ' ) 
                   : medico.convenio}</div>
+              )}
+              {medico.procedimentos && medico.procedimentos.length > 0 && (
+                <div className={styles.medicoValor}>
+                  Procedimentos: {medico.procedimentos.join(', ')}
+                </div>
               )}
               {/* Mostra horários cadastrados */}
               <div className={styles.convenioHeader}>Horários cadastrados:</div>

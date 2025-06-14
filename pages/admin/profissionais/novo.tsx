@@ -3,7 +3,7 @@ import { auth } from '@/firebase/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { criarMedico, medicoExiste } from '@/functions/medicosFunctions';
 import { criarHorario } from '@/functions/scheduleFunctions';
-import { buscarConsultas } from '@/functions/procedimentosFunctions';
+import { buscarConsultas, buscarProcedimentos } from '@/functions/procedimentosFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
@@ -62,6 +62,7 @@ interface MedicoForm {
   convenio: string[];
   foto?: string;
   fotoPath?: string;
+  procedimentos: string[]; // novo campo
 }
 
 interface Convenio {
@@ -87,10 +88,12 @@ const NovoMedico = () => {
     telefone: '',
     cpf: '',
     email: '',
-    convenio: []
+    convenio: [],
+    procedimentos: [],
   });
   const [convenios, setConvenios] = useState<Convenio[]>([])
   const [consultas, setConsultas] = useState<{ id: string; nome: string }[]>([]);
+  const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
@@ -128,6 +131,8 @@ const NovoMedico = () => {
         setConvenios(fetchedConvenios);
         const fetchedConsultas = await buscarConsultas();
         setConsultas(fetchedConsultas);
+        const fetchedProcedimentos = await buscarProcedimentos();
+        setProcedimentos(fetchedProcedimentos);
       } catch (error) {
         console.error('Erro ao buscar convênios ou consultas:', error);
       }
@@ -174,6 +179,12 @@ const NovoMedico = () => {
       else atual.delete(value);
       return { ...prev, convenio: Array.from(atual) };
     });
+  };
+
+  // Novo: handle para procedimentos múltiplos
+  const handleProcedimentosChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
+    setFormData(prev => ({ ...prev, procedimentos: selected }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -274,7 +285,8 @@ const NovoMedico = () => {
         convenio: formData.convenio,
         intervaloConsultas: Number(formData.intervaloConsultas),
         foto: fotoUrl,
-        fotoPath
+        fotoPath,
+        procedimentos: formData.procedimentos, // salva procedimentos
       });
 
       if (medicoRef && formData.diasAtendimento.length > 0) {
@@ -392,6 +404,28 @@ const NovoMedico = () => {
                 onChange={handleCheckConvenio}
               />
               {c.nome}
+            </label>
+          ))}
+        </div>
+        <div className={styles.convenioHeader}>Selecione os procedimentos realizados:</div>
+        <div className={styles.conveniosBox}>
+          {procedimentos.map((p) => (
+            <label key={p.id} className={styles.conveniosItem}>
+              <input
+                type="checkbox"
+                value={p.nome}
+                checked={formData.procedimentos.includes(p.nome)}
+                onChange={e => {
+                  const { value, checked } = e.target;
+                  setFormData(prev => {
+                    const atual = new Set(prev.procedimentos);
+                    if (checked) atual.add(value);
+                    else atual.delete(value);
+                    return { ...prev, procedimentos: Array.from(atual) };
+                  });
+                }}
+              />
+              {p.nome}
             </label>
           ))}
         </div>
