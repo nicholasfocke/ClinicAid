@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/firebase/firebaseConfig';
+import { useRouter } from 'next/router';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import layoutStyles from '@/styles/admin/medico/medicos.module.css';
 import tableStyles from '@/styles/admin/cadastros/salas/salas.module.css';
@@ -18,13 +21,41 @@ interface Medico {
   nome: string;
 }
 
+interface User {
+    uid: string;
+    email: string;
+}
+
 const Salas = () => {
+  const [error, setError] = useState('');
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [salas, setSalas] = useState<Sala[]>([]);
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<{ nome: string; profissionalId: string | null }>({ nome: '', profissionalId: null });
   const [showModal, setShowModal] = useState(false);
   const [newSala, setNewSala] = useState<{ nome: string; profissionalId: string | null }>({ nome: '', profissionalId: null });
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      try {
+        if (currentUser) {
+          setUser({
+            uid: currentUser.uid,
+            email: currentUser.email || '',
+          });
+        } else {
+          router.push('/auth/login');
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        setError('Erro ao verificar autenticação.');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   useEffect(() => {
     const fetchData = async () => {

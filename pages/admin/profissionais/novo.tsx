@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { auth } from '@/firebase/firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
 import { criarMedico, medicoExiste } from '@/functions/medicosFunctions';
 import { criarHorario } from '@/functions/scheduleFunctions';
 import { buscarConsultas } from '@/functions/procedimentosFunctions';
@@ -8,6 +10,7 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+
 
 
 const formatCPF = (value: string) => {
@@ -66,6 +69,11 @@ interface Convenio {
   nome: string;
 }
 
+interface User {
+  uid: string;
+  email: string;
+}
+
 const NovoMedico = () => {
   const [formData, setFormData] = useState<MedicoForm>({
     nome: '',
@@ -87,9 +95,31 @@ const NovoMedico = () => {
   const [error, setError] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [user, setUser] = useState<User | null>(null); 
   const router = useRouter();
 
   const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+
+  
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      try {
+        if (currentUser) {
+          setUser({
+            uid: currentUser.uid,
+            email: currentUser.email || '',
+          });
+        } else {
+          router.push('/auth/login');
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        setError('Erro ao verificar autenticação.');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   useEffect(() => {
     (async () => {

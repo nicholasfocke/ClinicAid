@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/firebase/firebaseConfig';
+import { useRouter } from 'next/router';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import layoutStyles from '@/styles/admin/medico/medicos.module.css';
 import tableStyles from '@/styles/admin/cadastros/convenio/convenios.module.css';
@@ -13,6 +16,11 @@ interface Convenio {
   telefone?: string;
 }
 
+interface User {
+  uid: string;
+  email: string;
+}
+
 const formatTelefone = (value: string) => {
   return value
     .replace(/\D/g, '')
@@ -22,6 +30,8 @@ const formatTelefone = (value: string) => {
 };
 
 const Convenios = () => {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +48,26 @@ const Convenios = () => {
     comissao: 0,
     telefone: '',
   });
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      try {
+        if (currentUser) {
+          setUser({
+            uid: currentUser.uid,
+            email: currentUser.email || '',
+          });
+        } else {
+          router.push('/auth/login');
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        setError('Erro ao verificar autenticação.');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   useEffect(() => {
     const fetchData = async () => {

@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/firebase/firebaseConfig';
+import { useRouter } from 'next/router';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import layoutStyles from '@/styles/admin/medico/medicos.module.css';
 import tableStyles from '@/styles/admin/cadastros/formapagamentos/formasPagamento.module.css';
 import modalStyles from '@/styles/admin/cadastros/formapagamentos/novoFormaPagamentoModal.module.css';
-import {
-  buscarFormasPagamento,
-  criarFormaPagamento,
-  excluirFormaPagamento,
-  atualizarFormaPagamento,
-} from '@/functions/formasPagamentosFunctions';
+import { buscarFormasPagamento, criarFormaPagamento, excluirFormaPagamento, atualizarFormaPagamento, } from '@/functions/formasPagamentosFunctions';
 
 interface FormaPagamento {
   id: string;
@@ -16,13 +14,40 @@ interface FormaPagamento {
   taxa: number;
 }
 
+interface User {
+  uid: string;
+  email: string;
+}
+
 const FormasPagamento = () => {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [formas, setFormas] = useState<FormaPagamento[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<{ nome: string; taxa: number }>({ nome: '', taxa: 0 });
   const [newForma, setNewForma] = useState<{ nome: string; taxa: number }>({ nome: '', taxa: 0 });
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      try {
+        if (currentUser) {
+          setUser({
+            uid: currentUser.uid,
+            email: currentUser.email || '',
+          });
+        } else {
+          router.push('/auth/login');
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        setError('Erro ao verificar autenticação.');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   useEffect(() => {
     const fetchData = async () => {

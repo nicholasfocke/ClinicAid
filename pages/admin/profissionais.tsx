@@ -1,13 +1,44 @@
 import { useEffect, useState } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/firebase/firebaseConfig';
+import { useRouter } from 'next/router';
 import { buscarMedicos } from '@/functions/medicosFunctions';
 import DoctorCard, { Medico } from '@/components/admin/DoctorCard';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/medico/medicos.module.css';
 import Link from 'next/link';
 
+interface User {
+  uid: string;
+  email: string;
+}
+
 const Medicos = () => {
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      try {
+        if (currentUser) {
+          setUser({
+            uid: currentUser.uid,
+            email: currentUser.email || '',
+          });
+        } else {
+          router.push('/auth/login');
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        setError('Erro ao verificar autenticação.');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   useEffect(() => {
     const fetchMedicos = async () => {

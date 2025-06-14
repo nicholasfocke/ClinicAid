@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/firebase/firebaseConfig';
+import { useRouter } from 'next/router';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import tableStyles from '@/styles/admin/horario/horarios.module.css';
 import { buscarMedicos } from '@/functions/medicosFunctions';
@@ -13,7 +16,15 @@ interface ScheduleItem extends ScheduleData {
   id: string;
 }
 
+interface User {
+    uid: string;
+    email: string;
+  }
+
 const Horarios = () => {
+  const [error, setError] = useState('');
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [profissionais, setProfissionais] = useState<MedicoItem[]>([]);
   const [selectedMedico, setSelectedMedico] = useState('');
   const [dia, setDia] = useState('');
@@ -40,6 +51,26 @@ const Horarios = () => {
     'Sábado',
     'Domingo',
   ];
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      try {
+        if (currentUser) {
+          setUser({
+            uid: currentUser.uid,
+            email: currentUser.email || '',
+          });
+        } else {
+          router.push('/auth/login');
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        setError('Erro ao verificar autenticação.');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   useEffect(() => {
     const fetch = async () => {

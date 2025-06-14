@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/firebase/firebaseConfig';
+import { useRouter } from 'next/router';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import layoutStyles from '@/styles/admin/medico/medicos.module.css';
 import tableStyles from '@/styles/admin/cadastros/procedimento/procedimentos.module.css';
@@ -17,7 +20,14 @@ interface Procedimento extends ProcedimentoData {
   id: string;
 }
 
+interface User {
+  uid: string;
+  email: string;
+}
+
 const Procedimentos = () => {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [procedimentos, setProcedimentos] = useState<Procedimento[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +48,26 @@ const Procedimentos = () => {
   const [valorInput, setValorInput] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'todos' | 'consultas' | 'exames'>('todos');
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      try {
+        if (currentUser) {
+          setUser({
+            uid: currentUser.uid,
+            email: currentUser.email || '',
+          });
+        } else {
+          router.push('/auth/login');
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        setError('Erro ao verificar autenticação.');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   useEffect(() => {
     if (showModal) {
