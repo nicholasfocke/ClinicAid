@@ -176,6 +176,19 @@
   transform: translateY(-2px) scale(1.04);
   box-shadow: 0 2px 8px #1992b722;
 }
+.disabledDay {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+}
+.disabledDay:hover,
+.disabledDay:focus {
+  background: #f3f4f6;
+  color: #9ca3af;
+  transform: none;
+  box-shadow: none;
+}
 .dayCard:active {
   background: #eaf6fa;
   color: #1992b7;
