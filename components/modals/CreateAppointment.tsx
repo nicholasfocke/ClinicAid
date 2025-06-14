@@ -4,7 +4,7 @@ import styles from '@/styles/CreateAppointment.module.css';
 import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { auth, firestore } from '@/firebase/firebaseConfig';
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 
@@ -84,10 +84,46 @@ const CreateAppointmentModal: React.FC<Props> = ({
     return map[name];
   };
 
+  // Estado para armazenar os dias disponíveis do profissional selecionado
+  const [diasDisponiveis, setDiasDisponiveis] = useState<string[]>([]);
+
+  // Atualiza os dias disponíveis ao selecionar profissional
+  useEffect(() => {
+    const fetchDiasDisponiveis = async () => {
+      if (!appointmentData.profissional) {
+        setDiasDisponiveis([]);
+        return;
+      }
+      const profSnap = await getDocs(collection(firestore, 'profissionais'));
+      const profDoc = profSnap.docs.find(
+        d => d.data().nome === appointmentData.profissional
+      );
+      if (!profDoc) {
+        setDiasDisponiveis([]);
+        return;
+      }
+      // Busca os dias da subcoleção 'horarios'
+      const horariosSnap = await getDocs(collection(
+        firestore,
+        'profissionais',
+        profDoc.id,
+        'horarios'
+      ));
+      const dias = horariosSnap.docs.map(d => d.data().dia);
+      setDiasDisponiveis(dias);
+    };
+    fetchDiasDisponiveis();
+  }, [appointmentData.profissional]);
+
+  // Padronize o array de dias da semana
+  const diasSemana = [
+    'Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'
+  ];
+
+  // Altere isDayEnabled para usar diasDisponiveis e padronize o label
   const isDayEnabled = (day: Date) => {
-    const dateStr = format(day, 'yyyy-MM-dd');
-    const label = getDayLabel(day);
-    return availableDays.includes(dateStr) || availableDays.includes(label);
+    const label = diasSemana[day.getDay()];
+    return diasDisponiveis.includes(label);
   };
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -255,18 +291,26 @@ const CreateAppointmentModal: React.FC<Props> = ({
   };
 
   // Estado para profissionais cadastrados no sistema
-  const [profissionaisCadastrados, setProfissionaisCadastrados] = useState<{ id: string; nome: string }[]>([]);
+  const [profissionaisCadastrados, setProfissionaisCadastrados] = useState<{ id: string; nome: string, horaInicio?: string, horaFim?: string, almocoInicio?: string, almocoFim?: string, intervaloConsultas?: number }[]>([]);
 
   // Buscar profissionais do Firestore ao abrir o modal
   useEffect(() => {
     const fetchProfissionais = async () => {
       try {
         const snap = await getDocs(collection(firestore, 'profissionais'));
-        const list: { id: string; nome: string }[] = [];
+        const list: { id: string; nome: string, horaInicio?: string, horaFim?: string, almocoInicio?: string, almocoFim?: string, intervaloConsultas?: number }[] = [];
         snap.forEach(doc => {
           const data = doc.data();
           if (data.nome) {
-            list.push({ id: doc.id, nome: data.nome });
+            list.push({
+              id: doc.id,
+              nome: data.nome,
+              horaInicio: data.horaInicio || '',
+              horaFim: data.horaFim || '',
+              almocoInicio: data.almocoInicio || '',
+              almocoFim: data.almocoFim || '',
+              intervaloConsultas: Number(data.intervaloConsultas) || 15, // padrão 15 min
+            });
           }
         });
         setProfissionaisCadastrados(list);
@@ -276,6 +320,105 @@ const CreateAppointmentModal: React.FC<Props> = ({
     };
     if (isOpen) fetchProfissionais();
   }, [isOpen]);
+
+  // Novo: buscar dados do profissional selecionado
+  const [profissionalSelecionado, setProfissionalSelecionado] = useState<any>(null);
+
+  useEffect(() => {
+    if (appointmentData.profissional) {
+      const prof = profissionaisCadastrados.find(p => p.nome === appointmentData.profissional);
+      setProfissionalSelecionado(prof || null);
+    } else {
+      setProfissionalSelecionado(null);
+    }
+  }, [appointmentData.profissional, profissionaisCadastrados]);
+
+  // Buscar horários do profissional selecionado para o dia da semana
+  const [horarioDoDia, setHorarioDoDia] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchHorario = async () => {
+      if (!appointmentData.profissional || !selectedDate) {
+        setHorarioDoDia(null);
+        return;
+      }
+      const profSnap = await getDocs(collection(
+        firestore,
+        'profissionais'
+      ));
+      const profDoc = profSnap.docs.find(
+        d => d.data().nome === appointmentData.profissional
+      );
+      if (!profDoc) {
+        setHorarioDoDia(null);
+        return;
+      }
+      const horariosSnap = await getDocs(collection(
+        firestore,
+        'profissionais',
+        profDoc.id,
+        'horarios'
+      ));
+      // Use o mesmo array diasSemana para garantir igualdade
+      const diaSemana = diasSemana[selectedDate.getDay()];
+      const horario = horariosSnap.docs
+        .map(d => d.data())
+        .find(h => h.dia === diaSemana);
+      setHorarioDoDia(horario || null);
+    };
+    fetchHorario();
+  }, [appointmentData.profissional, selectedDate]);
+
+  // Gera todos os horários disponíveis do dia, sem filtrar por período
+  const gerarHorarios = () => {
+    if (
+      !horarioDoDia ||
+      typeof horarioDoDia.horaInicio !== 'string' ||
+      typeof horarioDoDia.horaFim !== 'string' ||
+      !horarioDoDia.horaInicio.match(/^\d{2}:\d{2}$/) ||
+      !horarioDoDia.horaFim.match(/^\d{2}:\d{2}$/) ||
+      !horarioDoDia.intervaloConsultas ||
+      isNaN(Number(horarioDoDia.intervaloConsultas)) ||
+      Number(horarioDoDia.intervaloConsultas) < 5
+    ) return [];
+
+    const horarios: string[] = [];
+    let [h, m] = horarioDoDia.horaInicio.split(':').map(Number);
+    const [endH, endM] = horarioDoDia.horaFim.split(':').map(Number);
+    const almocoInicio = typeof horarioDoDia.almocoInicio === 'string' && horarioDoDia.almocoInicio.match(/^\d{2}:\d{2}$/)
+      ? horarioDoDia.almocoInicio
+      : null;
+    const almocoFim = typeof horarioDoDia.almocoFim === 'string' && horarioDoDia.almocoFim.match(/^\d{2}:\d{2}$/)
+      ? horarioDoDia.almocoFim
+      : null;
+    const intervalo = Number(horarioDoDia.intervaloConsultas);
+
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    while (h < endH || (h === endH && m <= endM)) {
+      const horaStr = `${pad(h)}:${pad(m)}`;
+      // Pula horários dentro do intervalo de almoço
+      if (
+        almocoInicio && almocoFim &&
+        horaStr >= almocoInicio && horaStr < almocoFim
+      ) {
+        const [almocoEndH, almocoEndM] = almocoFim.split(':').map(Number);
+        h = almocoEndH;
+        m = almocoEndM;
+        continue;
+      }
+      horarios.push(horaStr);
+      m += intervalo;
+      while (m >= 60) {
+        m -= 60;
+        h += 1;
+      }
+      if (h > endH || (h === endH && m > endM)) break;
+    }
+    return horarios;
+  };
+
+  const horariosGerados = horarioDoDia ? gerarHorarios() : availableTimes;
 
   return (
     <Modal
@@ -354,7 +497,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
         </button>
       </div>
 
-      {/* Linha dos dias com scroll visual e botões de navegação */}
+      {/* Linha dos dias com scroll visual e botões de navegação centralizados */}
       <div style={{ display: 'flex', alignItems: 'center', position: 'relative', marginBottom: 8, marginTop: 8 }}>
         <button
           type="button"
@@ -476,8 +619,8 @@ const CreateAppointmentModal: React.FC<Props> = ({
           className={styles.timeSelectorWrapper}
           ref={timesContainerRef}
         >
-          {availableTimes.length > 0 ? (
-            availableTimes.map((time) => (
+          {(horariosGerados.length > 0) ? (
+            horariosGerados.map((time) => (
               <button
                 key={time}
                 type="button"

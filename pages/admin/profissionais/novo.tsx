@@ -83,7 +83,7 @@ const NovoMedico = () => {
     horaFim: '',
     almocoInicio: '',
     almocoFim: '',
-    intervaloConsultas: 0,
+    intervaloConsultas: 15, // Corrigido: valor inicial padrão válido
     telefone: '',
     cpf: '',
     email: '',
@@ -151,7 +151,11 @@ const NovoMedico = () => {
     let newValue: string | number = value;
     if (name === 'cpf') newValue = formatCPF(value);
     if (name === 'telefone') newValue = formatTelefone(value);
-    if (name === 'intervaloConsultas') { newValue = Number(value); }
+    if (name === 'intervaloConsultas') {
+      // Garante que o valor seja sempre um número válido e >= 5
+      const num = Number(value);
+      newValue = isNaN(num) || num < 5 ? 5 : num;
+    }
     setFormData((prev) => ({ ...prev, [name]: newValue as any }));
   };
 
@@ -228,6 +232,18 @@ const NovoMedico = () => {
       return;
     }
 
+    // Validação extra para intervalo de consultas
+    if (
+      formData.intervaloConsultas === undefined ||
+      formData.intervaloConsultas === null ||
+      isNaN(Number(formData.intervaloConsultas)) ||
+      Number(formData.intervaloConsultas) < 5
+    ) {
+      setError('O intervalo entre consultas deve ser de pelo menos 5 minutos.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const exists = await medicoExiste(cpfNumeros, formData.email);
       if (exists) {
@@ -256,19 +272,21 @@ const NovoMedico = () => {
         cpf: formData.cpf,
         email: formData.email,
         convenio: formData.convenio,
-        intervaloConsultas: formData.intervaloConsultas,
+        intervaloConsultas: Number(formData.intervaloConsultas),
         foto: fotoUrl,
-        fotoPath,
+        fotoPath
       });
 
       if (medicoRef && formData.diasAtendimento.length > 0) {
+        // Garante que o campo 'dia' seja salvo como 'Segunda', 'Terça', etc.
         for (const dia of formData.diasAtendimento) {
           await criarHorario(medicoRef.id, {
-            dia,
-            horaInicio: formData.horaInicio,
-            horaFim: formData.horaFim,
-            almocoInicio: formData.almocoInicio,
-            almocoFim: formData.almocoFim,
+            dia, // deve ser 'Segunda', 'Terça', etc.
+            horaInicio: formData.horaInicio || '',
+            horaFim: formData.horaFim || '',
+            almocoInicio: formData.almocoInicio || '',
+            almocoFim: formData.almocoFim || '',
+            intervaloConsultas: Number(formData.intervaloConsultas)
           });
         }
       }
@@ -357,6 +375,8 @@ const NovoMedico = () => {
           onChange={handleChange}
           placeholder="Intervalo das consultas (min)"
           className={styles.input}
+          min={5} // Corrigido: impede valores menores que 5 no input
+          required // Corrigido: campo obrigatório
         />
         <input name="telefone" value={formData.telefone} onChange={handleChange} placeholder="Telefone" className={styles.input} />
         <input name="cpf" value={formData.cpf} onChange={handleChange} placeholder="CPF" className={styles.input} />

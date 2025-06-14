@@ -38,6 +38,7 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
   const [formData, setFormData] = useState<Medico>({ ...medico });
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
   const [consultas, setConsultas] = useState<ConsultaProc[]>([]);
+  const [horarios, setHorarios] = useState<{ [dia: string]: any }>({});
 
   const diasSemana = [
     'Segunda',
@@ -62,6 +63,19 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (showDetails) {
+      buscarHorariosPorMedico(medico.id).then((horariosList) => {
+        // Agrupa por dia
+        const agrupado: { [dia: string]: any } = {};
+        horariosList.forEach((h) => {
+          agrupado[h.dia] = h;
+        });
+        setHorarios(agrupado);
+      });
+    }
+  }, [showDetails, medico.id]);
 
   const handleDelete = async () => {
     try{
@@ -331,6 +345,33 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                 <div className={styles.medicoValor}>Convênios: {' '} {Array.isArray(medico.convenio) ? medico.convenio.join(', ' ) 
                   : medico.convenio}</div>
               )}
+              {/* Mostra horários cadastrados */}
+              <div className={styles.convenioHeader}>Horários cadastrados:</div>
+              <div className={styles.horariosBox}>
+                {diasSemana.map((dia) =>
+                  horarios[dia] ? (
+                    <div key={dia} className={styles.horarioItem}>
+                      <strong>{dia}:</strong>{' '}
+                      {horarios[dia].horaInicio} - {horarios[dia].horaFim}
+                      {horarios[dia].almocoInicio && horarios[dia].almocoFim && (
+                        <span>
+                          {' '}
+                          | Almoço: {horarios[dia].almocoInicio} - {horarios[dia].almocoFim}
+                        </span>
+                      )}
+                      <span>
+                        {' '}| Intervalo: {
+                          typeof horarios[dia].intervaloConsultas === 'number' && horarios[dia].intervaloConsultas > 0
+                            ? `${horarios[dia].intervaloConsultas} min`
+                            : (Number(horarios[dia].intervaloConsultas) > 0
+                                ? `${Number(horarios[dia].intervaloConsultas)} min`
+                                : 'Não definido')
+                        }
+                      </span>
+                    </div>
+                  ) : null
+                )}
+              </div>
               <div className={styles.detalhesButtons}>
                 <button className={styles.buttonExcluir} onClick={() => setConfirmDelete(true)}>
                   Excluir médico

@@ -7,11 +7,26 @@ export interface ScheduleData {
   horaFim: string;
   almocoInicio: string;
   almocoFim: string;
+  intervaloConsultas: number; // Adicione este campo no tipo!
 }
 
-export const criarHorario = async (medicoId: string, data: ScheduleData) => {
-  await addDoc(collection(firestore, `profissionais/${medicoId}/horarios`), data);
-};
+export async function criarHorario(
+  profissionalId: string,
+  horario: {
+    dia: string;
+    horaInicio: string;
+    horaFim: string;
+    almocoInicio: string;
+    almocoFim: string;
+    intervaloConsultas: number; // Adicione este campo no tipo!
+  }
+) {
+  // Salva na subcoleção 'horarios' do profissional
+  await addDoc(
+    collection(firestore, 'profissionais', profissionalId, 'horarios'),
+    horario
+  );
+}
 
 export const buscarHorariosPorMedico = async (medicoId: string) => {
   const snap = await getDocs(collection(firestore, `profissionais/${medicoId}/horarios`));
