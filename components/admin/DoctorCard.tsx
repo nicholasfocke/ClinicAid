@@ -3,7 +3,7 @@ import styles from '@/styles/admin/medico/medicos.module.css';
 import { excluirMedico, atualizarMedico } from '@/functions/medicosFunctions';
 import { excluirHorario, buscarHorariosPorMedico } from '@/functions/scheduleFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
-import { buscarConsultas } from '@/functions/procedimentosFunctions';
+import { buscarCargosSaude, ajustarNumeroUsuariosCargo } from '@/functions/cargosFunctions';
 import { on } from 'events';
 
 export interface Medico {
@@ -27,9 +27,10 @@ interface DoctorCardProps {
   onUpdate?: (medico: Medico) => void;
 }
 
-interface ConsultaProc {
+interface CargoItem {
   id: string;
   nome: string;
+  quantidadeUsuarios?: number;
 }
 
 const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
@@ -38,7 +39,7 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Medico>({ ...medico });
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
-  const [consultas, setConsultas] = useState<ConsultaProc[]>([]);
+  const [cargos, setCargos] = useState<CargoItem[]>([]);
   const [horarios, setHorarios] = useState<{ [dia: string]: any }>({});
 
   const diasSemana = [
@@ -56,8 +57,8 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
       try {
         const list = await buscarConvenios();
         setConvenios(list);
-        const consultasList = await buscarConsultas();
-        setConsultas(consultasList);
+        const cargosList = await buscarCargosSaude();
+        setCargos(cargosList);
       } catch (err) {
         console.error('Erro ao buscar dados:', err);
       }
@@ -84,6 +85,11 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
       const horarios = await buscarHorariosPorMedico(medico.id);
       await Promise.all(horarios.map(h => excluirHorario(medico.id, h.id)));
 
+      const cargoAtual = cargos.find(c => c.nome === medico.especialidade);
+      if (cargoAtual) {
+        await ajustarNumeroUsuariosCargo(cargoAtual.id, -1);
+      }
+
       if(onDelete) onDelete(medico.id);
       setShowDetails(false);
     }
@@ -93,11 +99,14 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
   };
 
   const handleSave = async () => {
+    const cargoAntigo = cargos.find(c => c.nome === medico.especialidade);
+    const cargoNovo = cargos.find(c => c.nome === formData.especialidade);
+
     await atualizarMedico(medico.id, {
       nome: formData.nome,
       especialidade: formData.especialidade,
       diasAtendimento: formData.diasAtendimento,
-      intervaloConsultas: formData.intervaloConsultas || 0, 
+      intervaloConsultas: formData.intervaloConsultas || 0,
       telefone: formData.telefone || '',
       email: formData.email || '',
       convenio: formData.convenio
@@ -109,6 +118,14 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
       fotoPath: formData.fotoPath || '',
       cpf: medico.cpf || '',
     });
+
+    if (cargoAntigo && cargoAntigo.id !== cargoNovo?.id) {
+      await ajustarNumeroUsuariosCargo(cargoAntigo.id, -1);
+    }
+    if (cargoNovo) {
+      await ajustarNumeroUsuariosCargo(cargoNovo.id, 1);
+    }
+
     setEditing(false);
     setShowDetails(false);
     if (onUpdate) onUpdate({ ...formData, id: medico.id });
@@ -238,7 +255,7 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                 className={styles.inputEditar}
               >
                 <option value="">Selecione a especialidade</option>
-                {consultas.map((c) => (
+                {cargos.map((c) => (
                   <option key={c.id} value={c.nome}>
                     {c.nome}
                   </option>

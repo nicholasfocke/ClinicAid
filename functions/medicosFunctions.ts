@@ -5,6 +5,7 @@ export interface MedicoData {
   nome: string;
   especialidade: string;
   diasAtendimento: string[];
+  cargoId?: string;
   telefone: string;
   cpf: string;
   email: string;

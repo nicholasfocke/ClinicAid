@@ -3,8 +3,10 @@ import { auth } from '@/firebase/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { criarMedico, medicoExiste } from '@/functions/medicosFunctions';
 import { criarHorario } from '@/functions/scheduleFunctions';
-import { buscarConsultas, buscarProcedimentos } from '@/functions/procedimentosFunctions';
+import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
+import { buscarCargos, ajustarNumeroUsuariosCargo } from '@/functions/cargosFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
+import { buscarCargosSaude } from '@/functions/cargosFunctions';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
@@ -51,6 +53,7 @@ interface MedicoForm {
   nome: string;
   especialidade: string;
   diasAtendimento: string[];
+  cargoId: string;
   horaInicio: string;
   horaFim: string;
   almocoInicio: string;
@@ -66,7 +69,12 @@ interface MedicoForm {
 }
 
 interface Convenio {
-  id: string; 
+  id: string;
+  nome: string;
+}
+
+interface Cargo {
+  id: string;
   nome: string;
 }
 
@@ -80,6 +88,7 @@ const NovoMedico = () => {
     nome: '',
     especialidade: '',
     diasAtendimento: [],
+    cargoId: '',
     horaInicio: '',
     horaFim: '',
     almocoInicio: '',
@@ -92,7 +101,7 @@ const NovoMedico = () => {
     procedimentos: [],
   });
   const [convenios, setConvenios] = useState<Convenio[]>([])
-  const [consultas, setConsultas] = useState<{ id: string; nome: string }[]>([]);
+  const [cargos, setCargos] = useState<{ id: string; nome: string }[]>([]);
   const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -129,12 +138,12 @@ const NovoMedico = () => {
       try {
         const fetchedConvenios = await buscarConvenios();
         setConvenios(fetchedConvenios);
-        const fetchedConsultas = await buscarConsultas();
-        setConsultas(fetchedConsultas);
         const fetchedProcedimentos = await buscarProcedimentos();
         setProcedimentos(fetchedProcedimentos);
+        const fetchedCargos = await buscarCargosSaude();
+        setCargos(fetchedCargos as Cargo[]);
       } catch (error) {
-        console.error('Erro ao buscar convênios ou consultas:', error);
+        console.error('Erro ao buscar convênios ou cargos:', error);
       }
     })();
   }, []);
@@ -279,6 +288,7 @@ const NovoMedico = () => {
         nome: formData.nome,
         especialidade: formData.especialidade,
         diasAtendimento: formData.diasAtendimento,
+        cargoId: formData.cargoId,
         telefone: formData.telefone,
         cpf: formData.cpf,
         email: formData.email,
@@ -288,6 +298,11 @@ const NovoMedico = () => {
         fotoPath,
         procedimentos: formData.procedimentos, // salva procedimentos
       });
+
+      const cargoObj = cargos.find(c => c.nome === formData.especialidade);
+      if (cargoObj) {
+        await ajustarNumeroUsuariosCargo(cargoObj.id, 1);
+      }
 
       if (medicoRef && formData.diasAtendimento.length > 0) {
         // Garante que o campo 'dia' seja salvo como 'Segunda', 'Terça', etc.
@@ -324,8 +339,16 @@ const NovoMedico = () => {
         <input name="nome" value={formData.nome} onChange={handleChange} placeholder="Nome" className={styles.input} required />
         <select name="especialidade" value={formData.especialidade} onChange={handleChange} className={styles.input} required>
           <option value="">Selecione a especialidade</option>
-          {consultas.map((c) => (
+          {cargos.map((c) => (
             <option key={c.id} value={c.nome}>
+              {c.nome}
+            </option>
+          ))}
+        </select>
+        <select name="cargoId" value={formData.cargoId} onChange={handleChange} className={styles.input} required>
+          <option value="">Selecione o cargo</option>
+          {cargos.map((c) => (
+            <option key={c.id} value={c.id}>
               {c.nome}
             </option>
           ))}
