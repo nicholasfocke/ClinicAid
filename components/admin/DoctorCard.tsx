@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import styles from '@/styles/admin/medico/medicos.module.css';
 import { excluirMedico, atualizarMedico } from '@/functions/medicosFunctions';
-import { excluirHorario, buscarHorariosPorMedico } from '@/functions/scheduleFunctions';
+import { excluirHorario, buscarHorariosPorMedico, atualizarHorario, criarHorario } from '@/functions/scheduleFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarConsultas } from '@/functions/procedimentosFunctions';
+import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 import { on } from 'events';
 
 export interface Medico {
@@ -32,14 +33,25 @@ interface ConsultaProc {
   nome: string;
 }
 
+// Adicione ao topo do componente:
+interface MedicoForm extends Medico {
+  horaInicio?: string;
+  horaFim?: string;
+  almocoInicio?: string;
+  almocoFim?: string;
+}
+
 const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
+  // Troque o tipo do formData para MedicoForm
+  const [formData, setFormData] = useState<MedicoForm>({ ...medico });
   const [showDetails, setShowDetails] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState<Medico>({ ...medico });
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
   const [consultas, setConsultas] = useState<ConsultaProc[]>([]);
   const [horarios, setHorarios] = useState<{ [dia: string]: any }>({});
+  const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const diasSemana = [
     'Segunda',
@@ -58,6 +70,9 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
         setConvenios(list);
         const consultasList = await buscarConsultas();
         setConsultas(consultasList);
+        // Buscar todos os procedimentos cadastrados no sistema
+        const procs = await buscarProcedimentos();
+        setProcedimentos(procs);
       } catch (err) {
         console.error('Erro ao buscar dados:', err);
       }
@@ -78,6 +93,35 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
     }
   }, [showDetails, medico.id]);
 
+  // Preenche formData com horários ao entrar em edição
+  useEffect(() => {
+    if (editing) {
+      buscarHorariosPorMedico(medico.id).then((horariosList) => {
+        if (horariosList.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            horaInicio: horariosList[0].horaInicio || '',
+            horaFim: horariosList[0].horaFim || '',
+            almocoInicio: horariosList[0].almocoInicio || '',
+            almocoFim: horariosList[0].almocoFim || '',
+            intervaloConsultas: horariosList[0].intervaloConsultas || prev.intervaloConsultas,
+            procedimentos: prev.procedimentos || [],
+          }));
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            horaInicio: '',
+            horaFim: '',
+            almocoInicio: '',
+            almocoFim: '',
+            procedimentos: prev.procedimentos || [],
+          }));
+        }
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing, medico.id]);
+
   const handleDelete = async () => {
     try{
       await excluirMedico(medico.id);
@@ -93,25 +137,62 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
   };
 
   const handleSave = async () => {
-    await atualizarMedico(medico.id, {
-      nome: formData.nome,
-      especialidade: formData.especialidade,
-      diasAtendimento: formData.diasAtendimento,
-      intervaloConsultas: formData.intervaloConsultas || 0, 
-      telefone: formData.telefone || '',
-      email: formData.email || '',
-      convenio: formData.convenio
-        ? Array.isArray(formData.convenio)
-          ? formData.convenio
-          : [formData.convenio]
-        : [],
-      foto: formData.foto || '', // garantir que nunca seja undefined
-      fotoPath: formData.fotoPath || '',
-      cpf: medico.cpf || '',
-    });
-    setEditing(false);
-    setShowDetails(false);
-    if (onUpdate) onUpdate({ ...formData, id: medico.id });
+    if (saving) return;
+    setSaving(true);
+    try {
+      await atualizarMedico(medico.id, {
+        nome: formData.nome,
+        especialidade: formData.especialidade,
+        diasAtendimento: formData.diasAtendimento,
+        intervaloConsultas: formData.intervaloConsultas || 0,
+        telefone: formData.telefone || '',
+        email: formData.email || '',
+        convenio: formData.convenio
+          ? Array.isArray(formData.convenio)
+            ? formData.convenio
+            : [formData.convenio]
+          : [],
+        foto: formData.foto || '',
+        fotoPath: formData.fotoPath || '',
+        cpf: medico.cpf || '',
+        procedimentos: formData.procedimentos || [],
+      });
+
+      // Atualiza horários
+      if (formData.diasAtendimento && Array.isArray(formData.diasAtendimento)) {
+        const horariosExistentes = await buscarHorariosPorMedico(medico.id);
+        for (const dia of formData.diasAtendimento) {
+          const horarioExistente = horariosExistentes.find(h => h.dia === dia);
+          const horarioData = {
+            dia,
+            horaInicio: formData.horaInicio || '',
+            horaFim: formData.horaFim || '',
+            almocoInicio: formData.almocoInicio || '',
+            almocoFim: formData.almocoFim || '',
+            intervaloConsultas: Number(formData.intervaloConsultas) || 15,
+          };
+          if (horarioExistente) {
+            await atualizarHorario(medico.id, horarioExistente.id, horarioData);
+          } else {
+            await criarHorario(medico.id, horarioData);
+          }
+        }
+        // Remove horários de dias que não estão mais selecionados
+        for (const h of horariosExistentes) {
+          if (!formData.diasAtendimento.includes(h.dia)) {
+            await excluirHorario(medico.id, h.id);
+          }
+        }
+      }
+
+      setEditing(false);
+      setShowDetails(false);
+      if (onUpdate) onUpdate({ ...formData, id: medico.id });
+    } catch (err) {
+      alert('Erro ao salvar alterações do profissional.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleChange = (
@@ -296,9 +377,74 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                   </label>
                 ))}
               </div>
+              <div className={styles.convenioHeader}>Procedimentos:</div>
+              <div className={styles.conveniosBox}>
+                {procedimentos.map((p) => (
+                  <label key={p.id} className={styles.conveniosItem}>
+                    <input
+                      type="checkbox"
+                      value={p.nome}
+                      checked={formData.procedimentos?.includes(p.nome)}
+                      onChange={e => {
+                        const { value, checked } = e.target;
+                        setFormData(prev => {
+                          const atual = new Set(prev.procedimentos || []);
+                          if (checked) atual.add(value);
+                          else atual.delete(value);
+                          return { ...prev, procedimentos: Array.from(atual) };
+                        });
+                      }}
+                    />
+                    {p.nome}
+                  </label>
+                ))}
+              </div>
               {medico.cpf && (
                 <div className={styles.medicoValor}>CPF: {medico.cpf}</div>
               )}
+              <div className={styles.convenioHeader}>Horários de Atendimento:</div>
+              <div className={styles.horariosBox}>
+                <div className={styles.horarioItem}>
+                  <div>Início:</div>
+                  <input
+                    type="time"
+                    name="horaInicio"
+                    value={formData.horaInicio}
+                    onChange={handleChange}
+                    className={styles.inputEditar}
+                  />
+                </div>
+                <div className={styles.horarioItem}>
+                  <div>Fim:</div>
+                  <input
+                    type="time"
+                    name="horaFim"
+                    value={formData.horaFim}
+                    onChange={handleChange}
+                    className={styles.inputEditar}
+                  />
+                </div>
+                <div className={styles.horarioItem}>
+                  <div>Almoço Início:</div>
+                  <input
+                    type="time"
+                    name="almocoInicio"
+                    value={formData.almocoInicio}
+                    onChange={handleChange}
+                    className={styles.inputEditar}
+                  />
+                </div>
+                <div className={styles.horarioItem}>
+                  <div>Almoço Fim:</div>
+                  <input
+                    type="time"
+                    name="almocoFim"
+                    value={formData.almocoFim}
+                    onChange={handleChange}
+                    className={styles.inputEditar}
+                  />
+                </div>
+              </div>
               <div className={styles.detalhesButtons}>
                 <button className={styles.buttonEditar} onClick={handleSave}>
                   Salvar

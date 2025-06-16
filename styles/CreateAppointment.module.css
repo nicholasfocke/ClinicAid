@@ -8,7 +8,6 @@
   margin: 0 auto;
   box-shadow: 0 8px 32px rgba(16, 30, 54, 0.13);
   outline: none;
-  overflow-y: auto;
   overflow-x: hidden;
   position: relative;
   border: none;
@@ -85,6 +84,7 @@
   position: relative;
   padding: 38px 24px 0 24px;
   margin-bottom: 0;
+  gap: 0;
 }
 
 .modalTitle {
@@ -92,9 +92,10 @@
   font-weight: 800;
   color: #222;
   text-align: center;
-  flex: 1;
+  /* flex: 1; removido para centralizar melhor */
   letter-spacing: -1px;
   font-family: 'Inter', sans-serif;
+  margin: 0 8px;
 }
 
 .modalCloseBtn {
@@ -462,4 +463,47 @@
     font-size: 0.95rem;
     padding: 8px 0;
   }
+}
+
+.monthNavBtn, .dayNavBtn, .timeNavBtn {
+  border: none;
+  background: none;
+  font-size: 28px;
+  color: #b0b0b0;
+  cursor: pointer;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px #0001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s cubic-bezier(.4,0,.2,1);
+}
+.monthNavBtn:disabled,
+.dayNavBtn:disabled,
+.timeNavBtn:disabled {
+  color: #e5e7eb;
+  cursor: not-allowed;
+  background: none;
+}
+.daysNavWrapper, .timesNavWrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin-bottom: 8px;
+  margin-top: 8px;
+  gap: 0;
+}
+.timesNavWrapper {
+  margin-top: 16px;
+}
+
+.monthNavGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  flex: unset;
 }
