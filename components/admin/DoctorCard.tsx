@@ -351,33 +351,6 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                   Procedimentos: {medico.procedimentos.join(', ')}
                 </div>
               )}
-              {/* Mostra horários cadastrados */}
-              <div className={styles.convenioHeader}>Horários cadastrados:</div>
-              <div className={styles.horariosBox}>
-                {diasSemana.map((dia) =>
-                  horarios[dia] ? (
-                    <div key={dia} className={styles.horarioItem}>
-                      <strong>{dia}:</strong>{' '}
-                      {horarios[dia].horaInicio} - {horarios[dia].horaFim}
-                      {horarios[dia].almocoInicio && horarios[dia].almocoFim && (
-                        <span>
-                          {' '}
-                          | Almoço: {horarios[dia].almocoInicio} - {horarios[dia].almocoFim}
-                        </span>
-                      )}
-                      <span>
-                        {' '}| Intervalo: {
-                          typeof horarios[dia].intervaloConsultas === 'number' && horarios[dia].intervaloConsultas > 0
-                            ? `${horarios[dia].intervaloConsultas} min`
-                            : (Number(horarios[dia].intervaloConsultas) > 0
-                                ? `${Number(horarios[dia].intervaloConsultas)} min`
-                                : 'Não definido')
-                        }
-                      </span>
-                    </div>
-                  ) : null
-                )}
-              </div>
               <div className={styles.detalhesButtons}>
                 <button className={styles.buttonExcluir} onClick={() => setConfirmDelete(true)}>
                   Excluir médico
