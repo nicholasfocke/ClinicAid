@@ -125,7 +125,6 @@ const Cargos = () => {
                       <td>
                         <input name="nome" value={formData.nome} onChange={handleChange} />
                       </td>
-                      <td>{c.quantidadeUsuarios ?? 0}</td>
                       <td>
                         <input name="quantidadeUsuarios" type="number" value={formData.quantidadeUsuarios} onChange={handleChange} />
                       </td>
