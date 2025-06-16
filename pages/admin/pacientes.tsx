@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { auth, firestore } from '@/firebase/firebaseConfig';
 import { useRouter } from 'next/router';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
@@ -42,20 +42,35 @@ const Pacientes = () => {
   useEffect(() => {
     const fetchPacientes = async () => {
       try {
-        const q = query(collection(firestore, 'users'), where('tipo', '==', 'cliente'));
-        const snap = await getDocs(q);
-        const lista: Paciente[] = snap.docs.map(docSnap => {
+        // Busca todos os agendamentos confirmados
+        const agsSnap = await getDocs(
+          query(collection(firestore, 'agendamentos'), where('status', '==', 'confirmado'))
+        );
+        // Extrai os IDs dos usuários (usuarioId) dos agendamentos
+        const userIdsSet = new Set<string>();
+        agsSnap.forEach(docSnap => {
           const data = docSnap.data();
-          return {
-            id: docSnap.id,
-            nome: data.nome || '',
-            email: data.email || '',
-            cpf: data.cpf || '',
-            telefone: data.telefone || '',
-            convenio: data.convenio || '',
-            dataNascimento: data.dataNascimento || '',
-          };
+          if (data.usuarioId) userIdsSet.add(data.usuarioId);
         });
+        const userIds = Array.from(userIdsSet);
+
+        // Busca os dados dos usuários que fizeram agendamento
+        const lista: Paciente[] = [];
+        for (const uid of userIds) {
+          const userDoc = await getDoc(doc(firestore, 'users', uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            lista.push({
+              id: userDoc.id,
+              nome: data.nome || '',
+              email: data.email || '',
+              cpf: data.cpf || '',
+              telefone: data.telefone || '',
+              convenio: data.convenio || '',
+              dataNascimento: data.dataNascimento || '',
+            });
+          }
+        }
         setPacientes(lista);
       } catch (err) {
         console.error('Erro ao buscar pacientes:', err);

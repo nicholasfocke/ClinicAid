@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, setDoc, doc, runTransaction, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, setDoc, doc, runTransaction, orderBy, getDoc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { format } from 'date-fns';
 
@@ -147,6 +147,27 @@ export const buscarHorariosBloqueados = async (date: Date): Promise<BlockedTime[
 };
 
 export const criarAgendamento = async (data: AppointmentData, user: UserLike) => {
+  // Busca dados do usuário fora da transaction para salvar em 'pacientes'
+  let pacienteData: any = {
+    nome: data.nomesPacientes[0],
+    email: user.email,
+  };
+  try {
+    const userDoc = await getDoc(doc(firestore, 'users', user.uid));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      pacienteData = {
+        ...pacienteData,
+        cpf: userData.cpf || '',
+        telefone: userData.telefone || '',
+        convenio: userData.convenio || '',
+        dataNascimento: userData.dataNascimento || '',
+      };
+    }
+  } catch (e) {
+    // Se não encontrar, salva só nome/email
+  }
+
   await runTransaction(firestore, async transaction => {
     for (let i = 0; i < data.nomesPacientes.length; i++) {
       const nome = data.nomesPacientes[i];
@@ -173,6 +194,14 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
       });
     }
   });
+
+  // Fora da transaction, salve/atualize o paciente na coleção 'pacientes'
+  // (não pode fazer set/getDoc dentro da transaction se já fez writes)
+  const pacienteRef = doc(firestore, 'pacientes', user.uid);
+  const pacienteSnap = await getDoc(pacienteRef);
+  if (!pacienteSnap.exists()) {
+    await setDoc(pacienteRef, pacienteData);
+  }
 };
 
 export const bloquearDia = async (date: Date) => {
