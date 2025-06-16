@@ -191,12 +191,10 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
       const cargoAntigo = cargos.find(c => c.nome === medico.especialidade);
       const cargoNovo = cargos.find(c => c.nome === formData.especialidade);
 
-      if (cargoAntigo && cargoAntigo.id !== cargoNovo?.id) {
-      await ajustarNumeroUsuariosCargo(cargoAntigo.id, -1);
-    }
-    if (cargoNovo) {
-      await ajustarNumeroUsuariosCargo(cargoNovo.id, 1);
-    }
+      if (cargoAntigo && cargoNovo && cargoAntigo.id !== cargoNovo.id) {
+        await ajustarNumeroUsuariosCargo(cargoAntigo.id, -1);
+        await ajustarNumeroUsuariosCargo(cargoNovo.id, 1);
+      }
 
       // Atualiza horários
       if (formData.diasAtendimento && Array.isArray(formData.diasAtendimento)) {
