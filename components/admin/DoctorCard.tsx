@@ -6,6 +6,7 @@ import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarCargosSaude, ajustarNumeroUsuariosCargo } from '@/functions/cargosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 import { on } from 'events';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 export interface Medico {
   id: string;
@@ -53,6 +54,8 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
   const [horarios, setHorarios] = useState<{ [dia: string]: any }>({});
   const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
   const [saving, setSaving] = useState(false);
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(medico.foto || null);
 
   const diasSemana = [
     'Segunda',
@@ -143,12 +146,30 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
   };
 
    const handleSave = async () => {
-    const cargoAntigo = cargos.find(c => c.nome === medico.especialidade);
-    const cargoNovo = cargos.find(c => c.nome === formData.especialidade);
-
     if (saving) return;
     setSaving(true);
     try {
+      let fotoUrl = formData.foto || '';
+      let fotoPathFinal = formData.fotoPath || '';
+
+      // Upload da nova foto se houver arquivo novo
+      if (fotoFile) {
+        // Remove foto antiga se existir
+        if (formData.fotoPath) {
+          try {
+            const storage = getStorage();
+            const storageRef = ref(storage, formData.fotoPath);
+            await deleteObject(storageRef);
+          } catch (err) {}
+        }
+        const storage = getStorage();
+        const uniqueName = `${medico.cpf?.replace(/\D/g, '') || 'medico'}_${Date.now()}`;
+        const storageRef = ref(storage, `medico_photos/${uniqueName}`);
+        await uploadBytes(storageRef, fotoFile);
+        fotoUrl = await getDownloadURL(storageRef);
+        fotoPathFinal = storageRef.fullPath;
+      }
+
       await atualizarMedico(medico.id, {
         nome: formData.nome,
         especialidade: formData.especialidade,
@@ -161,11 +182,14 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
             ? formData.convenio
             : [formData.convenio]
           : [],
-        foto: formData.foto || '',
-        fotoPath: formData.fotoPath || '',
+        foto: fotoUrl,
+        fotoPath: fotoPathFinal,
         cpf: medico.cpf || '',
         procedimentos: formData.procedimentos || [],
       });
+
+      const cargoAntigo = cargos.find(c => c.nome === medico.especialidade);
+      const cargoNovo = cargos.find(c => c.nome === formData.especialidade);
 
       if (cargoAntigo && cargoAntigo.id !== cargoNovo?.id) {
       await ajustarNumeroUsuariosCargo(cargoAntigo.id, -1);
@@ -203,11 +227,12 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
 
       setEditing(false);
       setShowDetails(false);
-      if (onUpdate) onUpdate({ ...formData, id: medico.id });
+      if (onUpdate) onUpdate({ ...formData, id: medico.id, foto: fotoUrl, fotoPath: fotoPathFinal });
     } catch (err) {
       alert('Erro ao salvar alterações do profissional.');
     } finally {
       setSaving(false);
+      setFotoFile(null);
     }
   };
 
@@ -236,6 +261,32 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
       else atual.delete(value);
       return { ...prev, convenio: Array.from(atual) };
     });
+  };
+
+  // Preview e upload da foto ao editar
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFotoFile(file);
+      setFotoPreview(URL.createObjectURL(file));
+      setFormData(prev => ({ ...prev, foto: '', fotoPath: '' }));
+    }
+  };
+
+  // Excluir foto do Storage (se já enviada)
+  const handleFotoRemove = async () => {
+    if (formData.fotoPath) {
+      try {
+        const storage = getStorage();
+        const storageRef = ref(storage, formData.fotoPath);
+        await deleteObject(storageRef);
+      } catch (err) {
+        // Se não existir, ignora
+      }
+    }
+    setFotoFile(null);
+    setFotoPreview(null);
+    setFormData(prev => ({ ...prev, foto: '', fotoPath: '' }));
   };
 
   const diasText = Array.isArray(medico.diasAtendimento)
@@ -288,15 +339,14 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
             </div>
           ) : editing ? (
             <div className={styles.detalhesCard}>
-
               {/* FOTO - editar/remover/adicionar */}
               <div className={styles.fotoEdit}>
-                {formData.foto ? (
+                {fotoPreview ? (
                   <>
-                    <img src={formData.foto} alt={formData.nome} className={styles.medicoFoto} />
+                    <img src={fotoPreview} alt={formData.nome} className={styles.medicoFoto} />
                     <button
                       className={styles.buttonRemoverFoto}
-                      onClick={() => setFormData((prev) => ({ ...prev, foto: '' }))}
+                      onClick={handleFotoRemove}
                     >
                       Remover foto
                     </button>
@@ -306,14 +356,7 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                     <label className={styles.buttonEditar}>
                       Carregar foto
                       <input type="file" accept="image/*" style={{ display: 'none' }}
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            const file = e.target.files[0];
-                            const preview = URL.createObjectURL(file);
-                            setFormData((prev) => ({ ...prev, foto: preview }));
-                            // Aqui você também poderia guardar o File se for subir pro Firebase Storage depois
-                          }
-                        }}
+                        onChange={handleFotoChange}
                       />
                     </label>
                   </>

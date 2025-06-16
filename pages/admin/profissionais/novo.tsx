@@ -7,7 +7,7 @@ import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 import { buscarCargos, ajustarNumeroUsuariosCargo } from '@/functions/cargosFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarCargosSaude } from '@/functions/cargosFunctions';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
 import { useRouter } from 'next/router';
@@ -107,6 +107,7 @@ const NovoMedico = () => {
   const [error, setError] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [fotoPath, setFotoPath] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null); 
   const router = useRouter();
 
@@ -173,12 +174,32 @@ const NovoMedico = () => {
     setFormData((prev) => ({ ...prev, [name]: newValue as any }));
   };
 
+  // Preview e upload da foto
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if(e.target.files && e.target.files[0]) {
-      setFoto(URL.createObjectURL(e.target.files[0]));
-      setFotoFile(e.target.files[0]);
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFoto(URL.createObjectURL(file));
+      setFotoFile(file);
+      setFotoPath(null); // Limpa path anterior ao trocar imagem
     }
-  }
+  };
+
+  // Excluir foto do Storage (se já enviada)
+  const handleFotoRemove = async () => {
+    if (fotoPath) {
+      try {
+        const storage = getStorage();
+        const storageRef = ref(storage, fotoPath);
+        await deleteObject(storageRef);
+      } catch (err) {
+        // Se não existir, ignora
+      }
+    }
+    setFoto(null);
+    setFotoFile(null);
+    setFotoPath(null);
+    setFormData(prev => ({ ...prev, foto: '', fotoPath: '' }));
+  };
 
   const handleCheckConvenio = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
@@ -273,15 +294,16 @@ const NovoMedico = () => {
       }
 
       let fotoUrl = '';
-      let fotoPath = '';
-      
-      if(fotoFile) {
+      let fotoPathFinal = fotoPath || '';
+
+      // Upload da foto se houver arquivo novo
+      if (fotoFile) {
         const storage = getStorage();
         const uniqueName = `${formData.cpf.replace(/\D/g, '')}_${Date.now()}`;
         const storageRef = ref(storage, `medico_photos/${uniqueName}`);
         await uploadBytes(storageRef, fotoFile);
         fotoUrl = await getDownloadURL(storageRef);
-        fotoPath = storageRef.fullPath;
+        fotoPathFinal = storageRef.fullPath;
       }
 
       const medicoRef = await criarMedico({
@@ -295,8 +317,8 @@ const NovoMedico = () => {
         convenio: formData.convenio,
         intervaloConsultas: Number(formData.intervaloConsultas),
         foto: fotoUrl,
-        fotoPath,
-        procedimentos: formData.procedimentos, // salva procedimentos
+        fotoPath: fotoPathFinal,
+        procedimentos: formData.procedimentos,
       });
 
       const cargoObj = cargos.find(c => c.nome === formData.especialidade);
@@ -454,18 +476,30 @@ const NovoMedico = () => {
         </div>
         <div className={styles.fotoBox}>
           {foto ? (
-            <img src={foto} alt="Foto do médico" className={styles.fotoPreview} />
+            <>
+              <img src={foto} alt="Foto do médico" className={styles.fotoPreview} />
+              <button
+                type="button"
+                className={styles.fotoBtn}
+                onClick={handleFotoRemove}
+                style={{ marginTop: 8 }}
+              >
+                Remover foto
+              </button>
+            </>
           ) : (
-            <svg className={styles.fotoPreview} width="120" height="120" viewBox="0 0 120 120" fill="none">
-              <circle cx="60" cy="60" r="60" fill="#E5E7EB" />
-              <circle cx="60" cy="54" r="28" fill="#D1D5DB" />
-              <ellipse cx="60" cy="94" rx="36" ry="22" fill="#D1D5DB" />
-            </svg>
+            <>
+              <svg className={styles.fotoPreview} width="120" height="120" viewBox="0 0 120 120" fill="none">
+                <circle cx="60" cy="60" r="60" fill="#E5E7EB" />
+                <circle cx="60" cy="54" r="28" fill="#D1D5DB" />
+                <ellipse cx="60" cy="94" rx="36" ry="22" fill="#D1D5DB" />
+              </svg>
+              <label className={styles.fotoBtn}>
+                Carregar foto
+                <input type="file" accept="image/*" onChange={handleFotoChange} style={{ display: 'none' }} />
+              </label>
+            </>
           )}
-          <label className={styles.fotoBtn}>
-            Carregar foto
-            <input type="file" accept="image/*" onChange={handleFotoChange} style={{ display: 'none' }} />
-          </label>
         </div>
         {error && <p style={{ color: 'red' }}>{error}</p>}
         <button type="submit" className={styles.buttonSalvar} disabled={loading}>
