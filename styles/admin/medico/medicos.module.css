@@ -133,26 +133,31 @@
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  width: 100vw;
+  height: 100vh;
+  background: rgba(30, 41, 59, 0.18);
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  /* Adicione overflow para permitir scroll no modal */
+  overflow: auto;
 }
 
 .detalhesCard {
-  position: relative;
   background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 8px 32px rgba(16, 30, 54, 0.08);
+  border-radius: 18px;
+  padding: 32px 24px 24px 24px;
+  min-width: 340px;
+  max-width: 98vw;
+  max-height: 90vh;
+  box-shadow: 0 8px 32px #00000022;
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
+  /* Adicione scroll interno se o conteúdo for maior que o card */
+  overflow-y: auto;
 }
 
 .detalhesButtons {

@@ -72,7 +72,7 @@ const Index = () => {
 
   useEffect(() => {
     if (user && user.tipo !== 'admin') {
-      router.replace('/indexCliente');
+      router.replace('/paciente/indexCliente');
     }
   }, [user, router]);
 

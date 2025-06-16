@@ -54,6 +54,11 @@ const Medicos = () => {
     fetchMedicos();
   }, []);
 
+  // Atualiza lista ao editar um profissional
+  const handleUpdate = (m: Medico) => {
+    setMedicos((prev) => prev.map((p) => (p.id === m.id ? m : p)));
+  };
+
   if (loading) {
     return <p>Carregando profissionais...</p>;
   }
@@ -81,9 +86,7 @@ const Medicos = () => {
             onDelete={(id) =>
               setMedicos((prev) => prev.filter((m) => m.id !== id))
             }
-            onUpdate={(m) =>
-              setMedicos((prev) => prev.map((p) => (p.id === m.id ? m : p)))
-            }
+            onUpdate={handleUpdate}
           />
         ))}
       </div>

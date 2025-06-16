@@ -187,10 +187,24 @@ const CreateAppointmentModal: React.FC<Props> = ({
     }
   }, [currentMonth, selectedDate, daysScrollIndex, daysOfMonth]);
 
-  // Função para mostrar 6 dias por vez
-  const visibleDays = daysOfMonth.slice(daysScrollIndex, daysScrollIndex + 6);
+  // Função para mostrar todos os dias do mês (não mais só 6)
+  const visibleDays = daysOfMonth;
 
-  // Corrija: use o índice correto do dia clicado em daysOfMonth
+  // Adicione uma ref para o container dos dias
+  const daysScrollRef = useRef<HTMLDivElement>(null);
+
+  // Função para navegar pelos dias (scroll lateral infinito)
+  const scrollDays = (direction: 'left' | 'right') => {
+    if (daysScrollRef.current) {
+      const width = daysScrollRef.current.offsetWidth;
+      daysScrollRef.current.scrollBy({
+        left: direction === 'left' ? -width : width,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  // Corrige: use o índice correto do dia clicado em daysOfMonth
   const handleDayClick = (date: Date) => {
     if (!isDayEnabled(date)) return;
     setSelectedDate(date);
@@ -210,15 +224,6 @@ const CreateAppointmentModal: React.FC<Props> = ({
       } else if (idx >= daysScrollIndex + 6) {
         setDaysScrollIndex(idx - 5);
       }
-    }
-  };
-
-  // Função para navegar pelos dias
-  const scrollDays = (direction: 'left' | 'right') => {
-    if (direction === 'left') {
-      setDaysScrollIndex((prev) => Math.max(0, prev - 1));
-    } else {
-      setDaysScrollIndex((prev) => Math.min(daysOfMonth.length - 6, prev + 1));
     }
   };
 
@@ -317,7 +322,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
       }
     };
     if (isOpen) fetchProfissionais();
-  }, [isOpen]);
+  }, [isOpen, isSubmitting]); // Adicione isSubmitting para atualizar após edição
 
   // Novo: procedimentos e convenios do profissional selecionado
   const [procedimentosProfissional, setProcedimentosProfissional] = useState<string[]>([]);
@@ -436,350 +441,231 @@ const CreateAppointmentModal: React.FC<Props> = ({
           </div>
         )}
         {/* Header com mês/ano e botões de navegação centralizados */}
-        <div
-          className={styles.modalHeader}
-          style={{
-            justifyContent: "center",
-            gap: 24,
-            position: "relative",
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <button
-          type="button"
-          aria-label="Mês anterior"
-          style={{
-            border: 'none',
-            background: 'none',
-            fontSize: 28,
-            color: '#b0b0b0',
-            cursor: 'pointer',
-            padding: 0,
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            boxShadow: '0 2px 8px #0001',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={handlePrevMonth}
-        >
-          &#8592;
-        </button>
-        <span className={styles.modalTitle} style={{ flex: "unset", minWidth: 180, textAlign: "center" }}>
-          {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
-        </span>
-        <button
-          type="button"
-          aria-label="Próximo mês"
-          style={{
-            border: 'none',
-            background: 'none',
-            fontSize: 28,
-            color: '#b0b0b0',
-            cursor: 'pointer',
-            padding: 0,
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            boxShadow: '0 2px 8px #0001',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={handleNextMonth}
-        >
-          &#8594;
-        </button>
-        <button type="button" className={styles.modalCloseBtn} onClick={handleClose} aria-label="Fechar">
-          ×
-        </button>
-      </div>
-
-      {/* Linha dos dias com scroll visual e botões de navegação centralizados */}
-      <div style={{ display: 'flex', alignItems: 'center', position: 'relative', marginBottom: 8, marginTop: 8 }}>
-        <button
-          type="button"
-          aria-label="Dias anteriores"
-          style={{
-            border: 'none',
-            background: 'none',
-            fontSize: 28,
-            color: '#b0b0b0',
-            cursor: 'pointer',
-            padding: 0,
-            marginRight: 4,
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            boxShadow: '0 2px 8px #0001',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={() => scrollDays('left')}
-          disabled={daysScrollIndex === 0}
-        >
-          &#8592;
-        </button>
-        <div
-          className={styles.daysContainer}
-          style={{
-            flex: 1,
-            overflowX: 'hidden',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            scrollBehavior: 'smooth',
-            justifyContent: "center",
-            gap: 12,
-            padding: "24px 0 0 0"
-          }}
-        >
-          {visibleDays.map((day) => (
+        <div className={styles.modalHeader}>
+          <div className={styles.monthNavGroup}>
             <button
-              key={day.toDateString()}
               type="button"
-              onClick={() => handleDayClick(day)}
-              disabled={!isDayEnabled(day)}
-              className={`${styles.dayCard} ${isSameDay(day, selectedDate) ? styles.activeDay : ''} ${!isDayEnabled(day) ? styles.disabledDay : ''}`}
+              aria-label="Mês anterior"
+              className={styles.monthNavBtn}
+              onClick={handlePrevMonth}
             >
-              <div className={styles.dayName}>{format(day, 'EEE', { locale: ptBR })}</div>
-              <div className={styles.dayNumber}>{format(day, 'dd')}</div>
+              &#8592;
+            </button>
+            <span className={styles.modalTitle}>
+              {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
+            </span>
+            <button
+              type="button"
+              aria-label="Próximo mês"
+              className={styles.monthNavBtn}
+              onClick={handleNextMonth}
+            >
+              &#8594;
+            </button>
+          </div>
+          <button type="button" className={styles.modalCloseBtn} onClick={handleClose} aria-label="Fechar">
+            ×
+          </button>
+        </div>
+
+        {/* Linha dos dias com scroll visual e botões de navegação centralizados */}
+        <div className={styles.daysNavWrapper}>
+          <button
+            type="button"
+            aria-label="Dias anteriores"
+            className={styles.dayNavBtn}
+            onClick={() => scrollDays('left')}
+          >
+            &#8592;
+          </button>
+          <div className={styles.daysContainer} ref={daysScrollRef}>
+            {visibleDays.map((day) => (
+              <button
+                key={day.toDateString()}
+                type="button"
+                onClick={() => handleDayClick(day)}
+                disabled={!isDayEnabled(day)}
+                className={`${styles.dayCard} ${isSameDay(day, selectedDate) ? styles.activeDay : ''} ${!isDayEnabled(day) ? styles.disabledDay : ''}`}
+              >
+                <div className={styles.dayName}>{format(day, 'EEE', { locale: ptBR })}</div>
+                <div className={styles.dayNumber}>{format(day, 'dd')}</div>
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            aria-label="Próximos dias"
+            className={styles.dayNavBtn}
+            onClick={() => scrollDays('right')}
+          >
+            &#8594;
+          </button>
+        </div>
+
+        {/* Botões de período */}
+        <div className={styles.periodFilter}>
+          {periodLabels.map((label) => (
+            <button
+              key={label}
+              type="button"
+              className={`${styles.periodButton} ${selectedPeriod === label ? styles.activePeriod : ''}`}
+              onClick={() => handlePeriodClick(label as 'Manhã' | 'Tarde' | 'Noite')}
+            >
+              {label}
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          aria-label="Próximos dias"
-          style={{
-            border: 'none',
-            background: 'none',
-            fontSize: 28,
-            color: '#b0b0b0',
-            cursor: 'pointer',
-            padding: 0,
-            marginLeft: 4,
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            boxShadow: '0 2px 8px #0001',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={() => scrollDays('right')}
-          disabled={daysScrollIndex + 6 >= daysOfMonth.length}
-        >
-          &#8594;
-        </button>
-      </div>
 
-      {/* Botões de período */}
-      <div className={styles.periodFilter}>
-        {periodLabels.map((label) => (
+        {/* Horários disponíveis com navegação */}
+        <div className={styles.timesNavWrapper}>
           <button
-            key={label}
             type="button"
-            className={`${styles.periodButton} ${selectedPeriod === label ? styles.activePeriod : ''}`}
-            onClick={() => handlePeriodClick(label as 'Manhã' | 'Tarde' | 'Noite')}
+            aria-label="Horários anteriores"
+            className={styles.timeNavBtn}
+            onClick={() => scrollTimes('left')}
+            tabIndex={-1}
           >
-            {label}
+            &#8592;
           </button>
-        ))}
-      </div>
+          <div
+            className={styles.timeSelectorWrapper}
+            ref={timesContainerRef}
+          >
+            {(horariosGerados.length > 0) ? (
+              horariosGerados.map((time) => (
+                <button
+                  key={time}
+                  type="button"
+                  className={`${styles.timeButton} ${appointmentData.time === time ? styles.activeTime : ''}`}
+                  onClick={() => setAppointmentData((prev: any) => ({ ...prev, time }))}
+                >
+                  {time}
+                </button>
+              ))
+            ) : (
+              <p className={styles.noTime}>Nenhum horário disponível para este período ou selecione um profissional para visualizar os horários disponíveis.</p>
+            )}
+          </div>
+          <button
+            type="button"
+            aria-label="Próximos horários"
+            className={styles.timeNavBtn}
+            onClick={() => scrollTimes('right')}
+            tabIndex={-1}
+          >
+            &#8594;
+          </button>
+        </div>
 
-      {/* Horários disponíveis com navegação */}
-      <div style={{ display: 'flex', alignItems: 'center', position: 'relative', marginBottom: 8, marginTop: 16 }}>
-        <button
-          type="button"
-          aria-label="Horários anteriores"
-          style={{
-            border: 'none',
-            background: 'none',
-            fontSize: 28,
-            color: '#b0b0b0',
-            cursor: 'pointer',
-            padding: 0,
-            marginRight: 8,
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            boxShadow: '0 2px 8px #0001',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={() => scrollTimes('left')}
-          tabIndex={-1}
-        >
-          &#8592;
-        </button>
-        <div
-          className={styles.timeSelectorWrapper}
-          ref={timesContainerRef}
-        >
-          {(horariosGerados.length > 0) ? (
-            horariosGerados.map((time) => (
-              <button
-                key={time}
-                type="button"
-                className={`${styles.timeButton} ${appointmentData.time === time ? styles.activeTime : ''}`}
-                onClick={() => setAppointmentData((prev: any) => ({ ...prev, time }))}
-                style={{
-                  borderRadius: 14,
-                  fontWeight: 700,
-                  fontSize: "1.08rem",
-                  background: appointmentData.time === time ? "#1992b7" : "#f3f4f6",
-                  color: appointmentData.time === time ? "#fff" : "#222",
-                  border: appointmentData.time === time ? "2px solid #1992b7" : "2px solid #e5e7eb",
-                  boxShadow: appointmentData.time === time ? "0 2px 8px #1992b722" : "none",
-                  transition: "all 0.2s"
-                }}
+        {/* Box de resumo, seleção de profissional e paciente */}
+        <div className={styles.summaryBoxStyled}>
+          <div className={styles.summaryRow}>
+            <span className={styles.summaryLabel}>Profissional:</span>
+            <span className={styles.summaryValue}>{appointmentData.profissional || 'Sem preferência'}</span>
+          </div>
+          <div className={styles.selectGroup}>
+            <select
+              value={appointmentData.profissional}
+              onChange={(e) => {
+                setAppointmentData((prev: any) => ({
+                  ...prev,
+                  profissional: e.target.value,
+                  convenio: '',
+                  procedimento: '',
+                }));
+                if (appointmentData.date) {
+                  fetchAvailableTimes(appointmentData.date, e.target.value);
+                }
+              }}
+              required
+              className={styles.selectStyled}
+            >
+              <option value="">Selecione um profissional</option>
+              {profissionaisCadastrados.map((p) => (
+                <option key={p.id} value={p.nome}>{p.nome}</option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.selectGroup}>
+            <input
+              type="text"
+              value={userInfo?.nome || appointmentData.nomePaciente || ''}
+              readOnly
+              className={styles.selectStyled}
+            />
+          </div>
+
+          {/* Convenio só aparece após selecionar profissional */}
+          {appointmentData.profissional && (
+            <div className={styles.selectGroup}>
+              <select
+                value={appointmentData.convenio}
+                onChange={e => setAppointmentData((prev: typeof appointmentData) => ({ ...prev, convenio: e.target.value }))
+                }
+                className={styles.selectStyled}
               >
-                {time}
-              </button>
-            ))
-          ) : (
-            <p className={styles.noTime}>Nenhum horário disponível para este período</p>
+                <option value="">Selecione o convênio</option>
+                <option value="Particular">Particular</option>
+                {conveniosProfissional.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Procedimento só aparece após selecionar profissional */}
+          {appointmentData.profissional && (
+            <div className={styles.selectGroup}>
+              <select
+                value={appointmentData.procedimento}
+                onChange={e => setAppointmentData((prev: typeof appointmentData) => ({ ...prev, procedimento: e.target.value }))
+                }
+                className={styles.selectStyled}
+              >
+                <option value="">Selecione o procedimento</option>
+                {procedimentosProfissional.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
           )}
         </div>
-        <button
-          type="button"
-          aria-label="Próximos horários"
-          style={{
-            border: 'none',
-            background: 'none',
-            fontSize: 28,
-            color: '#b0b0b0',
-            cursor: 'pointer',
-            padding: 0,
-            marginLeft: 8,
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            boxShadow: '0 2px 8px #0001',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={() => scrollTimes('right')}
-          tabIndex={-1}
-        >
-          &#8594;
-        </button>
-      </div>
 
-      {/* Box de resumo, seleção de profissional e paciente */}
-      <div className={styles.summaryBoxStyled}>
-        <div className={styles.summaryRow}>
-          <span className={styles.summaryLabel}>Profissional:</span>
-          <span className={styles.summaryValue}>{appointmentData.profissional || 'Sem preferência'}</span>
-        </div>
-        <div className={styles.selectGroup}>
-          <select
-            value={appointmentData.profissional}
-            onChange={(e) => {
-              setAppointmentData((prev: any) => ({
-                ...prev,
-                profissional: e.target.value,
-                convenio: '',
-                procedimento: '',
-              }));
-              if (appointmentData.date) {
-                fetchAvailableTimes(appointmentData.date, e.target.value);
-              }
-            }}
-            required
-            className={styles.selectStyled}
+        {/* Descrição menor */}
+        <textarea
+          placeholder="Descrição"
+          value={appointmentData.detalhes}
+          onChange={(e) => setAppointmentData((prev: any) => ({ ...prev, detalhes: e.target.value }))}
+          className={styles.inputDescricao}
+          style={{ minHeight: 40, maxHeight: 60 }}
+        />
+
+        {/* Footer com botões lado a lado e do mesmo tamanho */}
+        <div className={styles.modalFooter}>
+          <button
+            type="button"
+            onClick={handleClose}
+            className={styles.buttonSecondary}
+            style={{ flex: 1, borderRadius: "10px 0 0 10px", margin: 0, minWidth: 0 }}
+            disabled={isSubmitting}
           >
-            <option value="">Selecione um profissional</option>
-            {profissionaisCadastrados.map((p) => (
-              <option key={p.id} value={p.nome}>{p.nome}</option>
-            ))}
-          </select>
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className={styles.buttonStyled}
+            style={{ flex: 1, borderRadius: "0 10px 10px 0", margin: 0, minWidth: 0 }}
+            disabled={
+              isSubmitting ||
+              !appointmentData.date ||
+              !appointmentData.profissional ||
+              !appointmentData.time ||
+              !appointmentData.nomePaciente
+            }
+          >
+            {isSubmitting ? 'Aguarde...' : 'Confirmar'}
+          </button>
         </div>
-        <div className={styles.selectGroup}>
-          <input
-            type="text"
-            value={userInfo?.nome || appointmentData.nomePaciente || ''}
-            readOnly
-            className={styles.selectStyled}
-          />
-        </div>
-
-        {/* Convenio só aparece após selecionar profissional */}
-        {appointmentData.profissional && (
-          <div className={styles.selectGroup}>
-            <select
-              value={appointmentData.convenio}
-              onChange={e => setAppointmentData((prev: typeof appointmentData) => ({ ...prev, convenio: e.target.value }))
-              }
-              className={styles.selectStyled}
-            >
-              <option value="">Selecione o convênio</option>
-              <option value="Particular">Particular</option>
-              {conveniosProfissional.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Procedimento só aparece após selecionar profissional */}
-        {appointmentData.profissional && (
-          <div className={styles.selectGroup}>
-            <select
-              value={appointmentData.procedimento}
-              onChange={e => setAppointmentData((prev: typeof appointmentData) => ({ ...prev, procedimento: e.target.value }))
-              }
-              className={styles.selectStyled}
-            >
-              <option value="">Selecione o procedimento</option>
-              {procedimentosProfissional.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
-
-      {/* Descrição menor */}
-      <textarea
-        placeholder="Descrição"
-        value={appointmentData.detalhes}
-        onChange={(e) => setAppointmentData((prev: any) => ({ ...prev, detalhes: e.target.value }))}
-        className={styles.inputDescricao}
-        style={{ minHeight: 40, maxHeight: 60 }}
-      />
-
-      {/* Footer com botões lado a lado e do mesmo tamanho */}
-      <div className={styles.modalFooter}>
-        <button
-          type="button"
-          onClick={handleClose}
-          className={styles.buttonSecondary}
-          style={{ flex: 1, borderRadius: "10px 0 0 10px", margin: 0, minWidth: 0 }}
-          disabled={isSubmitting}
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          className={styles.buttonStyled}
-          style={{ flex: 1, borderRadius: "0 10px 10px 0", margin: 0, minWidth: 0 }}
-          disabled={
-            isSubmitting ||
-            !appointmentData.date ||
-            !appointmentData.profissional ||
-            !appointmentData.time ||
-            !appointmentData.nomePaciente
-          }
-        >
-          {isSubmitting ? 'Aguarde...' : 'Confirmar'}
-        </button>
-      </div>
       </form>
     </Modal>
   );
