@@ -105,3 +105,12 @@
 .buttonExcluir:hover {
   background: #b91c1c;
 }
+
+.checkboxCell {
+  width: 40px;
+  text-align: center;
+}
+
+.checkboxHeader {
+  width: 40px;
+}

@@ -36,6 +36,8 @@ const Salas = () => {
   const [formData, setFormData] = useState<{ nome: string; profissionalId: string | null }>({ nome: '', profissionalId: null });
   const [showModal, setShowModal] = useState(false);
   const [newSala, setNewSala] = useState<{ nome: string; profissionalId: string | null }>({ nome: '', profissionalId: null });
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const allSelected = salas.length > 0 && selectedIds.length === salas.length;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -104,6 +106,30 @@ const Salas = () => {
     setSalas(prev => prev.filter(s => s.id !== id));
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(salas.map(s => s.id));
+    }
+  };
+
+  const deleteSelected = async () => {
+    const confirm = window.confirm('Deseja excluir as salas selecionadas?');
+    if (!confirm) return;
+    for (const id of selectedIds) {
+      await excluirSala(id);
+    }
+    setSalas(prev => prev.filter(s => !selectedIds.includes(s.id)));
+    setSelectedIds([]);
+  };
+
   const toggleAtivo = async (s: Sala) => {
     await atualizarSala(s.id, { ativo: !s.ativo });
     setSalas(prev => prev.map(p => (p.id === s.id ? { ...p, ativo: !s.ativo } : p)));
@@ -129,11 +155,22 @@ const Salas = () => {
           <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>
             + Adicionar sala
           </button>
+          {selectedIds.length > 0 && (
+            <button
+              className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+              onClick={deleteSelected}
+            >
+              Excluir selecionadas
+            </button>
+          )}
         </div>
         <div className={tableStyles.salasTableWrapper}>
           <table className={tableStyles.salasTable}>
             <thead>
               <tr>
+                <th className={tableStyles.checkboxHeader}>
+                  <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
+                </th>
                 <th>NOME</th>
                 <th>PROFISSIONAL</th>
                 <th>ATIVA</th>
@@ -143,6 +180,13 @@ const Salas = () => {
             <tbody>
               {salas.map(s => (
                 <tr key={s.id}>
+                  <td className={tableStyles.checkboxCell}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(s.id)}
+                      onChange={() => toggleSelect(s.id)}
+                    />
+                  </td>
                   {editingId === s.id ? (
                     <>
                       <td>

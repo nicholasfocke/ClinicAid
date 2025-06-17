@@ -155,3 +155,12 @@
   border: 1px solid #d1d5db;
   border-radius: 6px;
 }
+
+.checkboxCell {
+  width: 40px;
+  text-align: center;
+}
+
+.checkboxHeader {
+  width: 40px;
+}

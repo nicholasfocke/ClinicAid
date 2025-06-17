@@ -40,6 +40,8 @@ const Remedios = () => {
         dosagem: '',
         uso: '',
     });
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const allSelected = remedios.length > 0 && selectedIds.length === remedios.length;
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -127,6 +129,30 @@ const Remedios = () => {
         setRemedios(prev => prev.filter(r => r.id !== id));
     };
 
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (allSelected) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(remedios.map(r => r.id));
+        }
+    };
+
+    const deleteSelected = async () => {
+        const confirmDelete = confirm('Deseja excluir os remédios selecionados?');
+        if (!confirmDelete) return;
+        for (const id of selectedIds) {
+            await excluirRemedio(id);
+        }
+        setRemedios(prev => prev.filter(r => !selectedIds.includes(r.id)));
+        setSelectedIds([]);
+    };
+
     return(
     <>
       <div className={layoutStyles.container}>
@@ -141,11 +167,22 @@ const Remedios = () => {
         {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
         <div className={tableStyles.actionButtonsWrapper}>
           <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>+ Adicionar remédio</button>
+          {selectedIds.length > 0 && (
+            <button
+              className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+              onClick={deleteSelected}
+            >
+              Excluir selecionados
+            </button>
+          )}
         </div>
         <div className={tableStyles.remediosTableWrapper}>
           <table className={tableStyles.remediosTable}>
             <thead>
               <tr>
+                <th className={tableStyles.checkboxHeader}>
+                  <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
+                </th>
                 <th>NOME</th>
                 <th>QUANTIDADE</th>
                 <th>DOSAGEM</th>
@@ -156,6 +193,13 @@ const Remedios = () => {
             <tbody>
               {remedios.map(r => (
                 <tr key={r.id}>
+                  <td className={tableStyles.checkboxCell}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(r.id)}
+                      onChange={() => toggleSelect(r.id)}
+                    />
+                  </td>
                   {editingId === r.id ? (
                     <>
                       <td><input name="nome" value={formData.nome} onChange={handleChange} /></td>

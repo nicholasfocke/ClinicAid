@@ -28,6 +28,8 @@ const FormasPagamento = () => {
   const [newForma, setNewForma] = useState<{ nome: string; taxa: number }>({ nome: '', taxa: 0 });
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const allSelected = formas.length > 0 && selectedIds.length === formas.length;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -106,6 +108,30 @@ const FormasPagamento = () => {
     setFormas(prev => prev.filter(f => f.id !== id));
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(formas.map(f => f.id));
+    }
+  };
+
+  const deleteSelected = async () => {
+    const confirmDelete = window.confirm('Deseja excluir as formas selecionadas?');
+    if (!confirmDelete) return;
+    for (const id of selectedIds) {
+      await excluirFormaPagamento(id);
+    }
+    setFormas(prev => prev.filter(f => !selectedIds.includes(f.id)));
+    setSelectedIds([]);
+  };
+
   return (
     <>
       <div className={layoutStyles.container}>
@@ -122,11 +148,22 @@ const FormasPagamento = () => {
           <button className={layoutStyles.buttonAdicionar} onClick={() => setShowModal(true)}>
             + Adicionar forma de pagamento
           </button>
+          {selectedIds.length > 0 && (
+            <button
+              className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+              onClick={deleteSelected}
+            >
+              Excluir selecionados
+            </button>
+          )}
         </div>
         <div className={tableStyles.formasPagamentoTableWrapper}>
           <table className={tableStyles.formasPagamentoTable}>
             <thead>
               <tr>
+                <th className={tableStyles.checkboxHeader}>
+                  <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
+                </th>
                 <th>NOME</th>
                 <th>TAXA (%)</th>
                 <th></th>
@@ -135,6 +172,13 @@ const FormasPagamento = () => {
             <tbody>
               {formas.map(f => (
                 <tr key={f.id}>
+                  <td className={tableStyles.checkboxCell}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(f.id)}
+                      onChange={() => toggleSelect(f.id)}
+                    />
+                  </td>
                   {editingId === f.id ? (
                     <>
                       <td>

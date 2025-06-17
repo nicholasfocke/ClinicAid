@@ -33,6 +33,9 @@ const Cargos = () => {
   });
   const [showModal, setShowModal] = useState(false);
   const [newCargo, setNewCargo] = useState<{ nome: string; profissionalSaude: boolean }>({ nome: '', profissionalSaude: false });
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const allSelected = cargos.length > 0 && selectedIds.length === cargos.length;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -93,6 +96,30 @@ const Cargos = () => {
     setCargos(prev => prev.filter(c => c.id !== id));
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(cargos.map(c => c.id));
+    }
+  };
+
+  const deleteSelected = async () => {
+    const confirmDelete = window.confirm('Deseja excluir os cargos selecionados?');
+    if (!confirmDelete) return;
+    for (const id of selectedIds) {
+      await excluirCargo(id);
+    }
+    setCargos(prev => prev.filter(c => !selectedIds.includes(c.id)));
+    setSelectedIds([]);
+  };
+
   return (
     <>
       <div className={layoutStyles.container}>
@@ -106,11 +133,22 @@ const Cargos = () => {
         <div className={tableStyles.subtitleSalas}>Lista de cargos cadastrados</div>
         <div className={tableStyles.actionButtonsWrapper}>
           <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>+ Adicionar cargo</button>
+          {selectedIds.length > 0 && (
+            <button
+              className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+              onClick={deleteSelected}
+            >
+              Excluir selecionados
+            </button>
+          )}
         </div>
         <div className={tableStyles.salasTableWrapper}>
           <table className={tableStyles.salasTable}>
             <thead>
               <tr>
+                <th className={tableStyles.checkboxHeader}>
+                  <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
+                </th>
                 <th>NOME</th>
                 <th>USUÁRIOS</th>
                 <th>PROFISSIONAL SAÚDE</th>
@@ -118,8 +156,15 @@ const Cargos = () => {
               </tr>
             </thead>
             <tbody>
-              {cargos.map(c => (
+            {cargos.map(c => (
                 <tr key={c.id}>
+                  <td className={tableStyles.checkboxCell}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(c.id)}
+                      onChange={() => toggleSelect(c.id)}
+                    />
+                  </td>
                   {editingId === c.id ? (
                     <>
                       <td>

@@ -122,3 +122,12 @@
 .buttonAdicionar:hover {
   background: #1746a2;
 }
+
+.checkboxCell {
+  width: 40px;
+  text-align: center;
+}
+
+.checkboxHeader {
+  width: 40px;
+}

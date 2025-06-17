@@ -48,6 +48,7 @@ const Procedimentos = () => {
   const [valorInput, setValorInput] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'todos' | 'consultas' | 'exames'>('todos');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -88,6 +89,9 @@ const Procedimentos = () => {
     if (activeTab === 'exames') return p.tipo === 'exame';
     return true;
   });
+  const allSelected =
+    filteredProcedimentos.length > 0 &&
+    selectedIds.length === filteredProcedimentos.length;
 
   const startEdit = (p: Procedimento) => {
     setEditingId(p.id);
@@ -154,6 +158,32 @@ const Procedimentos = () => {
     setProcedimentos(prev => prev.filter(p => p.id !== id));
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredProcedimentos.map(p => p.id));
+    }
+  };
+
+  const deleteSelected = async () => {
+    const confirm = window.confirm(
+      'Deseja excluir os procedimentos selecionados?'
+    );
+    if (!confirm) return;
+    for (const id of selectedIds) {
+      await excluirProcedimento(id);
+    }
+    setProcedimentos(prev => prev.filter(p => !selectedIds.includes(p.id)));
+    setSelectedIds([]);
+  };
+
   return (
     <div className={layoutStyles.container}>
       <div className={breadcrumbStyles.breadcrumbWrapper}>
@@ -189,11 +219,22 @@ const Procedimentos = () => {
         <button className={layoutStyles.buttonAdicionar} onClick={() => setShowModal(true)}>
           + Adicionar procedimento
         </button>
+        {selectedIds.length > 0 && (
+          <button
+            className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+            onClick={deleteSelected}
+          >
+            Excluir selecionados
+          </button>
+        )}
       </div>
       <div className={tableStyles.procedimentosTableWrapper}>
         <table className={tableStyles.procedimentosTable}>
           <thead>
             <tr>
+              <th className={tableStyles.checkboxHeader}>
+                <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
+              </th>
               <th>NOME</th>
               <th>VALOR</th>
               <th>DURAÇÃO (min)</th>
@@ -205,6 +246,13 @@ const Procedimentos = () => {
           <tbody>
             {filteredProcedimentos.map(p => (
               <tr key={p.id}>
+                <td className={tableStyles.checkboxCell}>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(p.id)}
+                    onChange={() => toggleSelect(p.id)}
+                  />
+                </td>
                 {editingId === p.id ? (
                   <>
                     <td>
