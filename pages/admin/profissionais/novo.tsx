@@ -367,14 +367,6 @@ const NovoMedico = () => {
             </option>
           ))}
         </select>
-        <select name="cargoId" value={formData.cargoId} onChange={handleChange} className={styles.input} required>
-          <option value="">Selecione o cargo</option>
-          {cargos.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nome}
-            </option>
-          ))}
-        </select>
         <div className={styles.convenioHeader}>Selecione os dias de atendimento:</div>
         <div className={styles.diasBox}>
           {diasSemana.map((dia) => (
