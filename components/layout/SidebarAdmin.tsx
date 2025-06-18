@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styles from './SidebarAdmin.module.css';
-import { Home, Calendar, User, LogOut, Stethoscope, Bot, FilePlus, ChevronDown, ChevronRight,} from 'lucide-react';
+import { Home, Calendar, User, LogOut, Stethoscope, Bot, FilePlus, ChevronDown, ChevronRight, Pill, Users } from 'lucide-react';
 import Link from 'next/link';
 import { auth, firestore } from '../../firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
@@ -12,6 +12,7 @@ const SidebarAdmin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [cadastroOpen, setCadastroOpen] = useState(false);
+  const [farmaciaOpen, setFarmaciaOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -42,6 +43,10 @@ const SidebarAdmin = () => {
 
   const toggleCadastro = () => {
     setCadastroOpen((prev) => !prev);
+  };
+
+  const toggleFarmacia = () => {
+    setFarmaciaOpen((prev) => !prev);
   };
 
   if (!isAuthenticated || !isAdmin) {
@@ -103,16 +108,32 @@ const SidebarAdmin = () => {
         </Link>
         <Link href="/admin/pacientes" className={styles.navItem}>
           <span className={styles.icon} style={{width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-            {/* SVG gratuito de grupo de pessoas, branco, estilo Heroicons Users */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <circle cx="9" cy="7" r="4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M23 20v-2a4 4 0 0 0-3-3.87" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <Users className={styles.icon}/>
           </span>
           <span>Pacientes</span>
         </Link>
+        <button type="button" onClick={toggleFarmacia} className={`${styles.navItem} ${styles.cadastroButton}`}>
+          <Pill className={styles.icon} />
+          <span>Farmácia</span>
+          {farmaciaOpen ? (
+            <ChevronDown className={styles.chevronIcon} size={16} />
+          ) : (
+            <ChevronRight className={styles.chevronIcon} size={16} />
+          )}
+        </button>
+        {farmaciaOpen && (
+          <div className={styles.subNav}>
+            <Link href="/admin/farmacia/medicamentos" className={styles.subNavItem}>
+              Medicamentos
+            </Link>
+            <Link href="/admin/farmacia/entrada" className={styles.subNavItem}>
+              Entrada de Remédios
+            </Link>
+            <Link href="/admin/farmacia/saida" className={styles.subNavItem}>
+              Saída de Remédios
+            </Link>
+          </div>
+        )}
         <Link href="/profile" className={styles.navItem}>
           <User className={styles.icon} />
           <span>Perfil</span>
