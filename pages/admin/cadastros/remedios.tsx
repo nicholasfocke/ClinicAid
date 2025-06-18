@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import layoutStyles from '@/styles/admin/medico/medicos.module.css';
 import tableStyles from '@/styles/admin/cadastros/remedios/remedios.module.css';
-import modalStyles from '@/styles/admin/cadastros/remedios/novoRemedioModal.module.css';
+import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { buscarRemedios, criarRemedio, excluirRemedio, atualizarRemedio } from '@/functions/remediosFunctions';
 
 interface Remedio {

@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import layoutStyles from '@/styles/admin/medico/medicos.module.css';
 import tableStyles from '@/styles/admin/cadastros/salas/salas.module.css';
-import modalStyles from '@/styles/admin/cadastros/salas/novoSalaModal.module.css';
+import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { buscarSalas, criarSala, excluirSala, atualizarSala } from '@/functions/salasFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
 
