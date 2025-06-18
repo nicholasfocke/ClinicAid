@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import styles from '@/styles/appointmentDetails.module.css';
+import styles from '@/styles/admin/agendamentos/appointmentDetails.module.css';
 import { doc, getDoc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { buscarConvenios } from '@/functions/conveniosFunctions';

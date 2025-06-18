@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from 'react-modal';
-import styles from '@/styles/CreateAppointment.module.css';
+import styles from '@/styles/admin/agendamentos/CreateAppointment.module.css';
 import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { auth, firestore } from '@/firebase/firebaseConfig';
