@@ -58,91 +58,129 @@ const SidebarAdmin = () => {
       <div className={styles.logo}>
         <img src="/images/ClinicAid branco.png" alt="ClinicAid Logo" />
       </div>
-      <nav className={styles.nav}>
-        <Link href="/" className={styles.navItem}>
-          <Home className={styles.icon} />
-          <span>Dashboard</span>
-        </Link>
-         <button type="button" onClick={toggleCadastro} className={`${styles.navItem} ${styles.cadastroButton}`}>
-          <FilePlus className={styles.icon} />
-          <span>Cadastros</span>
-          {cadastroOpen ? (
-            <ChevronDown className={styles.chevronIcon} size={16} />
-          ) : (
-            <ChevronRight className={styles.chevronIcon} size={16} />
-          )}
-        </button>
-        {cadastroOpen && (
-          <div className={styles.subNav}>
-            <Link href="/admin/cadastros/procedimentos" className={styles.subNavItem}>
-              Procedimentos
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          justifyContent: 'flex-start',
+          alignItems: 'flex-start',
+          height: '100%',
+          paddingTop: 0,
+        }}
+      >
+        <nav
+          className={styles.nav}
+          style={{
+            flexGrow: 0,
+            width: '100%',
+            marginTop: 0,
+            marginBottom: 0,
+            alignItems: 'flex-start',
+            gap: 0,
+            paddingTop: 0,
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, width: '100%' }}>
+            <Link href="/" className={styles.navItem} style={{ marginTop: 0 }}>
+              <Home className={styles.icon} style={{ marginTop: 0 }} />
+              <span style={{ marginTop: 0 }}>Dashboard</span>
             </Link>
-            <Link href="/admin/cadastros/convenios" className={styles.subNavItem}>
-              Convênios
+            <button type="button" onClick={toggleCadastro} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
+              <FilePlus className={styles.icon} style={{ marginTop: 0 }} />
+              <span style={{ marginTop: 0 }}>Cadastros</span>
+              {cadastroOpen ? (
+                <ChevronDown className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+              ) : (
+                <ChevronRight className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+              )}
+            </button>
+            {cadastroOpen && (
+              <div className={styles.subNav} style={{ marginTop: 0 }}>
+                <Link href="/admin/cadastros/procedimentos" className={styles.subNavItem}>
+                  Procedimentos
+                </Link>
+                <Link href="/admin/cadastros/convenios" className={styles.subNavItem}>
+                  Convênios
+                </Link>
+                <Link href="/admin/cadastros/formas-pagamento" className={styles.subNavItem}>
+                  Formas de Pagamento
+                </Link>
+                <Link href="/admin/cadastros/remedios" className={styles.subNavItem}>
+                  Remédios / Receitas
+                </Link>
+                <Link href="/admin/cadastros/cargos" className={styles.subNavItem}>
+                  Cargos
+                </Link>
+                <Link href="/admin/cadastros/salas" className={styles.subNavItem}>
+                  Salas
+                </Link>
+              </div>
+            )}
+            <Link href="/admin/agendamentos" className={styles.navItem} style={{ marginTop: 0 }}>
+              <Calendar className={styles.icon} style={{ marginTop: 0 }} />
+              <span style={{ marginTop: 0 }}>Agendamentos</span>
             </Link>
-            <Link href="/admin/cadastros/formas-pagamento" className={styles.subNavItem}>
-              Formas de Pagamento
+            <Link href="/assistente-ia" className={styles.navItem} style={{ marginTop: 0 }}>
+              <Bot className={styles.icon} color="#fff" style={{ marginTop: 0 }} />
+              <span style={{ marginTop: 0 }}>Assistente IA</span>
             </Link>
-            <Link href="/admin/cadastros/remedios" className={styles.subNavItem}>
-              Remédios / Receitas
+            <Link href="/admin/profissionais" className={styles.navItem} style={{ marginTop: 0 }}>
+              <Stethoscope className={styles.icon} color="#fff" style={{ marginTop: 0 }} />
+              <span style={{ marginTop: 0 }}>Profissionais</span>
             </Link>
-            <Link href="/admin/cadastros/cargos" className={styles.subNavItem}>
-              Cargos
+            <Link href="/admin/pacientes" className={styles.navItem} style={{ marginTop: 0 }}>
+              <span className={styles.icon} style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
+                <Users className={styles.icon} style={{ marginTop: 0 }} />
+              </span>
+              <span style={{ marginTop: 0 }}>Pacientes</span>
             </Link>
-            <Link href="/admin/cadastros/salas" className={styles.subNavItem}>
-              Salas
+            <button type="button" onClick={toggleFarmacia} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
+              <Pill className={styles.icon} style={{ marginTop: 0 }} />
+              <span style={{ marginTop: 0 }}>Farmácia</span>
+              {farmaciaOpen ? (
+                <ChevronDown className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+              ) : (
+                <ChevronRight className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+              )}
+            </button>
+            {farmaciaOpen && (
+              <div className={styles.subNav} style={{ marginTop: 0 }}>
+                <Link href="/admin/farmacia/medicamentos" className={styles.subNavItem}>
+                  Medicamentos
+                </Link>
+                <Link href="/admin/farmacia/entrada" className={styles.subNavItem}>
+                  Entrada de Remédios
+                </Link>
+                <Link href="/admin/farmacia/saida" className={styles.subNavItem}>
+                  Saída de Remédios
+                </Link>
+              </div>
+            )}
+            <Link href="/profile" className={styles.navItem} style={{ marginTop: 0 }}>
+              <User className={styles.icon} style={{ marginTop: 0 }} />
+              <span style={{ marginTop: 0 }}>Perfil</span>
             </Link>
           </div>
-        )}
-        <Link href="/admin/agendamentos" className={styles.navItem}>
-          <Calendar className={styles.icon} />
-          <span>Agendamentos</span>
-        </Link>
-        <Link href="/assistente-ia" className={styles.navItem}>
-          <Bot className={styles.icon} color="#fff" />
-          <span>Assistente IA</span>
-        </Link>
-        <Link href="/admin/profissionais" className={styles.navItem}>
-          <Stethoscope className={styles.icon} color="#fff" />
-          <span>Profissionais</span>
-        </Link>
-        <Link href="/admin/pacientes" className={styles.navItem}>
-          <span className={styles.icon} style={{width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-            <Users className={styles.icon}/>
-          </span>
-          <span>Pacientes</span>
-        </Link>
-        <button type="button" onClick={toggleFarmacia} className={`${styles.navItem} ${styles.cadastroButton}`}>
-          <Pill className={styles.icon} />
-          <span>Farmácia</span>
-          {farmaciaOpen ? (
-            <ChevronDown className={styles.chevronIcon} size={16} />
-          ) : (
-            <ChevronRight className={styles.chevronIcon} size={16} />
-          )}
-        </button>
-        {farmaciaOpen && (
-          <div className={styles.subNav}>
-            <Link href="/admin/farmacia/medicamentos" className={styles.subNavItem}>
-              Medicamentos
-            </Link>
-            <Link href="/admin/farmacia/entrada" className={styles.subNavItem}>
-              Entrada de Remédios
-            </Link>
-            <Link href="/admin/farmacia/saida" className={styles.subNavItem}>
-              Saída de Remédios
-            </Link>
-          </div>
-        )}
-        <Link href="/profile" className={styles.navItem}>
-          <User className={styles.icon} />
-          <span>Perfil</span>
-        </Link>
-        <button onClick={handleLogout} className={`${styles.navItem} ${styles.logoutButton}`}>
+        </nav>
+        <button
+          onClick={handleLogout}
+          className={`${styles.logoutButton}`}
+          style={{
+            marginTop: 8,
+            marginBottom: 0,
+            alignSelf: 'stretch',
+            width: '100%',
+            fontWeight: 700,
+            fontSize: 18,
+            zIndex: 2,
+          }}
+        >
           <LogOut className={styles.icon} />
           <span>Logout</span>
         </button>
-      </nav>
+      </div>
     </aside>
   );
 };
