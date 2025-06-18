@@ -1,7 +1,3 @@
-import pdfMake from 'pdfmake/build/pdfmake';
-import * as pdfFonts from 'pdfmake/build/vfs_fonts';
-(pdfMake as any).vfs = (pdfFonts as any).vfs;
-
 interface RelatorioOptions {
   titulo: string;
   colunas: string[];
@@ -12,8 +8,12 @@ interface RelatorioOptions {
 // Utilitário para converter imagem do public para base64
 export const carregarImagemComoBase64 = (src: string): Promise<string> => {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous'; // importante
+    let url = src;
+    if (typeof window !== 'undefined' && src.startsWith('/')) {
+      url = window.location.origin + src;
+    }
+    const img = new window.Image();
+    img.crossOrigin = 'anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
@@ -25,7 +25,7 @@ export const carregarImagemComoBase64 = (src: string): Promise<string> => {
       resolve(dataUrl);
     };
     img.onerror = reject;
-    img.src = src;
+    img.src = url;
   });
 };
 
@@ -35,6 +35,14 @@ export const gerarRelatorioPDF = async ({
   dados,
   nomeArquivo = 'relatorio.pdf',
 }: RelatorioOptions) => {
+  // Só importe pdfmake no client-side (evita erro no build SSR do Next.js)
+  if (typeof window === 'undefined') return;
+
+  // Use require para evitar erro de build (Next.js)
+  const pdfMake = require('pdfmake/build/pdfmake');
+  const pdfFonts = require('pdfmake/build/vfs_fonts');
+  pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
   const logoBase64 = await carregarImagemComoBase64('/images/ClinicAidLogo.png');
 
   const docDefinition = {
