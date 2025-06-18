@@ -88,7 +88,7 @@ const Pacientes = () => {
       <div className={styles.searchContainer}>
         <input
           type="text"
-          placeholder="Pesquisar paciente"
+          placeholder="🔍 Pesquisar paciente"
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           className={styles.searchInput}

@@ -185,23 +185,25 @@ const Procedimentos = () => {
     setSelectedIds([]);
   };
 
-  const gerarRelatorioProcedimentos = () => {
-  const colunas = ['Nome', 'Valor', 'Duração (min)', 'Convênio', 'Tipo'];
-  const dados = procedimentos.map(p => [
-    p.nome,
-    formatValor(p.valor),
-    `${p.duracao} min`,
-    p.convenio ? 'Sim' : 'Não',
-    p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1),
-  ]);
+  const gerarRelatorioProcedimentos = async () => {
+    const { gerarRelatorioPDF } = await import('@/utils/gerarRelatorio');
 
-  gerarRelatorioPDF({
-    titulo: 'Relatório de Procedimentos',
-    colunas,
-    dados,
-    nomeArquivo: 'procedimentos.pdf',
-  });
-};
+    const colunas = ['Nome', 'Valor', 'Duração (min)', 'Convênio', 'Tipo'];
+    const dados = procedimentos.map(p => [
+      p.nome,
+      formatValor(p.valor),
+      `${p.duracao} min`,
+      p.convenio ? 'Sim' : 'Não',
+      p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1),
+    ]);
+
+    gerarRelatorioPDF({
+      titulo: 'Relatório de Procedimentos',
+      colunas,
+      dados,
+      nomeArquivo: 'procedimentos.pdf',
+    });
+  };
 
   return (
     <div className={layoutStyles.container}>
