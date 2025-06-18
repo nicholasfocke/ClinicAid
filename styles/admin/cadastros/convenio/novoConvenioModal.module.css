@@ -36,6 +36,10 @@
   cursor: pointer;
 }
 
+.closeButton:hover {
+  color: #000;
+}
+
 .input {
   padding: 8px;
   border: 1px solid #d1d5db;
