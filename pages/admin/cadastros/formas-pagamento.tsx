@@ -185,7 +185,7 @@ const FormasPagamento = () => {
                         <input name="nome" value={formData.nome} onChange={handleChange} />
                       </td>
                       <td>
-                        <input name="taxa" type="number" step="0.01" value={formData.taxa} onChange={handleChange} />
+                        <input name="taxa" type="number" step="0.5" value={formData.taxa} onChange={handleChange} />
                       </td>
                       <td>
                         <button className={tableStyles.buttonAcao} onClick={() => saveEdit(f.id)}>Salvar</button>
@@ -233,7 +233,7 @@ const FormasPagamento = () => {
             <input
               name="taxa"
               type="number"
-              step="0.01"
+              step="0.5"
               className={modalStyles.input}
               value={newForma.taxa}
               onChange={handleNewChange}

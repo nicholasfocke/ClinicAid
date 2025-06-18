@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/firebase/firebaseConfig';
 import { useRouter } from 'next/router';
+import { gerarRelatorioPDF } from '@/utils/gerarRelatorio';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import layoutStyles from '@/styles/admin/medico/medicos.module.css';
 import tableStyles from '@/styles/admin/cadastros/procedimento/procedimentos.module.css';
@@ -184,6 +185,24 @@ const Procedimentos = () => {
     setSelectedIds([]);
   };
 
+  const gerarRelatorioProcedimentos = () => {
+  const colunas = ['Nome', 'Valor', 'Duração (min)', 'Convênio', 'Tipo'];
+  const dados = procedimentos.map(p => [
+    p.nome,
+    formatValor(p.valor),
+    `${p.duracao} min`,
+    p.convenio ? 'Sim' : 'Não',
+    p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1),
+  ]);
+
+  gerarRelatorioPDF({
+    titulo: 'Relatório de Procedimentos',
+    colunas,
+    dados,
+    nomeArquivo: 'procedimentos.pdf',
+  });
+};
+
   return (
     <div className={layoutStyles.container}>
       <div className={breadcrumbStyles.breadcrumbWrapper}>
@@ -215,19 +234,12 @@ const Procedimentos = () => {
           Exames
         </button>
       </div>
-      <div className={layoutStyles.actionButtonsWrapper}>
         <button className={layoutStyles.buttonAdicionar} onClick={() => setShowModal(true)}>
           + Adicionar procedimento
         </button>
-        {selectedIds.length > 0 && (
-          <button
-            className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
-            onClick={deleteSelected}
-          >
-            Excluir selecionados
-          </button>
-        )}
-      </div>
+        <button className={tableStyles.buttonPdf} onClick={gerarRelatorioProcedimentos}>
+          📄 Gerar PDF
+        </button>
       <div className={tableStyles.procedimentosTableWrapper}>
         <table className={tableStyles.procedimentosTable}>
           <thead>

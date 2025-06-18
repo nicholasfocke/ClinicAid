@@ -121,6 +121,23 @@
   margin-left: 8px;
 }
 
+.buttonPdf {
+  background: #22c55e; /* verde */
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 9px 20px ;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 8px;
+}
+
+.buttonPdf:hover {
+  background: #16a34a; /* verde escuro */
+}
+
 .buttonAcao:hover {
   background: #1746a2;
 }
