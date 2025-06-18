@@ -37,6 +37,7 @@ const Salas = () => {
   const [showModal, setShowModal] = useState(false);
   const [newSala, setNewSala] = useState<{ nome: string; profissionalId: string | null }>({ nome: '', profissionalId: null });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const allSelected = salas.length > 0 && selectedIds.length === salas.length;
 
   useEffect(() => {
@@ -68,6 +69,10 @@ const Salas = () => {
     };
     fetchData();
   }, []);
+
+  const filteredSalas = salas.filter(s =>
+    s.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const startEdit = (s: Sala) => {
     setEditingId(s.id);
@@ -151,18 +156,30 @@ const Salas = () => {
         </div>
         <h1 className={tableStyles.titleSalas}>Salas</h1>
         <div className={tableStyles.subtitleSalas}>Lista de salas cadastradas</div>
-        <div className={tableStyles.actionButtonsWrapper}>
-          <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>
-            + Adicionar sala
-          </button>
-          {selectedIds.length > 0 && (
-            <button
-              className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
-              onClick={deleteSelected}
-            >
-              Excluir selecionadas
+        <div className={tableStyles.topBar}>
+          <div className={tableStyles.actionButtonsWrapper}>
+            <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>
+              + Adicionar sala
             </button>
-          )}
+            {selectedIds.length > 0 && (
+              <button
+                className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+                onClick={deleteSelected}
+              >
+                Excluir selecionadas
+              </button>
+            )}
+          </div>
+
+          <div className={tableStyles.searchContainer}>
+            <input
+              type="text"
+              placeholder="Pesquisar sala"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className={tableStyles.searchInput}
+            />
+          </div>
         </div>
         <div className={tableStyles.salasTableWrapper}>
           <table className={tableStyles.salasTable}>
@@ -178,7 +195,7 @@ const Salas = () => {
               </tr>
             </thead>
             <tbody>
-              {salas.map(s => (
+              {filteredSalas.map(s => (
                 <tr key={s.id}>
                   <td className={tableStyles.checkboxCell}>
                     <input

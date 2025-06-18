@@ -33,6 +33,7 @@ const Convenios = () => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<{ nome: string; numeroPacientes: number; comissao: number; telefone: string }>({
@@ -78,6 +79,10 @@ const Convenios = () => {
     };
     fetchData();
   }, []);
+
+  const filteredConvenios = convenios.filter(c =>
+    c.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleDelete = async (id: string) => {
     const confirm = window.confirm('Deseja excluir este convênio?');
@@ -170,16 +175,28 @@ const Convenios = () => {
       </div>
         <h1 className={tableStyles.titleConvenios}>Convênios</h1>
       <div className={tableStyles.subtitleConvenios}>Lista de convênios cadastrados</div>
-      <div className={tableStyles.actionButtonsWrapper}>
-        <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>+ Adicionar convênio</button>
-        {selectedIds.length > 0 && (
-          <button
-            className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
-            onClick={deleteSelected}
-          >
-            Excluir selecionados
-          </button>
-        )}
+      <div className={tableStyles.topBar}>
+        <div className={tableStyles.actionButtonsWrapper}>
+          <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>+ Adicionar convênio</button>
+          {selectedIds.length > 0 && (
+            <button
+              className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+              onClick={deleteSelected}
+            >
+              Excluir selecionados
+            </button>
+          )}
+        </div>
+
+        <div className={tableStyles.searchContainer}>
+          <input
+            type="text"
+            placeholder="Pesquisar convênio"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className={tableStyles.searchInput}
+          />
+        </div>
       </div>
 
       <div className={tableStyles.conveniosTableWrapper}>
@@ -197,7 +214,7 @@ const Convenios = () => {
             </tr>
           </thead>
           <tbody>
-            {convenios.map(c => (
+            {filteredConvenios.map(c => (
               <tr key={c.id}>
                 <td className={tableStyles.checkboxCell}>
                   <input

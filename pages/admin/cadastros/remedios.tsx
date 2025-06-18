@@ -26,6 +26,7 @@ const Remedios = () => {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
     const [remedios, setRemedios] = useState<Remedio[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState<{ nome: string; quantidade: number; dosagem: string; uso: string }>({
         nome: '',
@@ -76,6 +77,10 @@ const Remedios = () => {
 
         fetchRemedios();
     }, []);
+
+    const filteredRemedios = remedios.filter(r =>
+        r.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     const startEdit = (r: Remedio) => {
         setEditingId(r.id);
@@ -165,16 +170,28 @@ const Remedios = () => {
         <h1 className={tableStyles.titleRemedios}>Remédios</h1>
         <div className={tableStyles.subtitleRemedios}>Lista de remédios cadastrados</div>
         {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
-        <div className={tableStyles.actionButtonsWrapper}>
-          <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>+ Adicionar remédio</button>
-          {selectedIds.length > 0 && (
-            <button
-              className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
-              onClick={deleteSelected}
-            >
-              Excluir selecionados
-            </button>
-          )}
+        <div className={tableStyles.topBar}>
+          <div className={tableStyles.actionButtonsWrapper}>
+            <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>+ Adicionar remédio</button>
+            {selectedIds.length > 0 && (
+              <button
+                className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+                onClick={deleteSelected}
+              >
+                Excluir selecionados
+              </button>
+            )}
+          </div>
+
+          <div className={tableStyles.searchContainer}>
+            <input
+              type="text"
+              placeholder="Pesquisar remédio"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className={tableStyles.searchInput}
+            />
+          </div>
         </div>
         <div className={tableStyles.remediosTableWrapper}>
           <table className={tableStyles.remediosTable}>
@@ -191,7 +208,7 @@ const Remedios = () => {
               </tr>
             </thead>
             <tbody>
-              {remedios.map(r => (
+              {filteredRemedios.map(r => (
                 <tr key={r.id}>
                   <td className={tableStyles.checkboxCell}>
                     <input

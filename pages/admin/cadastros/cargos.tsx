@@ -25,6 +25,7 @@ const Cargos = () => {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [cargos, setCargos] = useState<Cargo[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<{ nome: string; quantidadeUsuarios: number; profissionalSaude: boolean }>({
     nome: '',
@@ -55,6 +56,10 @@ const Cargos = () => {
     };
     fetchData();
   }, []);
+
+  const filteredCargos = cargos.filter(c =>
+    c.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const startEdit = (c: Cargo) => {
     setEditingId(c.id);
@@ -131,16 +136,28 @@ const Cargos = () => {
         </div>
         <h1 className={tableStyles.titleSalas}>Cargos</h1>
         <div className={tableStyles.subtitleSalas}>Lista de cargos cadastrados</div>
-        <div className={tableStyles.actionButtonsWrapper}>
-          <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>+ Adicionar cargo</button>
-          {selectedIds.length > 0 && (
-            <button
-              className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
-              onClick={deleteSelected}
-            >
-              Excluir selecionados
-            </button>
-          )}
+        <div className={tableStyles.topBar}>
+          <div className={tableStyles.actionButtonsWrapper}>
+            <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>+ Adicionar cargo</button>
+            {selectedIds.length > 0 && (
+              <button
+                className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+                onClick={deleteSelected}
+              >
+                Excluir selecionados
+              </button>
+            )}
+          </div>
+
+          <div className={tableStyles.searchContainer}>
+            <input
+              type="text"
+              placeholder="Pesquisar cargo"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className={tableStyles.searchInput}
+            />
+          </div>
         </div>
         <div className={tableStyles.salasTableWrapper}>
           <table className={tableStyles.salasTable}>
@@ -156,7 +173,7 @@ const Cargos = () => {
               </tr>
             </thead>
             <tbody>
-            {cargos.map(c => (
+            {filteredCargos.map(c => (
                 <tr key={c.id}>
                   <td className={tableStyles.checkboxCell}>
                     <input

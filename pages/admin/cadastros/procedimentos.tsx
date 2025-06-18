@@ -50,6 +50,7 @@ const Procedimentos = () => {
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'todos' | 'consultas' | 'exames'>('todos');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -90,6 +91,10 @@ const Procedimentos = () => {
     if (activeTab === 'exames') return p.tipo === 'exame';
     return true;
   });
+
+  const searchFilteredProcedimentos = filteredProcedimentos.filter(p =>
+    p.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   const allSelected =
     filteredProcedimentos.length > 0 &&
     selectedIds.length === filteredProcedimentos.length;
@@ -185,25 +190,23 @@ const Procedimentos = () => {
     setSelectedIds([]);
   };
 
-  const gerarRelatorioProcedimentos = async () => {
-    const { gerarRelatorioPDF } = await import('@/utils/gerarRelatorio');
+  const gerarRelatorioProcedimentos = () => {
+  const colunas = ['Nome', 'Valor', 'Duração (min)', 'Convênio', 'Tipo'];
+  const dados = procedimentos.map(p => [
+    p.nome,
+    formatValor(p.valor),
+    `${p.duracao} min`,
+    p.convenio ? 'Sim' : 'Não',
+    p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1),
+  ]);
 
-    const colunas = ['Nome', 'Valor', 'Duração (min)', 'Convênio', 'Tipo'];
-    const dados = procedimentos.map(p => [
-      p.nome,
-      formatValor(p.valor),
-      `${p.duracao} min`,
-      p.convenio ? 'Sim' : 'Não',
-      p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1),
-    ]);
-
-    gerarRelatorioPDF({
-      titulo: 'Relatório de Procedimentos',
-      colunas,
-      dados,
-      nomeArquivo: 'procedimentos.pdf',
-    });
-  };
+  gerarRelatorioPDF({
+    titulo: 'Relatório de Procedimentos',
+    colunas,
+    dados,
+    nomeArquivo: 'procedimentos.pdf',
+  });
+};
 
   return (
     <div className={layoutStyles.container}>
@@ -236,12 +239,26 @@ const Procedimentos = () => {
           Exames
         </button>
       </div>
-        <button className={layoutStyles.buttonAdicionar} onClick={() => setShowModal(true)}>
-          + Adicionar procedimento
-        </button>
-        <button className={tableStyles.buttonPdf} onClick={gerarRelatorioProcedimentos}>
-          📄 Gerar PDF
-        </button>
+      <div className={tableStyles.topBar}>
+        <div className={layoutStyles.actionButtonsWrapper}>
+          <button className={layoutStyles.buttonAdicionar} onClick={() => setShowModal(true)}>
+            + Adicionar procedimento
+          </button>
+          <button className={tableStyles.buttonPdf} onClick={gerarRelatorioProcedimentos}>
+            📄 Gerar PDF
+          </button>
+        </div>
+
+        <div className={tableStyles.searchContainer}>
+          <input
+            type="text"
+            placeholder="Pesquisar procedimento"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className={tableStyles.searchInput}
+          />
+        </div>
+      </div>
       <div className={tableStyles.procedimentosTableWrapper}>
         <table className={tableStyles.procedimentosTable}>
           <thead>
@@ -258,7 +275,7 @@ const Procedimentos = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredProcedimentos.map(p => (
+            {searchFilteredProcedimentos.map(p => (
               <tr key={p.id}>
                 <td className={tableStyles.checkboxCell}>
                   <input

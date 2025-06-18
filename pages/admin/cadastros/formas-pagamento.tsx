@@ -23,6 +23,7 @@ const FormasPagamento = () => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [formas, setFormas] = useState<FormaPagamento[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<{ nome: string; taxa: number }>({ nome: '', taxa: 0 });
   const [newForma, setNewForma] = useState<{ nome: string; taxa: number }>({ nome: '', taxa: 0 });
@@ -58,6 +59,10 @@ const FormasPagamento = () => {
     };
     fetchData();
   }, []);
+
+  const filteredFormas = formas.filter(f =>
+    f.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const startEdit = (f: FormaPagamento) => {
     setEditingId(f.id);
@@ -144,18 +149,30 @@ const FormasPagamento = () => {
         <h1 className={tableStyles.titleFormasPagamento}>Formas de Pagamento</h1>
         <div className={tableStyles.subtitleFormasPagamento}>Lista de formas de pagamento cadastradas</div>
         {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
-        <div className={layoutStyles.actionButtonsWrapper}>
-          <button className={layoutStyles.buttonAdicionar} onClick={() => setShowModal(true)}>
-            + Adicionar forma de pagamento
-          </button>
-          {selectedIds.length > 0 && (
-            <button
-              className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
-              onClick={deleteSelected}
-            >
-              Excluir selecionados
+        <div className={tableStyles.topBar}>
+          <div className={layoutStyles.actionButtonsWrapper}>
+            <button className={layoutStyles.buttonAdicionar} onClick={() => setShowModal(true)}>
+              + Adicionar forma de pagamento
             </button>
-          )}
+            {selectedIds.length > 0 && (
+              <button
+                className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+                onClick={deleteSelected}
+              >
+                Excluir selecionados
+              </button>
+            )}
+          </div>
+
+          <div className={tableStyles.searchContainer}>
+            <input
+              type="text"
+              placeholder="Pesquisar forma de pagamento"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className={tableStyles.searchInput}
+            />
+          </div>
         </div>
         <div className={tableStyles.formasPagamentoTableWrapper}>
           <table className={tableStyles.formasPagamentoTable}>
@@ -170,7 +187,7 @@ const FormasPagamento = () => {
               </tr>
             </thead>
             <tbody>
-              {formas.map(f => (
+              {filteredFormas.map(f => (
                 <tr key={f.id}>
                   <td className={tableStyles.checkboxCell}>
                     <input
