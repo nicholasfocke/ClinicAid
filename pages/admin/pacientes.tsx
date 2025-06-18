@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { auth, firestore } from '@/firebase/firebaseConfig';
 import { useRouter } from 'next/router';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
@@ -25,8 +25,13 @@ interface User {
 const Pacientes = () => {
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+
+  const filteredPacientes = pacientes.filter(p =>
+    p.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -42,35 +47,20 @@ const Pacientes = () => {
   useEffect(() => {
     const fetchPacientes = async () => {
       try {
-        // Busca todos os agendamentos confirmados
-        const agsSnap = await getDocs(
-          query(collection(firestore, 'agendamentos'), where('status', '==', 'confirmado'))
-        );
-        // Extrai os IDs dos usuários (usuarioId) dos agendamentos
-        const userIdsSet = new Set<string>();
-        agsSnap.forEach(docSnap => {
-          const data = docSnap.data();
-          if (data.usuarioId) userIdsSet.add(data.usuarioId);
-        });
-        const userIds = Array.from(userIdsSet);
-
-        // Busca os dados dos usuários que fizeram agendamento
+        const snap = await getDocs(collection(firestore, 'pacientes'));
         const lista: Paciente[] = [];
-        for (const uid of userIds) {
-          const userDoc = await getDoc(doc(firestore, 'users', uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            lista.push({
-              id: userDoc.id,
-              nome: data.nome || '',
-              email: data.email || '',
-              cpf: data.cpf || '',
-              telefone: data.telefone || '',
-              convenio: data.convenio || '',
-              dataNascimento: data.dataNascimento || '',
-            });
-          }
-        }
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          lista.push({
+            id: docSnap.id,
+            nome: data.nome || '',
+            email: data.email || '',
+            cpf: data.cpf || '',
+            telefone: data.telefone || '',
+            convenio: data.convenio || '',
+            dataNascimento: data.dataNascimento || '',
+          });
+        });
         setPacientes(lista);
       } catch (err) {
         console.error('Erro ao buscar pacientes:', err);
@@ -95,6 +85,15 @@ const Pacientes = () => {
       </div>
       <h1 className={styles.titlePacientes}>Pacientes</h1>
       <div className={styles.subtitlePacientes}>Lista de pacientes cadastrados</div>
+      <div className={styles.searchContainer}>
+        <input
+          type="text"
+          placeholder="Pesquisar paciente"
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className={styles.searchInput}
+        />
+      </div>
       <div className={styles.pacientesTableWrapper}>
         <table className={styles.pacientesTable}>
           <thead>
@@ -109,7 +108,7 @@ const Pacientes = () => {
             </tr>
           </thead>
           <tbody>
-            {pacientes.map(p => (
+            {filteredPacientes.map(p => (
               <tr key={p.id}>
                 <td>{p.nome}</td>
                 <td>{p.email}</td>
