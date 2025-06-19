@@ -37,6 +37,7 @@ interface Props {
   };
   setAppointmentData: React.Dispatch<React.SetStateAction<any>>;
   availableTimes: string[];
+  reservedTimes: string[];
   profissionais: { id: string; nome: string }[];
   fetchAvailableTimes: (date: string, profissional: string) => void;
   availableDays: string[];
@@ -50,6 +51,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
   appointmentData,
   setAppointmentData,
   availableTimes,
+  reservedTimes,
   profissionais,
   fetchAvailableTimes,
   availableDays,
@@ -425,6 +427,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
   };
 
   const horariosGerados = horarioDoDia ? gerarHorarios() : availableTimes;
+  const isTimeDisabled = (time: string) => reservedTimes.includes(time);
 
   return (
     <Modal
@@ -536,8 +539,9 @@ const CreateAppointmentModal: React.FC<Props> = ({
                 <button
                   key={time}
                   type="button"
-                  className={`${styles.timeButton} ${appointmentData.time === time ? styles.activeTime : ''}`}
+                  className={`${styles.timeButton} ${appointmentData.time === time ? styles.activeTime : ''} ${isTimeDisabled(time) ? styles.disabledTime : ''}`}
                   onClick={() => setAppointmentData((prev: any) => ({ ...prev, time }))}
+                  disabled={isTimeDisabled(time)}
                 >
                   {time}
                 </button>

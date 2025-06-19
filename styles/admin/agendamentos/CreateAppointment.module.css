@@ -299,6 +299,20 @@
   transform: scale(1.08);
 }
 
+.disabledTime {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+}
+.disabledTime:hover,
+.disabledTime:focus {
+  background: #f3f4f6;
+  color: #9ca3af;
+  transform: none;
+  box-shadow: none;
+}
+
 .noTime {
   text-align: center;
   color: #6b7280;
