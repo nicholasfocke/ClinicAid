@@ -15,6 +15,36 @@ import {
 } from '@/functions/pacientesFunctions';
 import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage';
 
+interface EvolucaoClinica {
+  data: string;
+  profissional: string;
+  diagnostico: string;
+  procedimentos: string;
+  prescricao?: string;
+  arquivos?: PacienteArquivo[];
+}
+
+interface ConversaIA {
+  data: string;
+  sintomas: string;
+  respostaIA: string;
+  recomendacao: string;
+  utilizada: boolean;
+}
+
+interface HistoricoAgendamento {
+  data: string;
+  especialidade: string;
+  profissional: string;
+  status: string;
+  prontuarioLink?: string;
+}
+
+interface RelacaoProfissional {
+  profissional: string;
+  sessoes: number;
+}
+
 interface Paciente {
   id: string;
   nome: string;
@@ -24,6 +54,13 @@ interface Paciente {
   convenio?: string;
   dataNascimento?: string;
   arquivos?: PacienteArquivo[];
+  prontuarios?: EvolucaoClinica[];
+  conversasIA?: ConversaIA[];
+  agendamentos?: HistoricoAgendamento[];
+  profissionaisAtendimentos?: RelacaoProfissional[];
+  observacoes?: string;
+  alertas?: string[];
+  tags?: string[];
 }
 
 interface User {
@@ -50,10 +87,20 @@ const Pacientes = () => {
     convenio: '',
     dataNascimento: '',
     arquivos: [],
+    prontuarios: [],
+    conversasIA: [],
+    agendamentos: [],
+    profissionaisAtendimentos: [],
+    observacoes: '',
+    alertas: [],
+    tags: [],
   });
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [pacienteInfo, setPacienteInfo] = useState<Paciente | null>(null);
+  const [activeTab, setActiveTab] = useState<
+    'info' | 'prontuarios' | 'conversas' | 'agendamentos' | 'documentos' | 'profissionais'
+  >('info');
 
   const filteredPacientes = pacientes.filter(p =>
     p.nome.toLowerCase().includes(searchTerm.toLowerCase())
@@ -86,6 +133,13 @@ const Pacientes = () => {
             convenio: data.convenio || '',
             dataNascimento: data.dataNascimento || '',
             arquivos: data.arquivos || [],
+            prontuarios: data.prontuarios || [],
+            conversasIA: data.conversasIA || [],
+            agendamentos: data.agendamentos || [],
+            profissionaisAtendimentos: data.profissionaisAtendimentos || [],
+            observacoes: data.observacoes || '',
+            alertas: data.alertas || [],
+            tags: data.tags || [],
           });
         });
         setPacientes(lista);
@@ -102,6 +156,7 @@ const Pacientes = () => {
   const openDetails = (p: Paciente) => {
     setSelectedPaciente(p);
     setFormData(p);
+    setActiveTab('info');
     setShowDetails(true);
   };
 
@@ -110,6 +165,7 @@ const Pacientes = () => {
     setEditing(false);
     setConfirmDelete(false);
     setFile(null);
+    setActiveTab('info');
   };
 
   // Função para aplicar máscara de data DD/MM/AAAA
@@ -270,6 +326,44 @@ const Pacientes = () => {
             className={detailsStyles.card}
             onClick={e => e.stopPropagation()}
           >
+            <div className={detailsStyles.tabBar}>
+              <button
+                className={`${detailsStyles.tabButton} ${activeTab === 'info' ? detailsStyles.activeTab : ''}`}
+                onClick={() => setActiveTab('info')}
+              >
+                Informações
+              </button>
+              <button
+                className={`${detailsStyles.tabButton} ${activeTab === 'prontuarios' ? detailsStyles.activeTab : ''}`}
+                onClick={() => setActiveTab('prontuarios')}
+              >
+                Prontuários
+              </button>
+              <button
+                className={`${detailsStyles.tabButton} ${activeTab === 'conversas' ? detailsStyles.activeTab : ''}`}
+                onClick={() => setActiveTab('conversas')}
+              >
+                Conversas IA
+              </button>
+              <button
+                className={`${detailsStyles.tabButton} ${activeTab === 'agendamentos' ? detailsStyles.activeTab : ''}`}
+                onClick={() => setActiveTab('agendamentos')}
+              >
+                Agendamentos
+              </button>
+              <button
+                className={`${detailsStyles.tabButton} ${activeTab === 'documentos' ? detailsStyles.activeTab : ''}`}
+                onClick={() => setActiveTab('documentos')}
+              >
+                Documentos
+              </button>
+              <button
+                className={`${detailsStyles.tabButton} ${activeTab === 'profissionais' ? detailsStyles.activeTab : ''}`}
+                onClick={() => setActiveTab('profissionais')}
+              >
+                Profissionais
+              </button>
+            </div>
             {confirmDelete ? (
               <>
                 <p>Confirmar exclusão?</p>
@@ -389,7 +483,7 @@ const Pacientes = () => {
               </>
             ) : (
               <>
-                {!editing && !confirmDelete && pacienteInfo && (
+                {activeTab === 'info' && pacienteInfo && (
                   <div style={{ marginBottom: 16 }}>
                     <h3>Informações completas do paciente</h3>
                     <p><strong>Nome:</strong> {pacienteInfo.nome}</p>
@@ -398,28 +492,139 @@ const Pacientes = () => {
                     <p><strong>Telefone:</strong> {pacienteInfo.telefone || '-'}</p>
                     <p><strong>Convênio:</strong> {pacienteInfo.convenio || '-'}</p>
                     <p><strong>Nascimento:</strong> {pacienteInfo.dataNascimento || '-'}</p>
-                    {pacienteInfo.arquivos && pacienteInfo.arquivos.length > 0 && (
-                      <div>
-                        <strong>Arquivos:</strong>
-                        <ul>
-                          {pacienteInfo.arquivos.map(a => (
-                            <li key={a.path} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
-                              <button
-                                style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
-                                onClick={() => handleDeleteArquivo(a)}
-                                title="Excluir arquivo"
-                                type="button"
-                              >
-                                Excluir
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                  </div>
+                )}
+
+                {activeTab === 'prontuarios' && pacienteInfo && (
+                  <div style={{ marginBottom: 16 }}>
+                    {pacienteInfo.prontuarios && pacienteInfo.prontuarios.length > 0 ? (
+                      pacienteInfo.prontuarios.map((ev, idx) => (
+                        <div key={idx} style={{ marginBottom: 12 }}>
+                          <p><strong>Data:</strong> {ev.data}</p>
+                          <p><strong>Profissional:</strong> {ev.profissional}</p>
+                          <p><strong>Diagnóstico:</strong> {ev.diagnostico}</p>
+                          <p><strong>Procedimentos:</strong> {ev.procedimentos}</p>
+                          {ev.prescricao && <p><strong>Prescrição:</strong> {ev.prescricao}</p>}
+                          {ev.arquivos && ev.arquivos.length > 0 && (
+                            <ul>
+                              {ev.arquivos.map(a => (
+                                <li key={a.path}>
+                                  <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p>Nenhuma evolução cadastrada.</p>
+                    )}
+                    <button
+                      className={detailsStyles.buttonEditar}
+                      onClick={() => alert('Funcionalidade não implementada')}
+                    >
+                      Adicionar nova evolução
+                    </button>
+                  </div>
+                )}
+
+                {activeTab === 'conversas' && pacienteInfo && (
+                  <div style={{ marginBottom: 16 }}>
+                    {pacienteInfo.conversasIA && pacienteInfo.conversasIA.length > 0 ? (
+                      <ul>
+                        {pacienteInfo.conversasIA.map((c, idx) => (
+                          <li key={idx} style={{ marginBottom: 8 }}>
+                            <p><strong>Data:</strong> {c.data}</p>
+                            <p><strong>Sintomas:</strong> {c.sintomas}</p>
+                            <p><strong>Resposta IA:</strong> {c.respostaIA}</p>
+                            <p><strong>Recomendação:</strong> {c.recomendacao}</p>
+                            <p><strong>Sugestão usada:</strong> {c.utilizada ? 'Sim' : 'Não'}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>Sem conversas registradas.</p>
                     )}
                   </div>
                 )}
+
+                {activeTab === 'agendamentos' && pacienteInfo && (
+                  <div style={{ marginBottom: 16 }}>
+                    {pacienteInfo.agendamentos && pacienteInfo.agendamentos.length > 0 ? (
+                      <ul>
+                        {pacienteInfo.agendamentos.map((a, idx) => (
+                          <li key={idx} style={{ marginBottom: 8 }}>
+                            <p><strong>Data:</strong> {a.data}</p>
+                            <p><strong>Especialidade:</strong> {a.especialidade}</p>
+                            <p><strong>Profissional:</strong> {a.profissional}</p>
+                            <p><strong>Status:</strong> {a.status}</p>
+                            {a.prontuarioLink && (
+                              <a href={a.prontuarioLink} target="_blank" rel="noreferrer">Ver prontuário</a>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>Sem agendamentos anteriores.</p>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'documentos' && pacienteInfo && (
+                  <div style={{ marginBottom: 16 }}>
+                    {pacienteInfo.arquivos && pacienteInfo.arquivos.length > 0 ? (
+                      <ul>
+                        {pacienteInfo.arquivos.map(a => (
+                          <li key={a.path} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
+                            <button
+                              style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
+                              onClick={() => handleDeleteArquivo(a)}
+                              title="Excluir arquivo"
+                              type="button"
+                            >
+                              Excluir
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>Nenhum documento enviado.</p>
+                    )}
+                    <div style={{ marginTop: 8 }}>
+                      <input
+                        type="file"
+                        onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
+                      />
+                      {file && (
+                        <button
+                          className={detailsStyles.buttonEditar}
+                          onClick={handleFileUpload}
+                          disabled={uploading}
+                        >
+                          {uploading ? 'Enviando...' : 'Enviar arquivo'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'profissionais' && pacienteInfo && (
+                  <div style={{ marginBottom: 16 }}>
+                    {pacienteInfo.profissionaisAtendimentos && pacienteInfo.profissionaisAtendimentos.length > 0 ? (
+                      <ul>
+                        {pacienteInfo.profissionaisAtendimentos.map((r, idx) => (
+                          <li key={idx} style={{ marginBottom: 8 }}>
+                            {r.profissional} - {r.sessoes} sessões
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>Nenhum atendimento registrado.</p>
+                    )}
+                  </div>
+                )}
+
                 <div className={detailsStyles.buttons}>
                   <button
                     className={detailsStyles.buttonExcluir}
