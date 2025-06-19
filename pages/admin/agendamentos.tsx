@@ -411,16 +411,18 @@ const fetchAgendamentos = async () => {
         return;
       }
       const ags = await buscarAgendamentosPorData(date);
+      const normalize = (t: string) => t.trim().slice(0, 5);
       const reserved = ags
         .filter(ag => ag.profissional === profissional)
-        .map(ag => ag.hora.trim());
+        .map(ag => normalize(ag.hora));
       const generated = generateTimes(
         schedule.horaInicio,
         schedule.horaFim,
         schedule.almocoInicio,
         schedule.almocoFim
       );
-      setAvailableTimes(generated.filter(t => !reserved.includes(t)));
+      const normalizedGenerated = generated.map(normalize);
+      setAvailableTimes(normalizedGenerated.filter(t => !reserved.includes(t)));
       setReservedTimes(reserved);
     } catch (e) {
       console.error('Erro ao buscar horários:', e);
