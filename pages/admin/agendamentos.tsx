@@ -69,6 +69,7 @@ const Agendamentos = () => {
     procedimento: '',
   });
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [reservedTimes, setReservedTimes] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [horariosProfissional, setHorariosProfissional] = useState<ScheduleData[]>([]);
@@ -399,12 +400,14 @@ const fetchAgendamentos = async () => {
   const fetchAvailableTimes = async (date: string, profissional: string) => {
     if (!date || !profissional) {
       setAvailableTimes([]);
+      setReservedTimes([]);
       return;
     }
     try {
       const schedule = getScheduleForDate(date);
       if (!schedule) {
         setAvailableTimes([]);
+        setReservedTimes([]);
         return;
       }
       const ags = await buscarAgendamentosPorData(date);
@@ -418,9 +421,11 @@ const fetchAgendamentos = async () => {
         schedule.almocoFim
       );
       setAvailableTimes(generated.filter(t => !reserved.includes(t)));
+      setReservedTimes(reserved);
     } catch (e) {
       console.error('Erro ao buscar horários:', e);
       setAvailableTimes([]);
+      setReservedTimes([]);
     }
   };
 
@@ -553,6 +558,7 @@ const fetchAgendamentos = async () => {
         appointmentData={appointmentData}
         setAppointmentData={setAppointmentData}
         availableTimes={availableTimes}
+        reservedTimes={reservedTimes}
         profissionais={profissionais}
         fetchAvailableTimes={fetchAvailableTimes}
         availableDays={diasDisponiveis}
