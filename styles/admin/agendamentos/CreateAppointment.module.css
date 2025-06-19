@@ -1,80 +1,41 @@
+/* --- MODAL --- */
 .modalContent {
   background: #fff;
-  border-radius: 22px;
+  border-radius: 28px;
   padding: 0;
   width: 100%;
-  max-width: 640px;
+  max-width: 660px; /* Aumentado de 540px para 660px */
   max-height: 98vh;
   margin: 0 auto;
-  box-shadow: 0 8px 32px rgba(16, 30, 54, 0.13);
+  box-shadow: 0 12px 40px rgba(16, 30, 54, 0.18);
   outline: none;
   overflow-x: hidden;
   position: relative;
   border: none;
+  animation: modalFadeIn 0.35s cubic-bezier(.4,0,.2,1);
 }
 
-.modalLoadingOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.7);
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.modalSpinner {
-  border: 6px solid #e0e0e0;
-  border-top: 6px solid #0a2d4a;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 12px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.modalLoadingText {
-  color: #0a2d4a;
-  font-weight: bold;
-  font-size: 1.1em;
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(40px) scale(0.98);}
+  to   { opacity: 1; transform: translateY(0) scale(1);}
 }
 
 .modalOverlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.75);
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.72);
   z-index: 1000;
+  animation: overlayFadeIn 0.3s;
+}
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .form {
   display: flex;
   flex-direction: column;
-}
-
-.modalBody {
-  padding: 0 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-@media (min-width: 700px) {
-  .modalContent {
-    max-width: 720px;
-  }
+  gap: 0;
 }
 
 .modalHeader {
@@ -82,60 +43,104 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: 38px 24px 0 24px;
+  padding: 38px 32px 0 32px;
   margin-bottom: 0;
   gap: 0;
 }
 
+.monthNavGroup {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+  flex: unset;
+}
+
 .modalTitle {
   font-size: 2.1rem;
-  font-weight: 800;
+  font-weight: 900;
   color: #222;
   text-align: center;
-  /* flex: 1; removido para centralizar melhor */
   letter-spacing: -1px;
   font-family: 'Inter', sans-serif;
   margin: 0 8px;
+  text-shadow: 0 2px 8px #0001;
 }
 
 .modalCloseBtn {
   position: absolute;
-  right: 24px;
+  right: 32px;
   top: 32px;
   background: none;
   border: none;
   font-size: 2.2rem;
-  color: #222;
+  color: #0099ff; /* Atualizado para cor principal */
   cursor: pointer;
   font-weight: 400;
   line-height: 1;
   z-index: 2;
-  transition: color 0.18s cubic-bezier(.4,0,.2,1), transform 0.18s cubic-bezier(.4,0,.2,1);
+  transition: color 0.18s cubic-bezier(.4,0,.2,1), background 0.18s cubic-bezier(.4,0,.2,1), transform 0.18s cubic-bezier(.4,0,.2,1);
   outline: none;
   padding: 0 8px;
   border-radius: 50%;
 }
 .modalCloseBtn:hover, .modalCloseBtn:focus {
-  color: #1992b7;
-  background: #eaf6fa;
+  color: #fff;
+  background: #00c6ff;
   transform: rotate(90deg) scale(1.15);
-  box-shadow: 0 2px 8px #1992b733;
+  box-shadow: 0 2px 8px #00c6ff55;
+}
+
+/* --- DIAS DA SEMANA --- */
+.daysNavWrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin-bottom: 8px;
+  margin-top: 8px;
+  gap: 0;
+}
+
+.dayNavBtn {
+  border: none;
+  background: none;
+  font-size: 28px;
+  color: #b0b0b0;
+  cursor: pointer;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px #0001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s cubic-bezier(.4,0,.2,1);
+}
+.dayNavBtn:disabled {
+  color: #e5e7eb;
+  cursor: not-allowed;
+  background: none;
 }
 
 .daysContainer {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   gap: 14px;
   padding: 24px 0 0 0;
   margin-bottom: 0;
   overflow-x: auto;
+  overflow-y: hidden; /* Remove scroll vertical */
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   max-width: 100%;
+  min-height: 110px; /* Garante altura para não cortar */
   scrollbar-width: thin;
   scrollbar-color: #e5e7eb #fff;
   transition: box-shadow 0.18s cubic-bezier(.4,0,.2,1);
+  background: #f9fafb;
+  border-radius: 16px;
 }
 .daysContainer::-webkit-scrollbar {
   height: 6px;
@@ -157,7 +162,7 @@
   font-size: 1.08rem;
   cursor: pointer;
   background-color: #fff;
-  color: #111827;
+  color: #222; /* Sempre preto inicialmente */
   scroll-snap-align: start;
   transition: all 0.18s cubic-bezier(.4,0,.2,1);
   display: flex;
@@ -169,11 +174,12 @@
   outline: none;
   user-select: none;
   will-change: transform, box-shadow, background, color;
+  margin-bottom: 2px;
 }
 .dayCard:not(.activeDay):hover, .dayCard:not(.activeDay):focus {
-  border-color: #1992b7;
-  background: #f3fafd;
-  color: #1992b7;
+  border-color: #0099ff;
+  background: #00c6ff;
+  color: #fff;
   transform: translateY(-2px) scale(1.04);
   box-shadow: 0 2px 8px #1992b722;
 }
@@ -197,10 +203,10 @@
   box-shadow: 0 2px 8px #1992b744;
 }
 .activeDay {
-  background-color: #1992b7;
+  background-color: #0099ff;
   color: #fff;
-  border-color: #1992b7;
-  box-shadow: 0 2px 8px #1992b722;
+  border-color: #0099ff;
+  box-shadow: 0 2px 8px #0099ff22;
   transform: scale(1.08);
 }
 .dayName {
@@ -216,6 +222,7 @@
   letter-spacing: -1px;
 }
 
+/* --- PERÍODOS --- */
 .periodFilter {
   display: flex;
   justify-content: center;
@@ -225,8 +232,8 @@
 }
 .periodButton {
   border: none;
-  background: #f3f4f6;
-  color: #374151;
+  background: #e5e7eb;
+  color: #222; /* Preto padrão */
   padding: 10px 32px;
   border-radius: 18px;
   font-size: 1.08rem;
@@ -235,15 +242,56 @@
   transition: 0.18s cubic-bezier(.4,0,.2,1);
   margin-bottom: 0;
   outline: none;
+  box-shadow: 0 2px 8px #0000000a;
 }
+
 .periodButton:hover, .periodButton:focus {
-  background: #eaf6fa;
-  color: #1992b7;
-}
-.activePeriod {
-  background: #1992b7;
+  background: #00c6ff;
   color: #fff;
-  box-shadow: 0 2px 8px #1992b722;
+}
+
+.activePeriod {
+  background: #0099ff !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px #0099ff22;
+  border: none;
+  outline: none;
+}
+.periodButton.activePeriod:hover,
+.periodButton.activePeriod:focus {
+  background: #0099ff !important;
+  color: #fff !important;
+}
+
+/* --- HORÁRIOS --- */
+.timesNavWrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin-bottom: 8px;
+  margin-top: 16px;
+  gap: 0;
+}
+.timeNavBtn {
+  border: none;
+  background: none;
+  font-size: 28px;
+  color: #b0b0b0;
+  cursor: pointer;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px #0001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s cubic-bezier(.4,0,.2,1);
+}
+.timeNavBtn:disabled {
+  color: #e5e7eb;
+  cursor: not-allowed;
+  background: none;
 }
 
 .timeSelectorWrapper {
@@ -254,9 +302,13 @@
   margin: 24px 0 0 0;
   padding: 0 24px;
   overflow-x: auto;
+  overflow-y: hidden; /* Remove scroll vertical */
   max-width: 100%;
+  min-height: 70px; /* Aumenta altura para não cortar */
   scrollbar-width: thin;
   scrollbar-color: #e5e7eb #fff;
+  background: #f9fafb;
+  border-radius: 14px;
 }
 .timeSelectorWrapper::-webkit-scrollbar {
   height: 6px;
@@ -272,7 +324,7 @@
   border-radius: 12px;
   border: 2px solid #e5e7eb;
   background: #fff;
-  color: #222;
+  color: #222; /* Sempre preto inicialmente */
   font-weight: 700;
   font-size: 1.08rem;
   cursor: pointer;
@@ -282,23 +334,24 @@
   transition: all 0.18s cubic-bezier(.4,0,.2,1);
   box-shadow: none;
   outline: none;
+  margin-bottom: 2px;
+  margin-top: 2px;
 }
 .timeButton:not(.activeTime):hover, .timeButton:not(.activeTime):focus {
-  background: #f3fafd;
-  color: #1992b7;
-  border-color: #1992b7;
+  background: #00c6ff;
+  color: #fff;
+  border-color: #00c6ff;
   transform: translateY(-2px) scale(1.04);
   box-shadow: 0 2px 8px #1992b722;
 }
 .activeTime {
-  background: #1992b7;
+  background: #0099ff;
   color: #fff;
   font-weight: 800;
-  border-color: #1992b7;
-  box-shadow: 0 2px 8px #1992b722;
+  border-color: #0099ff;
+  box-shadow: 0 2px 8px #0099ff22;
   transform: scale(1.08);
 }
-
 .disabledTime {
   background: #f3f4f6;
   color: #9ca3af;
@@ -321,18 +374,24 @@
   font-size: 0.92rem;
 }
 
+/* --- RESUMO --- */
 .summaryBoxStyled {
   background: #f9fafb;
   padding: 24px;
-  border-radius: 14px;
-  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  border: 1.5px solid #e5e7eb;
   font-size: 1.08rem;
   color: #374151;
-  margin: 0;
+  margin: 24px 0 0 0;
   box-shadow: 0 2px 8px #00000008;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  animation: fadeIn 0.4s;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px);}
+  to   { opacity: 1; transform: translateY(0);}
 }
 
 .summaryRow {
@@ -353,48 +412,115 @@
 }
 
 .selectGroup {
-  margin-top: 8px;
+  margin-top: 14px;
+  margin-bottom: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  /* Espaço extra entre selects, mas sem aumentar muito */
+  gap: 10px;
 }
 
+/* Select moderno e bonito */
 .selectStyled {
   width: 100%;
-  padding: 12px 14px;
-  border-radius: 8px;
+  padding: 14px 40px 14px 16px; /* espaço para a seta customizada */
+  border-radius: 14px;
   border: 1.5px solid #d1d5db;
-  background: #fff;
+  background: #f7fafc;
   font-size: 1.08rem;
   font-weight: 600;
+  color: #222;
+  transition: border 0.18s, box-shadow 0.18s, background 0.18s;
+  outline: none;
+  min-height: 48px;
+  box-sizing: border-box;
+  appearance: none;
+  position: relative;
+  box-shadow: 0 2px 12px #0099ff11;
+  cursor: pointer;
+  /* Seta customizada */
+  background-image: url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 8L10 12L14 8' stroke='%230099ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 22px 22px;
+}
+
+.selectStyled:focus {
+  border: 1.5px solid #0099ff;
+  background: #fff;
+  box-shadow: 0 0 0 2px #00c6ff33;
+}
+
+.selectStyled:disabled {
+  background: #f3f4f6;
+  color: #bdbdbd;
+  cursor: not-allowed;
+}
+
+/* Remove a seta padrão do select no Firefox */
+.selectStyled:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 #222;
+}
+
+/* Ajuste para input readonly (usuário) ficar igual ao select */
+.selectGroup input[readonly].selectStyled {
+  background: #f7fafc;
+  color: #222;
+  border: 1.5px solid #d1d5db;
+  border-radius: 14px;
+  font-size: 1.08rem;
+  font-weight: 600;
+  min-height: 48px;
+  box-shadow: 0 2px 12px #0099ff11;
+  padding: 14px 16px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: default;
 }
 
 .inputDescricao {
-  width: 100%;
-  min-height: 80px;
-  padding: 14px;
+  width: 93%;
+  min-height: 120px; /* aumenta altura mínima para não cortar */
+  max-height: 220px; /* permite crescer mais */
+  padding: 16px;
   border: 1.5px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 1.08rem;
   resize: vertical;
   background: #fff;
-  margin: 0;
+  margin: 24px auto 0 auto;
+  transition: border 0.18s cubic-bezier(.4,0,.2,1), box-shadow 0.18s cubic-bezier(.4,0,.2,1);
+  display: block;
+  box-shadow: 0 1.5px 8px #0099ff11;
+}
+.inputDescricao:focus {
+  border-color: #0099ff;
+  background: #f3fafd;
+  box-shadow: 0 0 0 2px #00c6ff33;
 }
 
+/* --- FOOTER --- */
 .modalFooter {
   display: flex;
   justify-content: flex-end;
   gap: 0;
   margin: 0;
   padding-bottom: 24px;
+  margin-top: 18px;
 }
 
 .buttonSecondary {
   background: #f3f4f6;
   border: none;
-  padding: 10px 0;
+  padding: 12px 0;
   border-radius: 10px 0 0 10px;
   font-weight: 700;
   color: #374151;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.08rem;
   transition: background 0.18s cubic-bezier(.4,0,.2,1);
   width: 100%;
   outline: none;
@@ -408,14 +534,14 @@
 }
 
 .buttonStyled {
-  background: #1992b7;
+  background: #0099ff;
   color: #fff;
   border: none;
-  padding: 10px 0;
+  padding: 12px 0;
   border-radius: 0 10px 10px 0;
   font-weight: 800;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.08rem;
   width: 100%;
   margin: 0;
   transition: background 0.18s cubic-bezier(.4,0,.2,1), box-shadow 0.18s cubic-bezier(.4,0,.2,1);
@@ -426,8 +552,9 @@
   display: block;
 }
 .buttonStyled:hover, .buttonStyled:focus {
-  background: #107ca1;
-  box-shadow: 0 4px 16px #1992b744;
+  background: #00c6ff;
+  color: #fff;
+  box-shadow: 0 4px 16px #00c6ff44;
 }
 
 .buttonStyled:disabled {
@@ -436,6 +563,7 @@
   color: #fff;
 }
 
+/* --- RESPONSIVO --- */
 @media (max-width: 600px) {
   .modalContent {
     max-width: 98vw;
@@ -446,7 +574,6 @@
   .daysContainer,
   .periodFilter,
   .timeSelectorWrapper,
-  .modalBody,
   .modalBody,
   .summaryBoxStyled,
   .inputDescricao,
@@ -479,45 +606,64 @@
   }
 }
 
-.monthNavBtn, .dayNavBtn, .timeNavBtn {
+/* Modern arrow buttons for navigation */
+.dayNavBtn,
+.monthNavBtn,
+.timeNavBtn {
   border: none;
-  background: none;
-  font-size: 28px;
-  color: #b0b0b0;
+  background: #f3f4f6;
+  color: #1992b7;
+  font-size: 24px;
   cursor: pointer;
   padding: 0;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   box-shadow: 0 2px 8px #0001;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.18s cubic-bezier(.4,0,.2,1);
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  outline: none;
+  position: relative;
+  z-index: 1;
 }
-.monthNavBtn:disabled,
 .dayNavBtn:disabled,
+.monthNavBtn:disabled,
 .timeNavBtn:disabled {
   color: #e5e7eb;
   cursor: not-allowed;
-  background: none;
+  background: #f3f4f6;
+  box-shadow: none;
 }
-.daysNavWrapper, .timesNavWrapper {
-  display: flex;
-  align-items: center;
-  position: relative;
-  margin-bottom: 8px;
-  margin-top: 8px;
-  gap: 0;
-}
-.timesNavWrapper {
-  margin-top: 16px;
+.dayNavBtn:hover,
+.monthNavBtn:hover,
+.timeNavBtn:hover,
+.dayNavBtn:focus,
+.monthNavBtn:focus,
+.timeNavBtn:focus {
+  background: #00c6ff; /* azul novo */
+  color: #fff;
+  box-shadow: 0 4px 16px #00c6ff44;
+  outline: none;
+  border: none;
 }
 
-.monthNavGroup {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  justify-content: center;
-  flex: unset;
+/* Remove scrollbars up/down for daysContainer and timeSelectorWrapper */
+.daysContainer::-webkit-scrollbar,
+.timeSelectorWrapper::-webkit-scrollbar {
+  height: 8px;
+  background: #fff;
+}
+.daysContainer::-webkit-scrollbar-thumb,
+.timeSelectorWrapper::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 8px;
+}
+.daysContainer::-webkit-scrollbar-corner,
+.timeSelectorWrapper::-webkit-scrollbar-corner {
+  background: transparent;
+}
+.timeSelectorWrapper::-webkit-scrollbar-corner {
+  background: transparent;
 }

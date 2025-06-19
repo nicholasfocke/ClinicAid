@@ -31,9 +31,46 @@
 
 .actionButtonsWrapper {
   display: flex;
-  justify-content: flex-start;
   gap: 12px;
-  margin-bottom: 2rem;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  gap: 0; /* Remove o gap geral */
+  margin-bottom: 1.5rem;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+/* Campo de busca moderno ao lado dos botões */
+.searchInput {
+  padding: 10px 14px 10px 36px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border 0.18s, box-shadow 0.18s;
+  outline: none;
+  width: 260px;
+  color: #222;
+  height: 44px;
+  margin-left: 12px; /* Espaço só à esquerda, cola no último botão */
+  margin-bottom: 0;
+  align-self: stretch;
+  box-sizing: border-box;
+  display: flex;
+  background: #f7fafc;
+  /* Remove ícone de lupa do background */
+  background-image: none;
+  text-align: left; /* Garante placeholder à esquerda */
+}
+
+.searchInput::placeholder {
+  color: #888;
+  opacity: 1;
+  text-align: left;
 }
 
 .buttonAdicionar {

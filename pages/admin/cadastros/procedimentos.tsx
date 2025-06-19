@@ -252,7 +252,7 @@ const Procedimentos = () => {
         <div className={tableStyles.searchContainer}>
           <input
             type="text"
-            placeholder="Pesquisar procedimento"
+            placeholder="🔍 Pesquisar procedimento"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className={tableStyles.searchInput}

@@ -19,6 +19,7 @@ const Medicos = () => {
   const [error, setError] = useState('');
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [searchTerm, setSearchTerm] = useState(''); // Novo estado para busca
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -59,6 +60,11 @@ const Medicos = () => {
     setMedicos((prev) => prev.map((p) => (p.id === m.id ? m : p)));
   };
 
+  // Filtro de busca por nome
+  const filteredMedicos = medicos.filter((m) =>
+    m.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (loading) {
     return <p>Carregando profissionais...</p>;
   }
@@ -72,14 +78,24 @@ const Medicos = () => {
       </div>
       <h1 className={styles.titleMedicos}>Profissionais</h1>
       <div className={styles.subtitleMedicos}>Lista de profissionais cadastrados</div>
-      <div className={styles.actionButtonsWrapper}>
-        <Link href="/admin/profissionais/novo" className={styles.buttonAdicionar}>+ Adicionar médico</Link>
-        <Link href="/admin/profissionais/horarios" className={styles.buttonAdicionar}>
-          Dias/Horários
-        </Link>
+      {/* Botões e campo de busca alinhados */}
+      <div className={styles.searchContainer}>
+        <div className={styles.actionButtonsWrapper}>
+          <Link href="/admin/profissionais/novo" className={styles.buttonAdicionar}>+ Adicionar médico</Link>
+          <Link href="/admin/profissionais/horarios" className={styles.buttonAdicionar}>
+            Dias/Horários
+          </Link>
+        </div>
+        <input
+          type="text"
+          placeholder="🔍 Pesquisar profissional"
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className={styles.searchInput}
+        />
       </div>
       <div className={styles.medicosList}>
-        {medicos.map((med) => (
+        {filteredMedicos.map((med) => (
           <DoctorCard
             key={med.id}
             medico={med}

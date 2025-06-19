@@ -167,7 +167,7 @@ const FormasPagamento = () => {
           <div className={tableStyles.searchContainer}>
             <input
               type="text"
-              placeholder="Pesquisar forma de pagamento"
+              placeholder="🔍 Pesquisar forma de pagamento"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className={tableStyles.searchInput}

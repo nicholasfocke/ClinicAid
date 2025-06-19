@@ -191,7 +191,7 @@ const Convenios = () => {
         <div className={tableStyles.searchContainer}>
           <input
             type="text"
-            placeholder="Pesquisar convênio"
+            placeholder="🔍 Pesquisar convênio"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className={tableStyles.searchInput}

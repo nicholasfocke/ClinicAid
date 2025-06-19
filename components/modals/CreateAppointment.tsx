@@ -289,7 +289,12 @@ const CreateAppointmentModal: React.FC<Props> = ({
         if (idx >= 0) {
           const btns = Array.from(timesContainerRef.current.querySelectorAll('button'));
           if (btns[idx]) {
-            (btns[idx] as HTMLElement).scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+            // Corrigido: scroll apenas para o botão, sem arrastar o container inteiro
+            (btns[idx] as HTMLElement).scrollIntoView({
+              behavior: 'smooth',
+              inline: 'center', // centraliza o botão na view
+              block: 'nearest'
+            });
           }
         }
       }
@@ -473,16 +478,8 @@ const CreateAppointmentModal: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Linha dos dias com scroll visual e botões de navegação centralizados */}
+        {/* Linha dos dias com scroll visual, sem setas */}
         <div className={styles.daysNavWrapper}>
-          <button
-            type="button"
-            aria-label="Dias anteriores"
-            className={styles.dayNavBtn}
-            onClick={() => scrollDays('left')}
-          >
-            &#8592;
-          </button>
           <div className={styles.daysContainer} ref={daysScrollRef}>
             {visibleDays.map((day) => (
               <button
@@ -497,14 +494,6 @@ const CreateAppointmentModal: React.FC<Props> = ({
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            aria-label="Próximos dias"
-            className={styles.dayNavBtn}
-            onClick={() => scrollDays('right')}
-          >
-            &#8594;
-          </button>
         </div>
 
         {/* Botões de período */}
@@ -521,17 +510,8 @@ const CreateAppointmentModal: React.FC<Props> = ({
           ))}
         </div>
 
-        {/* Horários disponíveis com navegação */}
+        {/* Horários disponíveis com scroll, sem setas */}
         <div className={styles.timesNavWrapper}>
-          <button
-            type="button"
-            aria-label="Horários anteriores"
-            className={styles.timeNavBtn}
-            onClick={() => scrollTimes('left')}
-            tabIndex={-1}
-          >
-            &#8592;
-          </button>
           <div
             className={styles.timeSelectorWrapper}
             ref={timesContainerRef}
@@ -549,18 +529,9 @@ const CreateAppointmentModal: React.FC<Props> = ({
                 </button>
               ))
             ) : (
-              <p className={styles.noTime}>Nenhum horário disponível para este período ou selecione um profissional para visualizar os horários disponíveis.</p>
+              <p className={styles.noTime}>Nenhum horário disponível para este período ou selecione um profissional e dia da semana para visualizar os horários disponíveis.</p>
             )}
           </div>
-          <button
-            type="button"
-            aria-label="Próximos horários"
-            className={styles.timeNavBtn}
-            onClick={() => scrollTimes('right')}
-            tabIndex={-1}
-          >
-            &#8594;
-          </button>
         </div>
 
         {/* Box de resumo, seleção de profissional e paciente */}
@@ -569,6 +540,16 @@ const CreateAppointmentModal: React.FC<Props> = ({
             <span className={styles.summaryLabel}>Profissional:</span>
             <span className={styles.summaryValue}>{appointmentData.profissional || 'Sem preferência'}</span>
           </div>
+          {/* Usuário como primeiro campo */}
+          <div className={styles.selectGroup}>
+            <input
+              type="text"
+              value={userInfo?.nome || appointmentData.nomePaciente || ''}
+              readOnly
+              className={styles.selectStyled}
+            />
+          </div>
+          {/* Profissional como segundo campo */}
           <div className={styles.selectGroup}>
             <select
               value={appointmentData.profissional}
@@ -591,14 +572,6 @@ const CreateAppointmentModal: React.FC<Props> = ({
                 <option key={p.id} value={p.nome}>{p.nome}</option>
               ))}
             </select>
-          </div>
-          <div className={styles.selectGroup}>
-            <input
-              type="text"
-              value={userInfo?.nome || appointmentData.nomePaciente || ''}
-              readOnly
-              className={styles.selectStyled}
-            />
           </div>
 
           {/* Convenio só aparece após selecionar profissional */}
