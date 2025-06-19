@@ -434,6 +434,9 @@ const CreateAppointmentModal: React.FC<Props> = ({
   const normalizedReserved = reservedTimes.map(normalize);
   const isTimeDisabled = (time: string) => normalizedReserved.includes(normalize(time));
 
+  console.log('reservedTimes', reservedTimes);
+  console.log('horariosGerados', horariosGerados);
+
   return (
     <Modal
       isOpen={isOpen}

@@ -411,15 +411,23 @@ const fetchAgendamentos = async () => {
         return;
       }
       const ags = await buscarAgendamentosPorData(date);
-      const normalize = (t: string) => t.trim().slice(0, 5);
+      // Normaliza para 'HH:mm'
+      const normalize = (t: string) => {
+        if (!t) return '';
+        const [h, m] = t.split(':');
+        return `${String(Number(h)).padStart(2, '0')}:${String(Number(m || '0')).padStart(2, '0')}`;
+      };
+      // Filtra apenas agendamentos do profissional selecionado
       const reserved = ags
         .filter(ag => ag.profissional === profissional)
         .map(ag => normalize(ag.hora));
+      // Gera todos os horários possíveis do dia para o profissional
       const generated = generateTimes(
         schedule.horaInicio,
         schedule.horaFim,
         schedule.almocoInicio,
-        schedule.almocoFim
+        schedule.almocoFim,
+        schedule.intervaloConsultas // importante: passar o intervalo correto!
       );
       const normalizedGenerated = generated.map(normalize);
       setAvailableTimes(normalizedGenerated.filter(t => !reserved.includes(t)));

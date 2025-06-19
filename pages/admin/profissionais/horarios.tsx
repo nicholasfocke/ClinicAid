@@ -40,6 +40,7 @@ const Horarios = () => {
     horaFim: '',
     almocoInicio: '',
     almocoFim: '',
+    intervaloConsultas: 30, // valor padrão, ajuste conforme necessário
   });
 
    const diasSemana = [
@@ -102,6 +103,7 @@ const Horarios = () => {
       horaFim,
       almocoInicio,
       almocoFim,
+      intervaloConsultas: 30, // Defina o valor padrão ou obtenha de um input
     });
     const list = await buscarHorariosPorMedico(selectedMedico);
     setHorarios(list as ScheduleItem[]);
