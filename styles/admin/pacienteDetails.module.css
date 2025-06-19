@@ -87,3 +87,24 @@
   cursor: pointer;
   font-weight: bold;
 }
+
+.tabBar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.tabButton {
+  background: #e5e7eb;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.activeTab {
+  background: #2563eb;
+  color: #fff;
+}
