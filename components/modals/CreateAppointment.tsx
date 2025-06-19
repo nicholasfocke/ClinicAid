@@ -426,8 +426,11 @@ const CreateAppointmentModal: React.FC<Props> = ({
     return horarios;
   };
 
-  const horariosGerados = horarioDoDia ? gerarHorarios() : availableTimes;
   const normalize = (t: string) => t.trim().slice(0, 5);
+  // Se houver horário definido para o dia, gera os horários e remove os já reservados
+  const horariosGerados = horarioDoDia
+    ? gerarHorarios().filter(time => !reservedTimes.includes(normalize(time)))
+    : availableTimes;
   const normalizedReserved = reservedTimes.map(normalize);
   const isTimeDisabled = (time: string) => normalizedReserved.includes(normalize(time));
 
