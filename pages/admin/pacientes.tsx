@@ -13,6 +13,7 @@ import {
   uploadArquivoPaciente,
   PacienteArquivo,
 } from '@/functions/pacientesFunctions';
+import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage';
 
 interface Paciente {
   id: string;
@@ -52,6 +53,7 @@ const Pacientes = () => {
   });
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [pacienteInfo, setPacienteInfo] = useState<Paciente | null>(null);
 
   const filteredPacientes = pacientes.filter(p =>
     p.nome.toLowerCase().includes(searchTerm.toLowerCase())
@@ -110,9 +112,22 @@ const Pacientes = () => {
     setFile(null);
   };
 
+  // Função para aplicar máscara de data DD/MM/AAAA
+  function maskDataNascimento(value: string) {
+    return value
+      .replace(/\D/g, '')
+      .replace(/^(\d{2})(\d)/, '$1/$2')
+      .replace(/^(\d{2})\/(\d{2})(\d)/, '$1/$2/$3')
+      .slice(0, 10);
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'dataNascimento') {
+      setFormData(prev => ({ ...prev, [name]: maskDataNascimento(value) }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSave = async () => {
@@ -155,6 +170,41 @@ const Pacientes = () => {
       setUploading(false);
     }
   };
+
+  const handleDeleteArquivo = async (arquivo: PacienteArquivo) => {
+    if (!selectedPaciente) return;
+    try {
+      // Remove do Storage se houver path
+      if (arquivo.path) {
+        const storage = getStorage();
+        const fileRef = storageRef(storage, arquivo.path);
+        await deleteObject(fileRef);
+      }
+      // Remove do Firestore (atualiza o array de arquivos)
+      const novosArquivos = (selectedPaciente.arquivos || []).filter(a => a.path !== arquivo.path);
+      await atualizarPaciente(selectedPaciente.id, { arquivos: novosArquivos });
+      setPacientes(prev =>
+        prev.map(p =>
+          p.id === selectedPaciente.id ? { ...p, arquivos: novosArquivos } : p
+        )
+      );
+      setSelectedPaciente(prev =>
+        prev ? { ...prev, arquivos: novosArquivos } : prev
+      );
+      setFormData(prev => ({ ...prev, arquivos: novosArquivos }));
+    } catch (err) {
+      alert('Erro ao excluir arquivo.');
+    }
+  };
+
+  // Busca todas as informações do paciente ao abrir o modal de detalhes
+  useEffect(() => {
+    if (showDetails && selectedPaciente) {
+      setPacienteInfo(selectedPaciente);
+    } else {
+      setPacienteInfo(null);
+    }
+  }, [showDetails, selectedPaciente]);
 
   if (loading) {
     return <p>Carregando pacientes...</p>;
@@ -280,7 +330,8 @@ const Pacientes = () => {
                   value={formData.dataNascimento || ''}
                   onChange={handleChange}
                   className={detailsStyles.input}
-                  placeholder="Nascimento"
+                  placeholder="Nascimento (DD/MM/AAAA)"
+                  maxLength={10}
                 />
                 <div>
                   <input
@@ -302,10 +353,18 @@ const Pacientes = () => {
                 {formData.arquivos && formData.arquivos.length > 0 && (
                   <ul>
                     {formData.arquivos.map(a => (
-                      <li key={a.path}>
+                      <li key={a.path} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <a href={a.url} target="_blank" rel="noreferrer">
                           {a.nome}
                         </a>
+                        <button
+                          style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
+                          onClick={() => handleDeleteArquivo(a)}
+                          title="Excluir arquivo"
+                          type="button"
+                        >
+                          Excluir
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -330,35 +389,37 @@ const Pacientes = () => {
               </>
             ) : (
               <>
-                <h3>{selectedPaciente.nome}</h3>
-                <p>
-                  <strong>Email:</strong> {selectedPaciente.email}
-                </p>
-                <p>
-                  <strong>CPF:</strong> {selectedPaciente.cpf || '-'}
-                </p>
-                <p>
-                  <strong>Telefone:</strong> {selectedPaciente.telefone || '-'}
-                </p>
-                <p>
-                  <strong>Convênio:</strong> {selectedPaciente.convenio || '-'}
-                </p>
-                <p>
-                  <strong>Nascimento:</strong>{' '}
-                  {selectedPaciente.dataNascimento || '-'}
-                </p>
-                {selectedPaciente.arquivos &&
-                  selectedPaciente.arquivos.length > 0 && (
-                    <ul>
-                      {selectedPaciente.arquivos.map(a => (
-                        <li key={a.path}>
-                          <a href={a.url} target="_blank" rel="noreferrer">
-                            {a.nome}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                {!editing && !confirmDelete && pacienteInfo && (
+                  <div style={{ marginBottom: 16 }}>
+                    <h3>Informações completas do paciente</h3>
+                    <p><strong>Nome:</strong> {pacienteInfo.nome}</p>
+                    <p><strong>Email:</strong> {pacienteInfo.email}</p>
+                    <p><strong>CPF:</strong> {pacienteInfo.cpf || '-'}</p>
+                    <p><strong>Telefone:</strong> {pacienteInfo.telefone || '-'}</p>
+                    <p><strong>Convênio:</strong> {pacienteInfo.convenio || '-'}</p>
+                    <p><strong>Nascimento:</strong> {pacienteInfo.dataNascimento || '-'}</p>
+                    {pacienteInfo.arquivos && pacienteInfo.arquivos.length > 0 && (
+                      <div>
+                        <strong>Arquivos:</strong>
+                        <ul>
+                          {pacienteInfo.arquivos.map(a => (
+                            <li key={a.path} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
+                              <button
+                                style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
+                                onClick={() => handleDeleteArquivo(a)}
+                                title="Excluir arquivo"
+                                type="button"
+                              >
+                                Excluir
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className={detailsStyles.buttons}>
                   <button
                     className={detailsStyles.buttonExcluir}

@@ -3,11 +3,9 @@ import { auth } from '@/firebase/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { criarMedico, medicoExiste } from '@/functions/medicosFunctions';
 import { criarHorario } from '@/functions/scheduleFunctions';
-import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
-import { buscarCargos, ajustarNumeroUsuariosCargo } from '@/functions/cargosFunctions';
+import { buscarConsultas } from '@/functions/procedimentosFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
-import { buscarCargosSaude } from '@/functions/cargosFunctions';
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
 import { useRouter } from 'next/router';
@@ -53,7 +51,6 @@ interface MedicoForm {
   nome: string;
   especialidade: string;
   diasAtendimento: string[];
-  cargoId: string;
   horaInicio: string;
   horaFim: string;
   almocoInicio: string;
@@ -65,16 +62,10 @@ interface MedicoForm {
   convenio: string[];
   foto?: string;
   fotoPath?: string;
-  procedimentos: string[]; // novo campo
 }
 
 interface Convenio {
-  id: string;
-  nome: string;
-}
-
-interface Cargo {
-  id: string;
+  id: string; 
   nome: string;
 }
 
@@ -88,26 +79,22 @@ const NovoMedico = () => {
     nome: '',
     especialidade: '',
     diasAtendimento: [],
-    cargoId: '',
     horaInicio: '',
     horaFim: '',
     almocoInicio: '',
     almocoFim: '',
-    intervaloConsultas: 15, // Corrigido: valor inicial padrão válido
+    intervaloConsultas: 0,
     telefone: '',
     cpf: '',
     email: '',
-    convenio: [],
-    procedimentos: [],
+    convenio: []
   });
   const [convenios, setConvenios] = useState<Convenio[]>([])
-  const [cargos, setCargos] = useState<{ id: string; nome: string }[]>([]);
-  const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
+  const [consultas, setConsultas] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
-  const [fotoPath, setFotoPath] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null); 
   const router = useRouter();
 
@@ -139,12 +126,10 @@ const NovoMedico = () => {
       try {
         const fetchedConvenios = await buscarConvenios();
         setConvenios(fetchedConvenios);
-        const fetchedProcedimentos = await buscarProcedimentos();
-        setProcedimentos(fetchedProcedimentos);
-        const fetchedCargos = await buscarCargosSaude();
-        setCargos(fetchedCargos as Cargo[]);
+        const fetchedConsultas = await buscarConsultas();
+        setConsultas(fetchedConsultas);
       } catch (error) {
-        console.error('Erro ao buscar convênios ou cargos:', error);
+        console.error('Erro ao buscar convênios ou consultas:', error);
       }
     })();
   }, []);
@@ -166,40 +151,16 @@ const NovoMedico = () => {
     let newValue: string | number = value;
     if (name === 'cpf') newValue = formatCPF(value);
     if (name === 'telefone') newValue = formatTelefone(value);
-    if (name === 'intervaloConsultas') {
-      // Garante que o valor seja sempre um número válido e >= 5
-      const num = Number(value);
-      newValue = isNaN(num) || num < 5 ? 5 : num;
-    }
+    if (name === 'intervaloConsultas') { newValue = Number(value); }
     setFormData((prev) => ({ ...prev, [name]: newValue as any }));
   };
 
-  // Preview e upload da foto
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setFoto(URL.createObjectURL(file));
-      setFotoFile(file);
-      setFotoPath(null); // Limpa path anterior ao trocar imagem
+    if(e.target.files && e.target.files[0]) {
+      setFoto(URL.createObjectURL(e.target.files[0]));
+      setFotoFile(e.target.files[0]);
     }
-  };
-
-  // Excluir foto do Storage (se já enviada)
-  const handleFotoRemove = async () => {
-    if (fotoPath) {
-      try {
-        const storage = getStorage();
-        const storageRef = ref(storage, fotoPath);
-        await deleteObject(storageRef);
-      } catch (err) {
-        // Se não existir, ignora
-      }
-    }
-    setFoto(null);
-    setFotoFile(null);
-    setFotoPath(null);
-    setFormData(prev => ({ ...prev, foto: '', fotoPath: '' }));
-  };
+  }
 
   const handleCheckConvenio = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
@@ -209,12 +170,6 @@ const NovoMedico = () => {
       else atual.delete(value);
       return { ...prev, convenio: Array.from(atual) };
     });
-  };
-
-  // Novo: handle para procedimentos múltiplos
-  const handleProcedimentosChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
-    setFormData(prev => ({ ...prev, procedimentos: selected }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -273,18 +228,6 @@ const NovoMedico = () => {
       return;
     }
 
-    // Validação extra para intervalo de consultas
-    if (
-      formData.intervaloConsultas === undefined ||
-      formData.intervaloConsultas === null ||
-      isNaN(Number(formData.intervaloConsultas)) ||
-      Number(formData.intervaloConsultas) < 5
-    ) {
-      setError('O intervalo entre consultas deve ser de pelo menos 5 minutos.');
-      setLoading(false);
-      return;
-    }
-
     try {
       const exists = await medicoExiste(cpfNumeros, formData.email);
       if (exists) {
@@ -294,48 +237,39 @@ const NovoMedico = () => {
       }
 
       let fotoUrl = '';
-      let fotoPathFinal = fotoPath || '';
-
-      // Upload da foto se houver arquivo novo
-      if (fotoFile) {
+      let fotoPath = '';
+      
+      if(fotoFile) {
         const storage = getStorage();
         const uniqueName = `${formData.cpf.replace(/\D/g, '')}_${Date.now()}`;
         const storageRef = ref(storage, `medico_photos/${uniqueName}`);
         await uploadBytes(storageRef, fotoFile);
         fotoUrl = await getDownloadURL(storageRef);
-        fotoPathFinal = storageRef.fullPath;
+        fotoPath = storageRef.fullPath;
       }
 
       const medicoRef = await criarMedico({
         nome: formData.nome,
         especialidade: formData.especialidade,
         diasAtendimento: formData.diasAtendimento,
-        cargoId: formData.cargoId,
         telefone: formData.telefone,
         cpf: formData.cpf,
         email: formData.email,
         convenio: formData.convenio,
-        intervaloConsultas: Number(formData.intervaloConsultas),
+        intervaloConsultas: formData.intervaloConsultas,
         foto: fotoUrl,
-        fotoPath: fotoPathFinal,
-        procedimentos: formData.procedimentos,
+        fotoPath,
       });
 
-      const cargoObj = cargos.find(c => c.nome === formData.especialidade);
-      if (cargoObj) {
-        await ajustarNumeroUsuariosCargo(cargoObj.id, 1);
-      }
-
       if (medicoRef && formData.diasAtendimento.length > 0) {
-        // Garante que o campo 'dia' seja salvo como 'Segunda', 'Terça', etc.
         for (const dia of formData.diasAtendimento) {
           await criarHorario(medicoRef.id, {
-            dia, // deve ser 'Segunda', 'Terça', etc.
-            horaInicio: formData.horaInicio || '',
-            horaFim: formData.horaFim || '',
-            almocoInicio: formData.almocoInicio || '',
-            almocoFim: formData.almocoFim || '',
-            intervaloConsultas: Number(formData.intervaloConsultas)
+            dia,
+            horaInicio: formData.horaInicio,
+            horaFim: formData.horaFim,
+            almocoInicio: formData.almocoInicio,
+            almocoFim: formData.almocoFim,
+            intervaloConsultas: formData.intervaloConsultas,
           });
         }
       }
@@ -361,7 +295,7 @@ const NovoMedico = () => {
         <input name="nome" value={formData.nome} onChange={handleChange} placeholder="Nome" className={styles.input} required />
         <select name="especialidade" value={formData.especialidade} onChange={handleChange} className={styles.input} required>
           <option value="">Selecione a especialidade</option>
-          {cargos.map((c) => (
+          {consultas.map((c) => (
             <option key={c.id} value={c.nome}>
               {c.nome}
             </option>
@@ -424,8 +358,6 @@ const NovoMedico = () => {
           onChange={handleChange}
           placeholder="Intervalo das consultas (min)"
           className={styles.input}
-          min={5} // Corrigido: impede valores menores que 5 no input
-          required // Corrigido: campo obrigatório
         />
         <input name="telefone" value={formData.telefone} onChange={handleChange} placeholder="Telefone" className={styles.input} />
         <input name="cpf" value={formData.cpf} onChange={handleChange} placeholder="CPF" className={styles.input} />
@@ -444,54 +376,20 @@ const NovoMedico = () => {
             </label>
           ))}
         </div>
-        <div className={styles.convenioHeader}>Selecione os procedimentos realizados:</div>
-        <div className={styles.conveniosBox}>
-          {procedimentos.map((p) => (
-            <label key={p.id} className={styles.conveniosItem}>
-              <input
-                type="checkbox"
-                value={p.nome}
-                checked={formData.procedimentos.includes(p.nome)}
-                onChange={e => {
-                  const { value, checked } = e.target;
-                  setFormData(prev => {
-                    const atual = new Set(prev.procedimentos);
-                    if (checked) atual.add(value);
-                    else atual.delete(value);
-                    return { ...prev, procedimentos: Array.from(atual) };
-                  });
-                }}
-              />
-              {p.nome}
-            </label>
-          ))}
-        </div>
         <div className={styles.fotoBox}>
           {foto ? (
-            <>
-              <img src={foto} alt="Foto do médico" className={styles.fotoPreview} />
-              <button
-                type="button"
-                className={styles.fotoBtn}
-                onClick={handleFotoRemove}
-                style={{ marginTop: 8 }}
-              >
-                Remover foto
-              </button>
-            </>
+            <img src={foto} alt="Foto do médico" className={styles.fotoPreview} />
           ) : (
-            <>
-              <svg className={styles.fotoPreview} width="120" height="120" viewBox="0 0 120 120" fill="none">
-                <circle cx="60" cy="60" r="60" fill="#E5E7EB" />
-                <circle cx="60" cy="54" r="28" fill="#D1D5DB" />
-                <ellipse cx="60" cy="94" rx="36" ry="22" fill="#D1D5DB" />
-              </svg>
-              <label className={styles.fotoBtn}>
-                Carregar foto
-                <input type="file" accept="image/*" onChange={handleFotoChange} style={{ display: 'none' }} />
-              </label>
-            </>
+            <svg className={styles.fotoPreview} width="120" height="120" viewBox="0 0 120 120" fill="none">
+              <circle cx="60" cy="60" r="60" fill="#E5E7EB" />
+              <circle cx="60" cy="54" r="28" fill="#D1D5DB" />
+              <ellipse cx="60" cy="94" rx="36" ry="22" fill="#D1D5DB" />
+            </svg>
           )}
+          <label className={styles.fotoBtn}>
+            Carregar foto
+            <input type="file" accept="image/*" onChange={handleFotoChange} style={{ display: 'none' }} />
+          </label>
         </div>
         {error && <p style={{ color: 'red' }}>{error}</p>}
         <button type="submit" className={styles.buttonSalvar} disabled={loading}>

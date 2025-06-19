@@ -411,23 +411,15 @@ const fetchAgendamentos = async () => {
         return;
       }
       const ags = await buscarAgendamentosPorData(date);
-      // Normaliza para 'HH:mm'
-      const normalize = (t: string) => {
-        if (!t) return '';
-        const [h, m] = t.split(':');
-        return `${String(Number(h)).padStart(2, '0')}:${String(Number(m || '0')).padStart(2, '0')}`;
-      };
-      // Filtra apenas agendamentos do profissional selecionado
+      const normalize = (t: string) => t.trim().slice(0, 5);
       const reserved = ags
         .filter(ag => ag.profissional === profissional)
         .map(ag => normalize(ag.hora));
-      // Gera todos os horários possíveis do dia para o profissional
       const generated = generateTimes(
         schedule.horaInicio,
         schedule.horaFim,
         schedule.almocoInicio,
-        schedule.almocoFim,
-        schedule.intervaloConsultas // importante: passar o intervalo correto!
+        schedule.almocoFim
       );
       const normalizedGenerated = generated.map(normalize);
       setAvailableTimes(normalizedGenerated.filter(t => !reserved.includes(t)));
@@ -463,10 +455,6 @@ const fetchAgendamentos = async () => {
           procedimento: appointmentData.procedimento,
         },
         { uid: user.uid, email: user.email }
-      );
-      await fetchAvailableTimes(
-        appointmentData.date,
-        appointmentData.profissional
       );
       setCreateModalOpen(false);
       setAppointmentData({ date: '', time: '', nomePaciente: '', profissional: '', detalhes: '', convenio: '', procedimento: '' });
