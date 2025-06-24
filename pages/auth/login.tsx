@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup} from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, firestore } from '../../firebase/firebaseConfig';
 import styles from "@/styles/auth/login.module.css";
@@ -35,6 +35,31 @@ const Login = () => {
       }
     }
   };
+
+  const loginWithGoogle = async () => {
+  setError('');
+  setLoading(true);
+
+  const provider = new GoogleAuthProvider();
+
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+
+    await setDoc(doc(firestore, 'users', user.uid), {
+      email: user.email,
+      name: user.displayName,
+      photoURL: user.photoURL,
+    }, { merge: true });
+
+    router.push('/');
+  } catch (err: any) {
+    setError('Erro ao fazer login com Google: ' + err.message);
+  }
+
+  setLoading(false);
+};
+
 
   const incrementLoginAttempts = async (email: string) => {
     const docRef = doc(firestore, 'loginAttempts', email);
@@ -199,7 +224,7 @@ const Login = () => {
               <span>ou</span>
             </div>
             <div className={styles.loginSplitSocialRow}>
-              <button type="button" className={styles.loginSplitSocialBtn} tabIndex={-1}>
+              <button type="button" className={styles.loginSplitSocialBtn} onClick={loginWithGoogle} tabIndex={-1}>
                 <svg width="26" height="26" viewBox="0 0 48 48"><g><circle fill="#fff" cx="24" cy="24" r="24"/><path fill="#4285F4" d="M34.5 24.3c0-.7-.1-1.4-.2-2H24v3.8h6c-.2 1.2-1 2.7-2.6 3.6v3h4.2c2.5-2.3 3.9-5.7 3.9-9.4z"/><path fill="#34A853" d="M24 36c3.2 0 5.8-1.1 7.7-2.9l-4.2-3c-1.2.8-2.7 1.3-4.5 1.3-3.5 0-6.5-2.4-7.6-5.6h-4.3v3.1C13.4 33.7 18.3 36 24 36z"/><path fill="#FBBC05" d="M16.4 25.8c-.3-.8-.5-1.7-.5-2.8s.2-2 .5-2.8v-3.1h-4.3C11.4 19.3 11 21.6 11 24s.4 4.7 1.1 6.9l4.3-3.1z"/><path fill="#EA4335" d="M24 17.7c1.8 0 3.4.6 4.6 1.7l3.4-3.4C29.8 14.1 27.2 13 24 13c-5.7 0-10.6 3.3-12.6 8.1l4.3 3.1c1.1-3.2 4.1-5.5 7.6-5.5z"/></g></svg>
               </button>
             </div>
