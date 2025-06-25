@@ -206,6 +206,7 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
     hora: time,
     profissional: data.profissional,
     status: statusAgendamento.AGENDADO,
+    procedimento: data.procedimento || '',
     descricao: data.detalhes,
   }));
 

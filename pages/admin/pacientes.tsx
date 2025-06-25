@@ -41,6 +41,7 @@ interface HistoricoAgendamento {
   data: string;
   hora?: string;
   profissional: string;
+  procedimento?:string;
   status: string;
   descricao?: string;
   especialidade?: string;
@@ -810,6 +811,11 @@ const Pacientes = () => {
                               {a.especialidade && (
                                 <p>
                                   <strong>Especialidade:</strong> {a.especialidade}
+                                </p>
+                              )}
+                              {a.procedimento && (
+                                <p>
+                                  <strong>Procedimento:</strong> {a.procedimento}
                                 </p>
                               )}
                               <p>
