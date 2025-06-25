@@ -15,7 +15,6 @@ import {
   uploadArquivoTemp,
   adicionarEvolucaoPaciente,
   PacienteArquivo,
-  EvolucaoClinica,
 } from '@/functions/pacientesFunctions';
 import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage';
 
