@@ -186,7 +186,7 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
         hora: data.times[i],
         usuarioId: user.uid,
         usuarioEmail: user.email,
-        status: statusAgendamento.CONFIRMADO,
+        status: statusAgendamento.AGENDADO,
         profissional: data.profissional,
         detalhes: data.detalhes,
         convenio: data.convenio || 'Particular',
@@ -205,7 +205,7 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
     data: data.date,
     hora: time,
     profissional: data.profissional,
-    status: statusAgendamento.CONFIRMADO,
+    status: statusAgendamento.AGENDADO,
     descricao: data.detalhes,
   }));
 

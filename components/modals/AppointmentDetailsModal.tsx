@@ -91,6 +91,26 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
       await updateDoc(doc(firestore, 'agendamentos', appointment.id), { status: newStatus });
       // Atualiza o status localmente (opcional, depende do parent atualizar)
       appointment.status = newStatus;
+
+      try {
+        const pacienteRef = doc(firestore, 'pacientes', appointment.usuarioId);
+        const pacienteSnap = await getDoc(pacienteRef);
+        if (pacienteSnap.exists()) {
+          const pacienteData = pacienteSnap.data();
+          const ags: any[] = pacienteData.agendamentos || [];
+          const idx = ags.findIndex(
+            ag =>
+              ag.data === appointment.data &&
+              ag.hora === appointment.hora &&
+              ag.profissional === appointment.profissional
+          );
+          if (idx > -1) {
+            ags[idx].status = newStatus;
+            await updateDoc(pacienteRef, { agendamentos: ags });
+          }
+        }
+      } catch {}
+
       setStatusLoading(false);
       setStatusError(null);
     } catch (err) {
