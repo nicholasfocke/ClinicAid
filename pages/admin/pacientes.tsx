@@ -11,7 +11,11 @@ import {
   atualizarPaciente,
   excluirPaciente,
   uploadArquivoPaciente,
+  uploadArquivoPacienteSecao,
+  uploadArquivoTemp,
+  adicionarEvolucaoPaciente,
   PacienteArquivo,
+  EvolucaoClinica,
 } from '@/functions/pacientesFunctions';
 import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage';
 
@@ -54,10 +58,13 @@ interface Paciente {
   convenio?: string;
   dataNascimento?: string;
   arquivos?: PacienteArquivo[];
+  infoArquivos?: PacienteArquivo[];
   prontuarios?: EvolucaoClinica[];
   conversasIA?: ConversaIA[];
+  conversasArquivos?: PacienteArquivo[];
   agendamentos?: HistoricoAgendamento[];
   profissionaisAtendimentos?: RelacaoProfissional[];
+  profissionaisArquivos?: PacienteArquivo[];
   observacoes?: string;
   alertas?: string[];
   tags?: string[];
@@ -87,10 +94,13 @@ const Pacientes = () => {
     convenio: '',
     dataNascimento: '',
     arquivos: [],
+    infoArquivos: [],
     prontuarios: [],
     conversasIA: [],
+    conversasArquivos: [],
     agendamentos: [],
     profissionaisAtendimentos: [],
+    profissionaisArquivos: [],
     observacoes: '',
     alertas: [],
     tags: [],
@@ -101,6 +111,14 @@ const Pacientes = () => {
   const [activeTab, setActiveTab] = useState<
     'info' | 'prontuarios' | 'conversas' | 'agendamentos' | 'documentos' | 'profissionais'
   >('info');
+  const [addingEvolucao, setAddingEvolucao] = useState(false);
+  const [novaEvolucao, setNovaEvolucao] = useState<EvolucaoClinica>({
+    data: '',
+    profissional: '',
+    diagnostico: '',
+    procedimentos: '',
+    prescricao: '',
+  });
 
   const filteredPacientes = pacientes.filter(p =>
     p.nome.toLowerCase().includes(searchTerm.toLowerCase())
@@ -133,10 +151,13 @@ const Pacientes = () => {
             convenio: data.convenio || '',
             dataNascimento: data.dataNascimento || '',
             arquivos: data.arquivos || [],
+            infoArquivos: data.infoArquivos || [],
             prontuarios: data.prontuarios || [],
             conversasIA: data.conversasIA || [],
+            conversasArquivos: data.conversasArquivos || [],
             agendamentos: data.agendamentos || [],
             profissionaisAtendimentos: data.profissionaisAtendimentos || [],
+            profissionaisArquivos: data.profissionaisArquivos || [],
             observacoes: data.observacoes || '',
             alertas: data.alertas || [],
             tags: data.tags || [],
@@ -209,25 +230,29 @@ const Pacientes = () => {
     closeModal();
   };
 
-  const handleFileUpload = async () => {
+  const handleFileUpload = async (campo: string) => {
     if (!selectedPaciente || !file) return;
     setUploading(true);
     try {
-      const arq = await uploadArquivoPaciente(selectedPaciente.id, file);
+      const arq = await uploadArquivoPacienteSecao(
+        selectedPaciente.id,
+        file,
+        campo
+      );
       const updated = {
         ...selectedPaciente,
-        arquivos: [...(selectedPaciente.arquivos || []), arq],
-      };
+        [campo]: [...((selectedPaciente as any)[campo] || []), arq],
+      } as Paciente;
       setPacientes(prev => prev.map(p => (p.id === updated.id ? updated : p)));
       setSelectedPaciente(updated);
-      setFormData(prev => ({ ...prev, arquivos: updated.arquivos }));
+      setFormData(prev => ({ ...prev, [campo]: (updated as any)[campo] }));
       setFile(null);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleDeleteArquivo = async (arquivo: PacienteArquivo) => {
+  const handleDeleteArquivo = async (campo: string, arquivo: PacienteArquivo) => {
     if (!selectedPaciente) return;
     try {
       // Remove do Storage se houver path
@@ -237,19 +262,47 @@ const Pacientes = () => {
         await deleteObject(fileRef);
       }
       // Remove do Firestore (atualiza o array de arquivos)
-      const novosArquivos = (selectedPaciente.arquivos || []).filter(a => a.path !== arquivo.path);
-      await atualizarPaciente(selectedPaciente.id, { arquivos: novosArquivos });
+      const novosArquivos = ((selectedPaciente as any)[campo] || []).filter(
+        (a: PacienteArquivo) => a.path !== arquivo.path
+      );
+      await atualizarPaciente(selectedPaciente.id, { [campo]: novosArquivos });
       setPacientes(prev =>
         prev.map(p =>
-          p.id === selectedPaciente.id ? { ...p, arquivos: novosArquivos } : p
+          p.id === selectedPaciente.id ? { ...p, [campo]: novosArquivos } : p
         )
       );
       setSelectedPaciente(prev =>
-        prev ? { ...prev, arquivos: novosArquivos } : prev
+        prev ? { ...prev, [campo]: novosArquivos } : prev
       );
-      setFormData(prev => ({ ...prev, arquivos: novosArquivos }));
+      setFormData(prev => ({ ...prev, [campo]: novosArquivos }));
     } catch (err) {
       alert('Erro ao excluir arquivo.');
+    }
+  };
+
+  const handleAddEvolucao = async () => {
+    if (!selectedPaciente) return;
+    setUploading(true);
+    try {
+      let arquivos: PacienteArquivo[] = [];
+      if (file) {
+        const arq = await uploadArquivoTemp(selectedPaciente.id, file, 'prontuarios');
+        arquivos.push(arq);
+      }
+      const nova = { ...novaEvolucao, arquivos };
+      await adicionarEvolucaoPaciente(selectedPaciente.id, nova);
+      const updated = {
+        ...selectedPaciente,
+        prontuarios: [...(selectedPaciente.prontuarios || []), nova],
+      } as Paciente;
+      setPacientes(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+      setSelectedPaciente(updated);
+      setPacienteInfo(updated);
+      setNovaEvolucao({ data: '', profissional: '', diagnostico: '', procedimentos: '', prescricao: '' });
+      setFile(null);
+      setAddingEvolucao(false);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -437,7 +490,7 @@ const Pacientes = () => {
                   {file && (
                     <button
                       className={detailsStyles.buttonEditar}
-                      onClick={handleFileUpload}
+                      onClick={() => handleFileUpload('arquivos')}
                       disabled={uploading}
                     >
                       {uploading ? 'Enviando...' : 'Enviar arquivo'}
@@ -453,7 +506,7 @@ const Pacientes = () => {
                         </a>
                         <button
                           style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
-                          onClick={() => handleDeleteArquivo(a)}
+                          onClick={() => handleDeleteArquivo('arquivos', a)}
                           title="Excluir arquivo"
                           type="button"
                         >
@@ -492,6 +545,38 @@ const Pacientes = () => {
                     <p><strong>Telefone:</strong> {pacienteInfo.telefone || '-'}</p>
                     <p><strong>Convênio:</strong> {pacienteInfo.convenio || '-'}</p>
                     <p><strong>Nascimento:</strong> {pacienteInfo.dataNascimento || '-'}</p>
+                    {pacienteInfo.infoArquivos && pacienteInfo.infoArquivos.length > 0 && (
+                      <ul>
+                        {pacienteInfo.infoArquivos.map(a => (
+                          <li key={a.path} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
+                            <button
+                              style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
+                              onClick={() => handleDeleteArquivo('infoArquivos', a)}
+                              title="Excluir arquivo"
+                              type="button"
+                            >
+                              Excluir
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <div style={{ marginTop: 8 }}>
+                      <input
+                        type="file"
+                        onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
+                      />
+                      {file && (
+                        <button
+                          className={detailsStyles.buttonEditar}
+                          onClick={() => handleFileUpload('infoArquivos')}
+                          disabled={uploading}
+                        >
+                          {uploading ? 'Enviando...' : 'Enviar arquivo'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -519,12 +604,75 @@ const Pacientes = () => {
                     ) : (
                       <p>Nenhuma evolução cadastrada.</p>
                     )}
-                    <button
-                      className={detailsStyles.buttonEditar}
-                      onClick={() => alert('Funcionalidade não implementada')}
-                    >
-                      Adicionar nova evolução
-                    </button>
+                    {addingEvolucao ? (
+                      <div style={{ marginTop: 8 }}>
+                        <input
+                          type="text"
+                          placeholder="Data"
+                          value={novaEvolucao.data}
+                          onChange={e => setNovaEvolucao({ ...novaEvolucao, data: e.target.value })}
+                          className={detailsStyles.input}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Profissional"
+                          value={novaEvolucao.profissional}
+                          onChange={e => setNovaEvolucao({ ...novaEvolucao, profissional: e.target.value })}
+                          className={detailsStyles.input}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Diagnóstico"
+                          value={novaEvolucao.diagnostico}
+                          onChange={e => setNovaEvolucao({ ...novaEvolucao, diagnostico: e.target.value })}
+                          className={detailsStyles.input}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Procedimentos"
+                          value={novaEvolucao.procedimentos}
+                          onChange={e => setNovaEvolucao({ ...novaEvolucao, procedimentos: e.target.value })}
+                          className={detailsStyles.input}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Prescrição"
+                          value={novaEvolucao.prescricao}
+                          onChange={e => setNovaEvolucao({ ...novaEvolucao, prescricao: e.target.value })}
+                          className={detailsStyles.input}
+                        />
+                        <div style={{ marginTop: 8 }}>
+                          <input
+                            type="file"
+                            onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
+                          />
+                          <button
+                            className={detailsStyles.buttonEditar}
+                            onClick={handleAddEvolucao}
+                            disabled={uploading}
+                          >
+                            {uploading ? 'Salvando...' : 'Salvar evolução'}
+                          </button>
+                          <button
+                            className={detailsStyles.buttonCancelar}
+                            onClick={() => {
+                              setAddingEvolucao(false);
+                              setNovaEvolucao({ data: '', profissional: '', diagnostico: '', procedimentos: '', prescricao: '' });
+                              setFile(null);
+                            }}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        className={detailsStyles.buttonEditar}
+                        onClick={() => setAddingEvolucao(true)}
+                      >
+                        Adicionar nova evolução
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -545,6 +693,38 @@ const Pacientes = () => {
                     ) : (
                       <p>Sem conversas registradas.</p>
                     )}
+                    {pacienteInfo.conversasArquivos && pacienteInfo.conversasArquivos.length > 0 && (
+                      <ul>
+                        {pacienteInfo.conversasArquivos.map(a => (
+                          <li key={a.path} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
+                            <button
+                              style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
+                              onClick={() => handleDeleteArquivo('conversasArquivos', a)}
+                              title="Excluir arquivo"
+                              type="button"
+                            >
+                              Excluir
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <div style={{ marginTop: 8 }}>
+                      <input
+                        type="file"
+                        onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
+                      />
+                      {file && (
+                        <button
+                          className={detailsStyles.buttonEditar}
+                          onClick={() => handleFileUpload('conversasArquivos')}
+                          disabled={uploading}
+                        >
+                          {uploading ? 'Enviando...' : 'Enviar arquivo'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -579,7 +759,7 @@ const Pacientes = () => {
                             <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
                             <button
                               style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
-                              onClick={() => handleDeleteArquivo(a)}
+                              onClick={() => handleDeleteArquivo('arquivos', a)}
                               title="Excluir arquivo"
                               type="button"
                             >
@@ -599,7 +779,7 @@ const Pacientes = () => {
                       {file && (
                         <button
                           className={detailsStyles.buttonEditar}
-                          onClick={handleFileUpload}
+                          onClick={() => handleFileUpload('arquivos')}
                           disabled={uploading}
                         >
                           {uploading ? 'Enviando...' : 'Enviar arquivo'}
@@ -622,6 +802,38 @@ const Pacientes = () => {
                     ) : (
                       <p>Nenhum atendimento registrado.</p>
                     )}
+                    {pacienteInfo.profissionaisArquivos && pacienteInfo.profissionaisArquivos.length > 0 && (
+                      <ul>
+                        {pacienteInfo.profissionaisArquivos.map(a => (
+                          <li key={a.path} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
+                            <button
+                              style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
+                              onClick={() => handleDeleteArquivo('profissionaisArquivos', a)}
+                              title="Excluir arquivo"
+                              type="button"
+                            >
+                              Excluir
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <div style={{ marginTop: 8 }}>
+                      <input
+                        type="file"
+                        onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
+                      />
+                      {file && (
+                        <button
+                          className={detailsStyles.buttonEditar}
+                          onClick={() => handleFileUpload('profissionaisArquivos')}
+                          disabled={uploading}
+                        >
+                          {uploading ? 'Enviando...' : 'Enviar arquivo'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
 
