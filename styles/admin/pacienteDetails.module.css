@@ -144,15 +144,38 @@
   user-select: none;
 }
 
-.agendamentoStatus {
+.statusBadge {
   font-weight: 600;
   font-size: 1.01rem;
-  color: #22c55e;           /* verde */
-  background: #d1fae5;      /* verde claro */
   border-radius: 8px;
   padding: 2px 12px;
   margin-left: 10px;
   display: inline-block;
+}
+
+.statusAgendado {
+  background: #dbeafe;
+  color: #3b82f6;
+}
+
+.statusConfirmado {
+  background: #d1fae5;
+  color: #22c55e;
+}
+
+.statusCancelado {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.statusConcluido {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.statusPendente {
+  background: #fef3c7;
+  color: #d97706;
 }
 
 .agendamentoContent {

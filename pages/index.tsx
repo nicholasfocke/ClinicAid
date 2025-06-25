@@ -29,6 +29,14 @@ const Index = () => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [pacientesPorDia, setPacientesPorDia] = useState<{ [dia: string]: number }>({});
 
+  const statusClassMap: Record<string, string> = {
+    [statusAgendamento.AGENDADO]: styles.statusAgendado,
+    [statusAgendamento.CONFIRMADO]: styles.statusConfirmado,
+    [statusAgendamento.CANCELADO]: styles.statusCancelado,
+    [statusAgendamento.CONCLUIDO]: styles.statusConcluido,
+    [statusAgendamento.PENDENTE]: styles.statusPendente,
+  };
+
   const router = useRouter();
 
   const fetchHoje = async () => {
@@ -212,12 +220,12 @@ const Index = () => {
                           {appointment.profissional || appointment.funcionaria || ''}
                         </td>
                         <td>
-                          <span className={styles.statusConfirmado}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24">
-                              <circle cx="12" cy="12" r="11" stroke="#22c55e" strokeWidth="1.2" fill="#e7f9ef"/>
-                              <path d="M8 12.5l2.5 2.5 5-5" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            Confirmado
+                          <span
+                            className={`${styles.statusBadge} ${
+                              statusClassMap[appointment.status] || styles.statusAgendado
+                            }`}
+                          >
+                            {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                           </span>
                         </td>
                         <td>

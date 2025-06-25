@@ -120,16 +120,39 @@
   padding-right: 24px;
 }
 
-.statusConfirmado {
+.statusBadge {
   display: inline-flex;
   align-items: center;
-  background: #e7f9ef;
-  color: #22c55e;
   font-weight: 700;
-  font-size: 1rem;
-  border-radius: 20px;
-  padding: 4px 16px 4px 10px;
-  margin-left: 0;
+  font-size: 0.97rem;
+  border-radius: 16px;
+  padding: 5px 12px;
+  gap: 6px;
+}
+
+.statusAgendado {
+  background: #dbeafe;
+  color: #3b82f6 !important;
+}
+
+.statusConfirmado {
+  background: #e7f9ef;
+  color: #22c55e !important;
+}
+
+.statusCancelado {
+  background: #fee2e2;
+  color: #dc2626 !important;
+}
+
+.statusConcluido {
+  background: #f3f4f6;
+  color: #6b7280 !important;
+}
+
+.statusPendente {
+  background: #fef3c7;
+  color: #d97706 !important;
 }
 
 .externalLink {
@@ -141,17 +164,6 @@
 
 .externalLink:hover {
   color: #2563eb;
-}
-.statusConfirmado {
-  display: inline-flex;
-  align-items: center;
-  background: #e7f9ef;
-  color: #22c55e !important;
-  font-weight: 700;
-  font-size: 0.97rem;
-  border-radius: 16px;
-  padding: 5px 12px;
-  gap: 6px;
 }
 
 .statusExcluido {

@@ -49,6 +49,41 @@
   font-weight: 700;
 }
 
+.statusAgendado {
+  background: #dbeafe;
+  color: #3b82f6;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.statusConfirmado {
+  background: #d1fae5;
+  color: #22c55e;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.statusCancelado {
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.statusConcluido {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.statusPendente {
+  background: #fef3c7;
+  color: #d97706;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
 .statusButtonsRow {
   display: flex;
   flex-direction: row;

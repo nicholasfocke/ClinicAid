@@ -75,6 +75,14 @@ const Agendamentos = () => {
   const [horariosProfissional, setHorariosProfissional] = useState<ScheduleData[]>([]);
   const [diasDisponiveis, setDiasDisponiveis] = useState<string[]>([]);
 
+  const statusClassMap: Record<string, string> = {
+    [statusAgendamento.AGENDADO]: styles.statusAgendado,
+    [statusAgendamento.CONFIRMADO]: styles.statusConfirmado,
+    [statusAgendamento.CANCELADO]: styles.statusCancelado,
+    [statusAgendamento.CONCLUIDO]: styles.statusConcluido,
+    [statusAgendamento.PENDENTE]: styles.statusPendente,
+  };
+
 
 
   // Novos estados para calendário/modal
@@ -534,9 +542,12 @@ const fetchAgendamentos = async () => {
                 </td>
                 <td>{ag.profissional}</td>
                 <td style={{ display: 'flex', alignItems: 'center' }}>
-                  <span className={styles.statusConfirmado}>
-                    <CheckCircle2 size={16} style={{ color: '#22c55e' }} />
-                    Confirmado
+                  <span
+                    className={`${styles.statusBadge} ${
+                      statusClassMap[ag.status] || styles.statusAgendado
+                    }`}
+                  >
+                    {ag.status.charAt(0).toUpperCase() + ag.status.slice(1)}
                   </span>
                   <button
                     onClick={() => handleRemove(ag.id)}
