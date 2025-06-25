@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, setDoc, doc, runTransaction, orderBy, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, setDoc, doc, runTransaction, orderBy, getDoc, updateDoc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { format } from 'date-fns';
 
@@ -199,8 +199,44 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
   // (não pode fazer set/getDoc dentro da transaction se já fez writes)
   const pacienteRef = doc(firestore, 'pacientes', user.uid);
   const pacienteSnap = await getDoc(pacienteRef);
+
+  // Novo registro do agendamento para o histórico do paciente
+  const novosAgendamentos = data.times.map(time => ({
+    data: data.date,
+    hora: time,
+    profissional: data.profissional,
+    status: statusAgendamento.CONFIRMADO,
+    descricao: data.detalhes,
+  }));
+
   if (!pacienteSnap.exists()) {
-    await setDoc(pacienteRef, pacienteData);
+    await setDoc(pacienteRef, {
+      ...pacienteData,
+      agendamentos: novosAgendamentos,
+      profissionaisAtendimentos: [
+        { profissional: data.profissional, sessoes: novosAgendamentos.length },
+      ],
+    });
+  } else {
+    const pacienteAtual = pacienteSnap.data();
+    const ags: any[] = pacienteAtual.agendamentos || [];
+    const profs: any[] = pacienteAtual.profissionaisAtendimentos || [];
+
+    novosAgendamentos.forEach(ag => ags.push(ag));
+
+    const idx = profs.findIndex(
+      (p: any) => p.profissional === data.profissional
+    );
+    if (idx > -1) {
+      profs[idx].sessoes = (profs[idx].sessoes || 0) + novosAgendamentos.length;
+    } else {
+      profs.push({ profissional: data.profissional, sessoes: novosAgendamentos.length });
+    }
+
+    await updateDoc(pacienteRef, {
+      agendamentos: ags,
+      profissionaisAtendimentos: profs,
+    });
   }
 };
 
