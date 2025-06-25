@@ -150,7 +150,13 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
         <p><strong>Descrição:</strong> {appointment.detalhes}</p>
         <p>
           <strong>Status:</strong>{' '}
-          <span className={styles.statusText}>{appointment.status}</span>
+          <span
+            className={`${styles.statusText} ${
+              styles[appointment.status] || styles.statusAgendado
+            }`}
+          >
+            {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+          </span>
         </p>
         <div className={styles.statusButtonsRow}>
           <button

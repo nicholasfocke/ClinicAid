@@ -7,6 +7,7 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/pacientes.module.css';
 import { ExternalLink } from 'lucide-react';
 import detailsStyles from '@/styles/admin/pacienteDetails.module.css';
+import { statusAgendamento } from '@/functions/agendamentosFunction';
 import {
   atualizarPaciente,
   excluirPaciente,
@@ -121,6 +122,14 @@ const Pacientes = () => {
     procedimentos: '',
     prescricao: '',
   });
+
+  const statusClassMap: Record<string, string> = {
+    [statusAgendamento.AGENDADO]: detailsStyles.statusAgendado,
+    [statusAgendamento.CONFIRMADO]: detailsStyles.statusConfirmado,
+    [statusAgendamento.CANCELADO]: detailsStyles.statusCancelado,
+    [statusAgendamento.CONCLUIDO]: detailsStyles.statusConcluido,
+    [statusAgendamento.PENDENTE]: detailsStyles.statusPendente,
+  };
 
   const filteredPacientes = pacientes.filter(p =>
     p.nome.toLowerCase().includes(searchTerm.toLowerCase())
@@ -784,8 +793,12 @@ const Pacientes = () => {
                                     }
                                   })()
                                 : `Agendamento`}
-                              <span className={detailsStyles.agendamentoStatus}>
-                                {a.status}
+                              <span
+                                className={`${detailsStyles.statusBadge} ${
+                                  statusClassMap[a.status] || detailsStyles.statusAgendado
+                                }`}
+                              >
+                                {a.status.charAt(0).toUpperCase() + a.status.slice(1)}
                               </span>
                             </summary>
                             <div className={detailsStyles.agendamentoContent}>

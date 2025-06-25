@@ -92,12 +92,10 @@
   padding-right: 18px;
 }
 
-.statusConfirmado,
-.upcomingStatusCell.statusConfirmado {
+.statusBadge,
+.upcomingStatusCell.statusBadge {
   display: inline-flex;
   align-items: center;
-  background: #e7f9ef;
-  color: #22c55e !important;
   font-weight: 700;
   font-size: 0.97rem;
   border-radius: 16px;
@@ -112,9 +110,39 @@
   transition: background 0.2s;
 }
 
-.upcomingStatusCell svg,
-.statusConfirmado svg {
+.statusAgendado,
+.upcomingStatusCell.statusAgendado {
+  background: #dbeafe;
+  color: #3b82f6 !important;
+}
+
+.statusConfirmado,
+.upcomingStatusCell.statusConfirmado {
+  background: #e7f9ef;
   color: #22c55e !important;
+}
+
+.statusCancelado,
+.upcomingStatusCell.statusCancelado {
+  background: #fee2e2;
+  color: #dc2626 !important;
+}
+
+.statusConcluido,
+.upcomingStatusCell.statusConcluido {
+  background: #f3f4f6;
+  color: #6b7280 !important;
+}
+
+.statusPendente,
+.upcomingStatusCell.statusPendente {
+  background: #fef3c7;
+  color: #d97706 !important;
+}
+
+.upcomingStatusCell svg,
+.statusBadge svg {
+  color: currentColor !important;
   margin-right: 0;
   width: 18px;
   height: 18px;
@@ -128,12 +156,11 @@
   border: none;
 }
 
-.statusConfirmado,
-.upcomingStatusCell.statusConfirmado,
-.statusConfirmado span,
-.upcomingStatusCell.statusConfirmado span {
+.statusBadge,
+.upcomingStatusCell.statusBadge,
+.statusBadge span,
+.upcomingStatusCell.statusBadge span {
   font-weight: 800;
-  color: #22c55e !important;
   letter-spacing: 0.5px;
 }
 
