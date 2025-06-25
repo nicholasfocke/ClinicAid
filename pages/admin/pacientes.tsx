@@ -37,9 +37,11 @@ interface ConversaIA {
 
 interface HistoricoAgendamento {
   data: string;
-  especialidade: string;
+  hora?: string;
   profissional: string;
   status: string;
+  descricao?: string;
+  especialidade?: string;
   prontuarioLink?: string;
 }
 
@@ -734,7 +736,9 @@ const Pacientes = () => {
                         {pacienteInfo.agendamentos.map((a, idx) => (
                           <li key={idx} style={{ marginBottom: 8 }}>
                             <p><strong>Data:</strong> {a.data}</p>
-                            <p><strong>Especialidade:</strong> {a.especialidade}</p>
+                            {a.hora && <p><strong>Hora:</strong> {a.hora}</p>}
+                            {a.descricao && <p><strong>Descrição:</strong> {a.descricao}</p>}
+                            {a.especialidade && <p><strong>Especialidade:</strong> {a.especialidade}</p>}
                             <p><strong>Profissional:</strong> {a.profissional}</p>
                             <p><strong>Status:</strong> {a.status}</p>
                             {a.prontuarioLink && (
