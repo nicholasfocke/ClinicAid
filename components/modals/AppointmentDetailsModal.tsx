@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import styles from '@/styles/admin/agendamentos/appointmentDetails.module.css';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
+import { format as formatDateFns, parse as parseDateFns } from 'date-fns';
+import { statusAgendamento } from '@/functions/agendamentosFunction';
 
 interface Appointment {
   id: string;
@@ -16,6 +18,7 @@ interface Appointment {
   usuarioId: string;
   convenio?: string;
   procedimento?: string;
+  status: string;
 }
 
 interface UserData {
@@ -37,6 +40,8 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
   const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
   const [medicos, setMedicos] = useState<{ id: string; nome: string }[]>([]);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -77,6 +82,23 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
     fetchAll();
   }, [isOpen]);
 
+  // Função para atualizar status do agendamento
+  const handleStatusChange = async (newStatus: string) => {
+    if (!appointment) return;
+    setStatusLoading(true);
+    setStatusError(null);
+    try {
+      await updateDoc(doc(firestore, 'agendamentos', appointment.id), { status: newStatus });
+      // Atualiza o status localmente (opcional, depende do parent atualizar)
+      appointment.status = newStatus;
+      setStatusLoading(false);
+      setStatusError(null);
+    } catch (err) {
+      setStatusLoading(false);
+      setStatusError('Erro ao atualizar status.');
+    }
+  };
+
   if (!isOpen || !appointment) return null;
 
   // Busca pelo id ou nome salvo no agendamento
@@ -102,30 +124,77 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
         <button className={styles.closeButton} onClick={onClose}>
           X
         </button>
-        <h3>Detalhes do Agendamento</h3>
+        <h3 className={styles.title}>Detalhes do Agendamento</h3>
         <p><strong>Paciente:</strong> {appointment.nomePaciente}</p>
-        <p><strong>Data:</strong> {appointment.data}</p>
+        <p>
+          <strong>Data:</strong>{' '}
+          {appointment.data
+            ? (() => {
+                try {
+                  let d = appointment.data;
+                  let parsed = d.includes('-')
+                    ? parseDateFns(d, 'yyyy-MM-dd', new Date())
+                    : parseDateFns(d, 'dd/MM/yyyy', new Date());
+                  return formatDateFns(parsed, 'dd-MM-yyyy');
+                } catch {
+                  return appointment.data;
+                }
+              })()
+            : '-'
+          }
+        </p>
         <p><strong>Hora:</strong> {appointment.hora}</p>
         <p><strong>Profissional:</strong> {profissionalNome}</p>
         <p><strong>Convênio:</strong> {convenioNome}</p>
         <p><strong>Procedimento:</strong> {procedimentoNome}</p>
         <p><strong>Descrição:</strong> {appointment.detalhes}</p>
-        {userData && (
-          <div className={styles.userSection}>
-            <p><strong>Usuário:</strong> {userData.nome}</p>
-            <p><strong>Email:</strong> {userData.email}</p>
-            <p><strong>CPF:</strong> {userData.cpf}</p>
-            <p><strong>Telefone:</strong> {userData.telefone}</p>
-          </div>
-        )}
-        {onComplete && (
+        <p>
+          <strong>Status:</strong>{' '}
+          <span className={styles.statusText}>{appointment.status}</span>
+        </p>
+        <div className={styles.statusButtonsRow}>
           <button
-            className={styles.completeButton}
-            onClick={() => onComplete(appointment.id)}
+            disabled={statusLoading || appointment.status === statusAgendamento.AGENDADO}
+            className={`${styles.statusButton} ${appointment.status === statusAgendamento.AGENDADO ? styles.statusButtonActive : ''}`}
+            onClick={() => handleStatusChange(statusAgendamento.AGENDADO)}
+            type="button"
           >
-            Marcar como concluído
+            Agendado
           </button>
-        )}
+          <button
+            disabled={statusLoading || appointment.status === statusAgendamento.CONFIRMADO}
+            className={`${styles.statusButton} ${appointment.status === statusAgendamento.CONFIRMADO ? styles.statusButtonActive : ''}`}
+            onClick={() => handleStatusChange(statusAgendamento.CONFIRMADO)}
+            type="button"
+          >
+            Confirmado
+          </button>
+          <button
+            disabled={statusLoading || appointment.status === statusAgendamento.CANCELADO}
+            className={`${styles.statusButton} ${appointment.status === statusAgendamento.CANCELADO ? styles.statusButtonActive : ''}`}
+            onClick={() => handleStatusChange(statusAgendamento.CANCELADO)}
+            type="button"
+          >
+            Cancelado
+          </button>
+          <button
+            disabled={statusLoading || appointment.status === statusAgendamento.CONCLUIDO}
+            className={`${styles.statusButton} ${appointment.status === statusAgendamento.CONCLUIDO ? styles.statusButtonActive : ''}`}
+            onClick={() => handleStatusChange(statusAgendamento.CONCLUIDO)}
+            type="button"
+          >
+            Concluído
+          </button>
+          <button
+            disabled={statusLoading || appointment.status === statusAgendamento.PENDENTE}
+            className={`${styles.statusButton} ${appointment.status === statusAgendamento.PENDENTE ? styles.statusButtonActive : ''}`}
+            onClick={() => handleStatusChange(statusAgendamento.PENDENTE)}
+            type="button"
+          >
+            Pendente
+          </button>
+        </div>
+        {statusError && <p className={styles.statusError}>{statusError}</p>}
       </div>
     </div>
   );

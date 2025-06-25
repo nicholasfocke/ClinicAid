@@ -108,3 +108,61 @@
   background: #2563eb;
   color: #fff;
 }
+
+.agendamentoList {
+  margin-top: 10px;
+  margin-bottom: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agendamentoDetails {
+  margin-bottom: 18px !important;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  background: #f9fafb;
+  padding: 18px 24px;
+  box-shadow: 0 2px 8px #0001;
+  transition: box-shadow 0.18s;
+}
+
+.agendamentoDetails[open] {
+  box-shadow: 0 4px 16px #2563eb11;
+  background: #f3f6fd;
+}
+
+.agendamentoSummary {
+  font-weight: 800;
+  font-size: 1.13rem;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  user-select: none;
+}
+
+.agendamentoStatus {
+  font-weight: 600;
+  font-size: 1.01rem;
+  color: #22c55e;           /* verde */
+  background: #d1fae5;      /* verde claro */
+  border-radius: 8px;
+  padding: 2px 12px;
+  margin-left: 10px;
+  display: inline-block;
+}
+
+.agendamentoContent {
+  margin-top: 12px;
+  margin-left: 2px;
+  font-size: 1.05rem;
+  color: #222;
+  line-height: 1.6;
+}
+
+.agendamentoContent p {
+  margin: 0 0 6px 0;
+}

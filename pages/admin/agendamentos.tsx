@@ -456,6 +456,10 @@ const fetchAgendamentos = async () => {
         },
         { uid: user.uid, email: user.email }
       );
+      await fetchAvailableTimes(
+        appointmentData.date,
+        appointmentData.profissional
+      );
       setCreateModalOpen(false);
       setAppointmentData({ date: '', time: '', nomePaciente: '', profissional: '', detalhes: '', convenio: '', procedimento: '' });
       await fetchAgendamentos();

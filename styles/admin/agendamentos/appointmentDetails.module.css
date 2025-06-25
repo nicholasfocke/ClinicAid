@@ -16,8 +16,9 @@
   background: #fff;
   padding: 20px;
   border-radius: 12px;
-  width: 90%;
-  max-width: 420px;
+  width: 98%;
+  max-width: 600px;
+  min-width: 340px;
   box-shadow: 0 8px 32px rgba(16, 30, 54, 0.08);
 }
 
@@ -37,16 +38,75 @@
   color: #000;
 }
 
-.userSection {
-  margin-top: 12px;
+.title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #222;
 }
 
-.completeButton {
-  margin-top: 16px;
-  background: #22c55e;
-  color: #fff;
+.statusText {
+  font-weight: 700;
+}
+
+.statusButtonsRow {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  margin: 18px 0 0 0;
+  justify-content: center;
+  width: 100%;
+}
+
+.statusButton {
+  background: #e5e7eb;
+  color: #222;
   border: none;
-  padding: 8px 16px;
   border-radius: 6px;
+  padding: 10px 0;
+  font-weight: 600;
   cursor: pointer;
+  opacity: 1;
+  transition: background 0.18s, color 0.18s;
+  min-width: 110px;
+  flex: 1 1 0;
+  text-align: center;
+  font-size: 1.04rem;
+  max-width: 140px;
+}
+
+.statusButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.statusButtonActive {
+  background: #2563eb;
+  color: #fff;
+  cursor: default;
+}
+
+.statusError {
+  color: red;
+  margin: 8px 0 0 0;
+  width: 100%;
+  text-align: center;
+}
+
+.statusButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.statusButtonActive {
+  background: #2563eb;
+  color: #fff;
+  cursor: default;
+}
+
+.statusError {
+  color: red;
+  margin: 8px 0 0 0;
+  width: 100%;
+  text-align: center;
 }

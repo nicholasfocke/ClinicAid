@@ -17,6 +17,7 @@ import {
   PacienteArquivo,
 } from '@/functions/pacientesFunctions';
 import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage';
+import { format as formatDateFns, parse as parseDateFns } from 'date-fns';
 
 interface EvolucaoClinica {
   data: string;
@@ -586,7 +587,24 @@ const Pacientes = () => {
                     {pacienteInfo.prontuarios && pacienteInfo.prontuarios.length > 0 ? (
                       pacienteInfo.prontuarios.map((ev, idx) => (
                         <div key={idx} style={{ marginBottom: 12 }}>
-                          <p><strong>Data:</strong> {ev.data}</p>
+                          <p>
+                            <strong>Data:</strong>{' '}
+                            {ev.data
+                              ? (() => {
+                                  // Tenta converter para DD-MM-AAAA
+                                  let d = ev.data;
+                                  try {
+                                    // Aceita tanto DD/MM/AAAA quanto YYYY-MM-DD
+                                    let parsed = d.includes('-')
+                                      ? parseDateFns(d, 'yyyy-MM-dd', new Date())
+                                      : parseDateFns(d, 'dd/MM/yyyy', new Date());
+                                    return formatDateFns(parsed, 'dd-MM-yyyy');
+                                  } catch {
+                                    return d;
+                                  }
+                                })()
+                              : '-'}
+                          </p>
                           <p><strong>Profissional:</strong> {ev.profissional}</p>
                           <p><strong>Diagnóstico:</strong> {ev.diagnostico}</p>
                           <p><strong>Procedimentos:</strong> {ev.procedimentos}</p>
@@ -683,7 +701,22 @@ const Pacientes = () => {
                       <ul>
                         {pacienteInfo.conversasIA.map((c, idx) => (
                           <li key={idx} style={{ marginBottom: 8 }}>
-                            <p><strong>Data:</strong> {c.data}</p>
+                            <p>
+                              <strong>Data:</strong>{' '}
+                              {c.data
+                                ? (() => {
+                                    let d = c.data;
+                                    try {
+                                      let parsed = d.includes('-')
+                                        ? parseDateFns(d, 'yyyy-MM-dd', new Date())
+                                        : parseDateFns(d, 'dd/MM/yyyy', new Date());
+                                      return formatDateFns(parsed, 'dd-MM-yyyy');
+                                    } catch {
+                                      return d;
+                                    }
+                                  })()
+                                : '-'}
+                            </p>
                             <p><strong>Sintomas:</strong> {c.sintomas}</p>
                             <p><strong>Resposta IA:</strong> {c.respostaIA}</p>
                             <p><strong>Recomendação:</strong> {c.recomendacao}</p>
@@ -732,19 +765,55 @@ const Pacientes = () => {
                 {activeTab === 'agendamentos' && pacienteInfo && (
                   <div style={{ marginBottom: 16 }}>
                     {pacienteInfo.agendamentos && pacienteInfo.agendamentos.length > 0 ? (
-                      <ul>
+                      <ul className={detailsStyles.agendamentoList}>
                         {pacienteInfo.agendamentos.map((a, idx) => (
-                          <li key={idx} style={{ marginBottom: 8 }}>
-                            <p><strong>Data:</strong> {a.data}</p>
-                            {a.hora && <p><strong>Hora:</strong> {a.hora}</p>}
-                            {a.descricao && <p><strong>Descrição:</strong> {a.descricao}</p>}
-                            {a.especialidade && <p><strong>Especialidade:</strong> {a.especialidade}</p>}
-                            <p><strong>Profissional:</strong> {a.profissional}</p>
-                            <p><strong>Status:</strong> {a.status}</p>
-                            {a.prontuarioLink && (
-                              <a href={a.prontuarioLink} target="_blank" rel="noreferrer">Ver prontuário</a>
-                            )}
-                          </li>
+                          <details
+                            key={idx}
+                            className={detailsStyles.agendamentoDetails}
+                          >
+                            <summary className={detailsStyles.agendamentoSummary}>
+                              {a.data && a.hora
+                                ? (() => {
+                                    try {
+                                      let parsed = a.data.includes('-')
+                                        ? parseDateFns(a.data, 'yyyy-MM-dd', new Date())
+                                        : parseDateFns(a.data, 'dd/MM/yyyy', new Date());
+                                      return `Agendamento: ${formatDateFns(parsed, 'dd-MM-yyyy')} ${a.hora}`;
+                                    } catch {
+                                      return `Agendamento: ${a.data} ${a.hora}`;
+                                    }
+                                  })()
+                                : `Agendamento`}
+                              <span className={detailsStyles.agendamentoStatus}>
+                                {a.status}
+                              </span>
+                            </summary>
+                            <div className={detailsStyles.agendamentoContent}>
+                              {a.descricao && (
+                                <p>
+                                  <strong>Descrição:</strong> {a.descricao}
+                                </p>
+                              )}
+                              {a.especialidade && (
+                                <p>
+                                  <strong>Especialidade:</strong> {a.especialidade}
+                                </p>
+                              )}
+                              <p>
+                                <strong>Profissional:</strong> {a.profissional}
+                              </p>
+                              <p>
+                                <strong>Status:</strong> {a.status}
+                              </p>
+                              {a.prontuarioLink && (
+                                <p>
+                                  <a href={a.prontuarioLink} target="_blank" rel="noreferrer">
+                                    Ver prontuário
+                                  </a>
+                                </p>
+                              )}
+                            </div>
+                          </details>
                         ))}
                       </ul>
                     ) : (
