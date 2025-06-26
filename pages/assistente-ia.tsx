@@ -59,7 +59,7 @@ export default function AssistenteIA() {
               Assistente IA
             </h1>
             <p className={styles.subtitleAssistente}>
-              Converse com a inteligência artificial para tirar dúvidas, pedir sugestões, gerar laudos e diagnósticos ou obter ajuda sobre o sistema.
+              Converse com a nossa IA para tirar dúvidas, pedir sugestões, gerar laudos e diagnósticos ou obter ajuda sobre o sistema.
             </p>
             <div className={styles.chatBox}>
               <div className={styles.chatTitle}>ClinicAid AI</div>

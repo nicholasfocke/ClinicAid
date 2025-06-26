@@ -1,11 +1,11 @@
 .container {
-  max-width: 800px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 40px 20px;
   text-align: left;
   display: flex;
   flex-direction: column;
-  min-height: 80vh;
+  min-height: 85vh;
   background: #f9fbfd;
 }
 
@@ -28,17 +28,24 @@
   margin-left: 0;
 }
 
+.mainContent {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-left: 90px;
+}
+
 .chatBox {
   background: linear-gradient(120deg, #f9fbfd 60%, #eaf6fb 100%);
   border-radius: 22px;
   box-shadow: 0 8px 32px rgba(37,99,235,0.10), 0 1.5px 6px rgba(0,0,0,0.04);
-  padding: 0 0 28px 0;
+  padding: 0 0 32px 0;
   width: 100%;
-  max-width: 700px;
-  min-width: 350px;
+  max-width: 1000px;
+  min-width: 1000px;
   display: flex;
   flex-direction: column;
-  height: 70vh;
+  height: 80vh;
   margin-top: 24px;
   border: 1.5px solid #e0e7ef;
   position: relative;
@@ -46,12 +53,12 @@
 }
 
 .chatTitle {
-  font-size: 1.7rem;
+  font-size: 2rem;
   font-weight: 900;
   color: #2563eb;
   letter-spacing: -1px;
   text-align: center;
-  padding: 28px 24px 18px 24px;
+  padding: 32px 24px 20px 24px;
   background: rgba(255,255,255,0.92);
   border-bottom: 1px solid #e5e7eb;
   margin-bottom: 0;
@@ -85,22 +92,22 @@
 
 .inputContainer {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
   background: #f3f4f6;
   border-radius: 14px;
-  padding: 14px 18px;
+  padding: 18px 22px;
   box-shadow: 0 1px 4px rgba(37,99,235,0.04);
   margin: 0 18px 0 18px;
 }
 
 .input {
   flex: 1;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: 10px;
   border: none;
   background: #fff;
-  font-size: 1.08rem;
+  font-size: 1.15rem;
   outline: none;
   transition: box-shadow 0.2s;
   box-shadow: 0 1px 2px rgba(37,99,235,0.03);
@@ -138,8 +145,8 @@
   background: linear-gradient(120deg, #2563eb 60%, #60a5fa 100%);
   color: #fff;
   border-radius: 18px 18px 4px 18px;
-  padding: 12px 18px;
-  font-size: 1.05rem;
+  padding: 14px 20px;
+  font-size: 1.15rem;
   max-width: 75%;
   box-shadow: 0 2px 8px rgba(37,99,235,0.08);
   word-break: break-word;
@@ -151,8 +158,8 @@
   background: linear-gradient(120deg, #f3f4f6 60%, #e0e7ef 100%);
   color: #22223b;
   border-radius: 18px 18px 18px 4px;
-  padding: 12px 18px;
-  font-size: 1.05rem;
+  padding: 14px 20px;
+  font-size: 1.15rem;
   max-width: 75%;
   box-shadow: 0 2px 8px rgba(37,99,235,0.04);
   word-break: break-word;
