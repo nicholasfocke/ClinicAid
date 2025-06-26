@@ -50,6 +50,7 @@ const Register = () => {
     telefone: '', // adicionado telefone
     senha: '',
     confirmarSenha: '',
+    dataNascimento: '', // novo campo
   });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -94,6 +95,21 @@ const Register = () => {
       return;
     }
 
+    // Validação da data de nascimento
+    if (!formData.dataNascimento) {
+      setError('Informe a data de nascimento.');
+      return;
+    }
+
+    // Converte dataNascimento para DD/MM/AAAA antes de salvar
+    let dataNascimentoSalvar = '';
+    if (formData.dataNascimento.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [y, m, d] = formData.dataNascimento.split('-');
+      dataNascimentoSalvar = `${d}/${m}/${y}`;
+    } else {
+      dataNascimentoSalvar = formData.dataNascimento;
+    }
+
     setLoading(true);
     try {
       const usersRef = collection(firestore, 'users');
@@ -116,6 +132,7 @@ const Register = () => {
         tipo: 'cliente',
         fotoPerfil: '',
         fotoPerfilPath: '',
+        dataNascimento: dataNascimentoSalvar,
       });
       router.push('/auth/login');
     } catch (err: any) {
@@ -210,6 +227,16 @@ const Register = () => {
               className={styles.loginSplitInput}
               autoComplete="tel"
               maxLength={15}
+            />
+            <input
+              name="dataNascimento"
+              type="date"
+              placeholder="Data de nascimento"
+              value={formData.dataNascimento}
+              onChange={handleChange}
+              required
+              className={styles.loginSplitInput}
+              autoComplete="bday"
             />
             <div className={styles.passwordContainer}>
               <input

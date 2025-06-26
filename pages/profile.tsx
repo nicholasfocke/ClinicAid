@@ -34,6 +34,7 @@ const Profile = () => {
     cpf: '',
     fotoPerfil: '', // URL da foto de perfil
     fotoPerfilPath: '', // Caminho da foto no Storage
+    dataNascimento: '', // novo campo
   });
   const [originalData, setOriginalData] = useState({
     nome: '',
@@ -42,6 +43,7 @@ const Profile = () => {
     cpf: '',
     fotoPerfil: '',
     fotoPerfilPath: '',
+    dataNascimento: '',
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -60,6 +62,19 @@ const Profile = () => {
         const docSnap = await getDoc(userDoc);
         if (docSnap.exists() && !ignore) {
           const data = docSnap.data();
+          // Formata data de nascimento para DD-MM-AAAA se existir
+          let dataNascimento = '';
+          if (data.dataNascimento) {
+            // Aceita tanto DD/MM/AAAA quanto YYYY-MM-DD
+            if (data.dataNascimento.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              const [y, m, d] = data.dataNascimento.split('-');
+              dataNascimento = `${d}/${m}/${y}`;
+            } else if (data.dataNascimento.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+              dataNascimento = data.dataNascimento;
+            } else {
+              dataNascimento = data.dataNascimento;
+            }
+          }
           const initialData = {
             nome: data.nome || '',
             email: data.email || '',
@@ -67,6 +82,7 @@ const Profile = () => {
             cpf: formatCPF(data.cpf || ''),
             fotoPerfil: data.fotoPerfil || '',
             fotoPerfilPath: data.fotoPerfilPath || '',
+            dataNascimento: dataNascimento || '',
           };
           setUserData(initialData);
           setOriginalData(initialData);
@@ -92,6 +108,7 @@ const Profile = () => {
       userData.email !== originalData.email ||
       userData.telefone !== originalData.telefone ||
       userData.cpf !== originalData.cpf ||
+      userData.dataNascimento !== originalData.dataNascimento ||
       fotoFile !== null ||
       (foto === null && originalData.fotoPerfil) || // Remoção da foto
       (fotoFile && foto); // Nova foto selecionada
@@ -167,6 +184,16 @@ const Profile = () => {
       return;
     }
 
+    // Validação da data de nascimento (DD/MM/AAAA)
+    if (
+      userData.dataNascimento &&
+      !/^\d{2}\/\d{2}\/\d{4}$/.test(userData.dataNascimento)
+    ) {
+      setError('A data de nascimento deve estar no formato DD/MM/AAAA.');
+      setIsUpdating(false);
+      return;
+    }
+
     try {
       const user = auth.currentUser;
       let fotoPerfilUrl = userData.fotoPerfil;
@@ -203,6 +230,17 @@ const Profile = () => {
           return;
         }
 
+        // Converte dataNascimento para DD/MM/AAAA antes de salvar
+        let dataNascimentoSalvar = '';
+        if (userData.dataNascimento && /^\d{2}\/\d{2}\/\d{4}$/.test(userData.dataNascimento)) {
+          dataNascimentoSalvar = userData.dataNascimento;
+        } else if (userData.dataNascimento && /^\d{4}-\d{2}-\d{2}$/.test(userData.dataNascimento)) {
+          const [y, m, d] = userData.dataNascimento.split('-');
+          dataNascimentoSalvar = `${d}/${m}/${y}`;
+        } else {
+          dataNascimentoSalvar = userData.dataNascimento;
+        }
+
         const userDoc = doc(firestore, 'users', user.uid);
         await updateDoc(userDoc, {
           nome: userData.nome,
@@ -211,10 +249,11 @@ const Profile = () => {
           cpf: userData.cpf,
           fotoPerfil: fotoPerfilUrl,
           fotoPerfilPath: fotoPerfilPath,
+          dataNascimento: dataNascimentoSalvar,
         });
         alert('Dados atualizados com sucesso!');
         // Atualiza o estado original e limpa preview local
-        setOriginalData({ ...userData, fotoPerfil: fotoPerfilUrl, fotoPerfilPath });
+        setOriginalData({ ...userData, fotoPerfil: fotoPerfilUrl, fotoPerfilPath, dataNascimento: userData.dataNascimento });
         setFotoFile(null);
         setIsChanged(false);
         setUserData((prev) => ({ ...prev, fotoPerfil: fotoPerfilUrl, fotoPerfilPath }));
@@ -340,6 +379,21 @@ const Profile = () => {
                 required
               />
               <span className={styles.perfilHint}>O número do seu documento sem pontos ou traços.</span>
+            </div>
+            <div className={styles.profileField}>
+              <label htmlFor="dataNascimento">Data de Nascimento</label>
+              <input
+                type="text"
+                id="dataNascimento"
+                value={userData.dataNascimento}
+                onChange={e =>
+                  setUserData({ ...userData, dataNascimento: e.target.value })
+                }
+                placeholder="DD-MM-AAAA"
+                maxLength={10}
+                required
+              />
+              <span className={styles.perfilHint}>Data de nascimento DD/MM/AAAA</span>
             </div>
           </div>
           {error && <p className={styles.error}>{error}</p>}

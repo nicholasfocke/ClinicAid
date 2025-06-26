@@ -519,7 +519,7 @@
 .loginSplitDivider {
   width: 100%;
   text-align: center;
-  margin: 18px 0 8px 0;
+  margin: 2px 0 0 0; /* Sobe a barra "ou" */
   color: #bdbdbd;
   font-size: 1.1rem;
   position: relative;
@@ -555,23 +555,34 @@
   gap: 18px;
   justify-content: center;
   width: 100%;
-  margin-bottom: 8px;
+  margin-bottom: 0px; /* Espaço abaixo do botão do Google */
+  margin-top: -10px;     /* Espaço acima do botão do Google */
+  position: relative;
+  z-index: 2;
 }
 
 .loginSplitSocialBtn {
   background: #fff;
   border: 2px solid #07344a;
   border-radius: 50%;
-  width: 54px;
-  height: 54px;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #07344a;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   cursor: pointer;
   transition: background 0.2s, border 0.2s;
   box-shadow: 0 2px 8px #07344a11;
+  outline: none;
+  margin: 0 auto;
+  padding: 0;
+}
+.loginSplitSocialBtn:focus {
+  outline: 2px solid #1096ea;
 }
 .loginSplitSocialBtn:hover {
   background: #e6eef3;

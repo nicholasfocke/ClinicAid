@@ -595,41 +595,59 @@ const Pacientes = () => {
                 {activeTab === 'prontuarios' && pacienteInfo && (
                   <div style={{ marginBottom: 16 }}>
                     {pacienteInfo.prontuarios && pacienteInfo.prontuarios.length > 0 ? (
-                      pacienteInfo.prontuarios.map((ev, idx) => (
-                        <div key={idx} style={{ marginBottom: 12 }}>
-                          <p>
-                            <strong>Data:</strong>{' '}
-                            {ev.data
-                              ? (() => {
-                                  // Tenta converter para DD-MM-AAAA
-                                  let d = ev.data;
-                                  try {
-                                    // Aceita tanto DD/MM/AAAA quanto YYYY-MM-DD
-                                    let parsed = d.includes('-')
-                                      ? parseDateFns(d, 'yyyy-MM-dd', new Date())
-                                      : parseDateFns(d, 'dd/MM/yyyy', new Date());
-                                    return formatDateFns(parsed, 'dd-MM-yyyy');
-                                  } catch {
-                                    return d;
-                                  }
-                                })()
-                              : '-'}
-                          </p>
-                          <p><strong>Profissional:</strong> {ev.profissional}</p>
-                          <p><strong>Diagnóstico:</strong> {ev.diagnostico}</p>
-                          <p><strong>Procedimentos:</strong> {ev.procedimentos}</p>
-                          {ev.prescricao && <p><strong>Prescrição:</strong> {ev.prescricao}</p>}
-                          {ev.arquivos && ev.arquivos.length > 0 && (
-                            <ul>
-                              {ev.arquivos.map(a => (
-                                <li key={a.path}>
-                                  <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      ))
+                      <ul className={detailsStyles.prontuarioList}>
+                        {pacienteInfo.prontuarios.map((ev, idx) => (
+                          <details
+                            key={idx}
+                            className={detailsStyles.prontuarioDetails}
+                          >
+                            <summary className={detailsStyles.prontuarioSummary}>
+                              {/* Título à esquerda, setinha preta à direita */}
+                              <span>
+                                {ev.data
+                                  ? (() => {
+                                      try {
+                                        let d = ev.data;
+                                        let parsed = d.includes('-')
+                                          ? parseDateFns(d, 'yyyy-MM-dd', new Date())
+                                          : parseDateFns(d, 'dd/MM/yyyy', new Date());
+                                        return `Prontuário: ${formatDateFns(parsed, 'dd-MM-yyyy')}`;
+                                      } catch {
+                                        return `Prontuário: ${ev.data}`;
+                                      }
+                                    })()
+                                  : `Prontuário`}
+                              </span>
+                              <span className={detailsStyles.detailsArrow}>›</span>
+                            </summary>
+                            <div className={detailsStyles.prontuarioContent}>
+                              <p>
+                                <strong>Profissional:</strong> {ev.profissional}
+                              </p>
+                              <p>
+                                <strong>Diagnóstico:</strong> {ev.diagnostico}
+                              </p>
+                              <p>
+                                <strong>Procedimentos:</strong> {ev.procedimentos}
+                              </p>
+                              {ev.prescricao && (
+                                <p>
+                                  <strong>Prescrição:</strong> {ev.prescricao}
+                                </p>
+                              )}
+                              {ev.arquivos && ev.arquivos.length > 0 && (
+                                <ul>
+                                  {ev.arquivos.map(a => (
+                                    <li key={a.path}>
+                                      <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          </details>
+                        ))}
+                      </ul>
                     ) : (
                       <p>Nenhuma evolução cadastrada.</p>
                     )}
@@ -782,18 +800,22 @@ const Pacientes = () => {
                             className={detailsStyles.agendamentoDetails}
                           >
                             <summary className={detailsStyles.agendamentoSummary}>
-                              {a.data && a.hora
-                                ? (() => {
-                                    try {
-                                      let parsed = a.data.includes('-')
-                                        ? parseDateFns(a.data, 'yyyy-MM-dd', new Date())
-                                        : parseDateFns(a.data, 'dd/MM/yyyy', new Date());
-                                      return `Agendamento: ${formatDateFns(parsed, 'dd-MM-yyyy')} ${a.hora}`;
-                                    } catch {
-                                      return `Agendamento: ${a.data} ${a.hora}`;
-                                    }
-                                  })()
-                                : `Agendamento`}
+                              {/* Título à esquerda, setinha preta à direita */}
+                              <span>
+                                {a.data && a.hora
+                                  ? (() => {
+                                      try {
+                                        let parsed = a.data.includes('-')
+                                          ? parseDateFns(a.data, 'yyyy-MM-dd', new Date())
+                                          : parseDateFns(a.data, 'dd/MM/yyyy', new Date());
+                                        return `Agendamento: ${formatDateFns(parsed, 'dd-MM-yyyy')} ${a.hora}`;
+                                      } catch {
+                                        return `Agendamento: ${a.data} ${a.hora}`;
+                                      }
+                                    })()
+                                  : `Agendamento`}
+                              </span>
+                              <span className={detailsStyles.detailsArrow}>›</span>
                               <span
                                 className={`${detailsStyles.statusBadge} ${
                                   statusClassMap[a.status] || detailsStyles.statusAgendado

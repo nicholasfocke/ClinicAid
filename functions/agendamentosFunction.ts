@@ -151,6 +151,7 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
   let pacienteData: any = {
     nome: data.nomesPacientes[0],
     email: user.email,
+     convenio: data.convenio || 'Particular',
   };
   try {
     const userDoc = await getDoc(doc(firestore, 'users', user.uid));
@@ -160,7 +161,6 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
         ...pacienteData,
         cpf: userData.cpf || '',
         telefone: userData.telefone || '',
-        convenio: userData.convenio || '',
         dataNascimento: userData.dataNascimento || '',
       };
     }
@@ -213,6 +213,7 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
   if (!pacienteSnap.exists()) {
     await setDoc(pacienteRef, {
       ...pacienteData,
+      convenio: data.convenio || pacienteData.convenio || 'Particular',
       agendamentos: novosAgendamentos,
       profissionaisAtendimentos: [
         { profissional: data.profissional, sessoes: novosAgendamentos.length },
@@ -237,6 +238,8 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
     await updateDoc(pacienteRef, {
       agendamentos: ags,
       profissionaisAtendimentos: profs,
+      convenio: data.convenio || pacienteAtual.convenio || 'Particular',
+      dataNascimento: pacienteData.dataNascimento || pacienteAtual.dataNascimento || '',
     });
   }
 };
