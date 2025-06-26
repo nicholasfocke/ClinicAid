@@ -10,6 +10,7 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 
 
 
@@ -60,6 +61,7 @@ interface MedicoForm {
   cpf: string;
   email: string;
   convenio: string[];
+  procedimentos?: string[]; // Adicionado campo para procedimentos
   foto?: string;
   fotoPath?: string;
 }
@@ -87,10 +89,11 @@ const NovoMedico = () => {
     telefone: '',
     cpf: '',
     email: '',
-    convenio: []
+    convenio: [],
+    procedimentos: [], // Inicializa procedimentos
   });
   const [convenios, setConvenios] = useState<Convenio[]>([])
-  const [consultas, setConsultas] = useState<{ id: string; nome: string }[]>([]);
+  const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
@@ -126,10 +129,10 @@ const NovoMedico = () => {
       try {
         const fetchedConvenios = await buscarConvenios();
         setConvenios(fetchedConvenios);
-        const fetchedConsultas = await buscarConsultas();
-        setConsultas(fetchedConsultas);
+        const fetchedProcedimentos = await buscarProcedimentos();
+        setProcedimentos(fetchedProcedimentos);
       } catch (error) {
-        console.error('Erro ao buscar convênios ou consultas:', error);
+        console.error('Erro ao buscar convênios ou procedimentos:', error);
       }
     })();
   }, []);
@@ -259,6 +262,7 @@ const NovoMedico = () => {
         intervaloConsultas: formData.intervaloConsultas,
         foto: fotoUrl,
         fotoPath,
+        procedimentos: formData.procedimentos, // Envia procedimentos selecionados
       });
 
       if (medicoRef && formData.diasAtendimento.length > 0) {
@@ -295,7 +299,7 @@ const NovoMedico = () => {
         <input name="nome" value={formData.nome} onChange={handleChange} placeholder="Nome" className={styles.input} required />
         <select name="especialidade" value={formData.especialidade} onChange={handleChange} className={styles.input} required>
           <option value="">Selecione a especialidade</option>
-          {consultas.map((c) => (
+          {procedimentos.map((c) => (
             <option key={c.id} value={c.nome}>
               {c.nome}
             </option>
@@ -373,6 +377,28 @@ const NovoMedico = () => {
                 onChange={handleCheckConvenio}
               />
               {c.nome}
+            </label>
+          ))}
+        </div>
+        <div className={styles.convenioHeader}>Selecione os procedimentos:</div>
+        <div className={styles.conveniosBox}>
+          {procedimentos.map((proc) => (
+            <label key={proc.id} className={styles.conveniosItem}>
+              <input
+                type="checkbox"
+                value={proc.nome}
+                checked={formData.procedimentos?.includes(proc.nome)}
+                onChange={e => {
+                  const { value, checked } = e.target;
+                  setFormData(prev => {
+                    const atual = new Set(prev.procedimentos || []);
+                    if (checked) atual.add(value);
+                    else atual.delete(value);
+                    return { ...prev, procedimentos: Array.from(atual) };
+                  });
+                }}
+              />
+              {proc.nome}
             </label>
           ))}
         </div>

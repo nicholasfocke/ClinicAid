@@ -76,7 +76,7 @@ const Sidebar = () => {
           Assistente com inteligência artificial, oferece sugestões de tratamento,
           realiza diagnóstico e pronto para realizar prontuários e está disponível para responder.
         </p>
-        <Link href="/artificialinteligence" passHref legacyBehavior>
+        <Link href="/assistente-ia" passHref legacyBehavior>
         <button className={styles.button}>Faça uma pergunta</button>
         </Link>
       </div>

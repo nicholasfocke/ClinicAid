@@ -22,6 +22,17 @@ You can start editing the page by modifying `pages/index.tsx`. The page auto-upd
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
 
+## OpenAI Integration
+
+The page `/assistente-ia` provides a simple chat interface powered by OpenAI. To
+enable it, create an `.env.local` file at the project root with your API key:
+
+```env
+OPENAI_API_KEY=your_openai_key_here
+```
+
+After setting the variable run the development server normally.
+
 This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
