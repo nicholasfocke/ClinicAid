@@ -13,7 +13,6 @@ export interface Medico {
   nome: string;
   especialidade: string;
   diasAtendimento: string[];
-  intervaloConsultas?: number; // em minutos
   telefone?: string;
   cpf?: string;
   email?: string;
@@ -108,7 +107,6 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
             horaFim: horariosList[0].horaFim || '',
             almocoInicio: horariosList[0].almocoInicio || '',
             almocoFim: horariosList[0].almocoFim || '',
-            intervaloConsultas: horariosList[0].intervaloConsultas || prev.intervaloConsultas,
             procedimentos: prev.procedimentos || [],
           }));
         } else {
@@ -174,7 +172,6 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
         nome: formData.nome,
         especialidade: formData.especialidade,
         diasAtendimento: formData.diasAtendimento,
-        intervaloConsultas: formData.intervaloConsultas || 0,
         telefone: formData.telefone || '',
         email: formData.email || '',
         convenio: formData.convenio
@@ -207,7 +204,6 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
             horaFim: formData.horaFim || '',
             almocoInicio: formData.almocoInicio || '',
             almocoFim: formData.almocoFim || '',
-            intervaloConsultas: Number(formData.intervaloConsultas) || 15,
           };
           if (horarioExistente) {
             await atualizarHorario(medico.id, horarioExistente.id, horarioData);
@@ -238,8 +234,7 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    const newValue = name === 'intervaloConsultas' ? Number(value) : value;
-    setFormData(prev => ({ ...prev, [name]: newValue }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const toggleDia = (dia: string) => {
@@ -409,15 +404,6 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                 className={styles.inputEditar}
                 placeholder="Email"
               />
-              <div className={styles.convenioHeader}>Intervalo entre consultas</div>
-              <input
-                type="number"
-                name="intervaloConsultas"
-                value={formData.intervaloConsultas}
-                onChange={handleChange}
-                className={styles.inputEditar}
-                placeholder="Intervalo das consultas (min)"
-              />
               <div className={styles.convenioHeader}>Convênios:</div>
               <div className={styles.conveniosBox}>
                 {convenios.map((c) => (
@@ -539,11 +525,6 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
               )}
               {medico.email && (
                 <div className={styles.medicoValor}>Email: {medico.email}</div>
-              )}
-              {medico.intervaloConsultas && (
-                <div className={styles.medicoValor}>
-                  Intervalo: {medico.intervaloConsultas} min
-                </div>
               )}
               {medico.convenio && (
                 <div className={styles.medicoValor}>Convênios: {' '} {Array.isArray(medico.convenio) ? medico.convenio.join(', ' ) 

@@ -269,7 +269,6 @@ const NovoMedico = () => {
             horaFim: formData.horaFim,
             almocoInicio: formData.almocoInicio,
             almocoFim: formData.almocoFim,
-            intervaloConsultas: 30,
           });
         }
       }

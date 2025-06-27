@@ -10,7 +10,6 @@ export interface MedicoData {
   cpf: string;
   email: string;
   convenio: string[];
-  intervaloConsultas?: number; // em minutos
   foto?: string;
   fotoPath?: string;
   procedimentos?: string[]; // garantir campo procedimentos
