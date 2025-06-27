@@ -236,21 +236,22 @@ export const enviarEmailDeConfirmacao = async (
 export const buscarAgendamentosPorData = async (data: string) => {
   const q = query(
     collection(firestore, 'agendamentos'),
-    where('data', '==', data),
-    where('status', '==', statusAgendamento.CONFIRMADO)
+    where('data', '==', data)
   );
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    data: doc.data().data,
-    hora: doc.data().hora,
-    profissional: doc.data().profissional,
-    nomePaciente: doc.data().nomePaciente,
-    status: doc.data().status,
-    detalhes: doc.data().detalhes,
-    usuarioId: doc.data().usuarioId,
-    convenio: doc.data().convenio,
-    procedimento: doc.data().procedimento
-  }));
+  return snapshot.docs
+    .filter(doc => doc.data().status !== statusAgendamento.CANCELADO)
+    .map(doc => ({
+      id: doc.id,
+      data: doc.data().data,
+      hora: doc.data().hora,
+      profissional: doc.data().profissional,
+      nomePaciente: doc.data().nomePaciente,
+      status: doc.data().status,
+      detalhes: doc.data().detalhes,
+      usuarioId: doc.data().usuarioId,
+      convenio: doc.data().convenio,
+      procedimento: doc.data().procedimento
+    }));
 };
