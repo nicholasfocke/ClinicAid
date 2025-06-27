@@ -8,9 +8,15 @@ import layoutStyles from '@/styles/admin/farmacia/farmacia.module.css';
 import tableStyles from '@/styles/admin/farmacia/medicamentos.module.css';
 import modalStyles from '@/styles/admin/farmacia/modalMedicamento.module.css';
 import detailsStyles from '@/styles/admin/farmacia/medicamentosDetails.module.css';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, LogIn, LogOut } from 'lucide-react';
 import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData } from '@/functions/medicamentosFunctions';
+import { registrarEntradaMedicamento, registrarSaidaMedicamento } from '@/functions/movimentacoesMedicamentosFunctions';
 import { format } from 'date-fns';
+import { buscarMedicos } from '@/functions/medicosFunctions';
+import { buscarPacientes, PacienteMin } from '@/functions/pacientesFunctions';
+
+const formatValor = (valor: number) =>
+  valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 interface Medicamento extends MedicamentoData {
   id: string;
@@ -121,6 +127,16 @@ const Medicamentos = () => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [detailsData, setDetailsData] = useState<Partial<MedicamentoData>>({});
 
+  const [showMovModal, setShowMovModal] = useState(false);
+  const [movType, setMovType] = useState<'entrada' | 'saida'>('entrada');
+  const [movMedicamento, setMovMedicamento] = useState<Medicamento | null>(null);
+  const [movQuantidade, setMovQuantidade] = useState(0);
+  const [movMotivo, setMovMotivo] = useState('');
+  const [movPaciente, setMovPaciente] = useState('');
+  const [movProfissional, setMovProfissional] = useState('');
+  const [pacientes, setPacientes] = useState<PacienteMin[]>([]);
+  const [profissionais, setProfissionais] = useState<{ id: string; nome: string }[]>([]);
+
   const selectedIds = medicamentos.filter(m => m.selected).map(m => m.id);
   const allSelected = medicamentos.length > 0 && selectedIds.length === medicamentos.length;
 
@@ -148,6 +164,20 @@ const Medicamentos = () => {
     fetchMedicamentos();
   }, []);
 
+  useEffect(() => {
+    const fetchAuxiliares = async () => {
+      try {
+        const pacs = await buscarPacientes();
+        setPacientes(pacs);
+        const profs = await buscarMedicos();
+        setProfissionais(profs.map(p => ({ id: p.id, nome: p.nome })));
+      } catch (err) {
+        console.error('Erro ao buscar pacientes ou profissionais:', err);
+      }
+    };
+    fetchAuxiliares();
+  }, []);
+
   const filtered = medicamentos.filter(m =>
     m.nome_comercial.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -158,6 +188,52 @@ const Medicamentos = () => {
     setShowDetails(true);
     setEditing(false);
     setConfirmDelete(false);
+  };
+
+  const openMovimento = (m: Medicamento, tipo: 'entrada' | 'saida') => {
+    setMovMedicamento(m);
+    setMovType(tipo);
+    setMovQuantidade(0);
+    setMovMotivo('');
+    setMovPaciente('');
+    setMovProfissional('');
+    setShowMovModal(true);
+  };
+
+  const registrarMov = async () => {
+    if (!movMedicamento || movQuantidade <= 0) return;
+    const data = new Date().toISOString();
+    const usuario = user?.email || '';
+    if (movType === 'entrada') {
+      await registrarEntradaMedicamento({
+        medicamento: movMedicamento.nome_comercial,
+        quantidade: movQuantidade,
+        motivo: movMotivo,
+        data,
+        usuario,
+      });
+      const nova = movMedicamento.quantidade + movQuantidade;
+      await atualizarMedicamento(movMedicamento.id, { quantidade: nova });
+      setMedicamentos(prev =>
+        prev.map(m => (m.id === movMedicamento.id ? { ...m, quantidade: nova } : m))
+      );
+    } else {
+      await registrarSaidaMedicamento({
+        medicamento: movMedicamento.nome_comercial,
+        quantidade: movQuantidade,
+        motivo: movMotivo,
+        data,
+        usuario,
+        paciente: movPaciente,
+        profissional: movProfissional,
+      });
+      const nova = Math.max(0, movMedicamento.quantidade - movQuantidade);
+      await atualizarMedicamento(movMedicamento.id, { quantidade: nova });
+      setMedicamentos(prev =>
+        prev.map(m => (m.id === movMedicamento.id ? { ...m, quantidade: nova } : m))
+      );
+    }
+    setShowMovModal(false);
   };
 
   const closeDetails = () => setShowDetails(false);
@@ -329,12 +405,26 @@ const Medicamentos = () => {
                 </td>
                 <td>{m.nome_comercial}</td>
                 <td>{m.quantidade}</td>
-                <td>{Number(m.valor).toFixed(2)}</td>
+                <td>{formatValor(m.valor)}</td>
                 <td>{m.lote}</td>
                 <td className={isExpired(m.validade) ? tableStyles.expired : ''}>
                   {m.validade ? format(new Date(m.validade), 'dd/MM/yyyy') : ''}
                 </td>
                 <td>
+                  <button
+                    className={tableStyles.entryButton}
+                    title="Registrar entrada"
+                    onClick={() => openMovimento(m, 'entrada')}
+                  >
+                    <LogIn size={18} />
+                  </button>
+                  <button
+                    className={tableStyles.exitButton}
+                    title="Registrar saída"
+                    onClick={() => openMovimento(m, 'saida')}
+                  >
+                    <LogOut size={18} />
+                  </button>
                   <button
                     className={tableStyles.externalLink}
                     title="Ver detalhes"
@@ -423,7 +513,66 @@ const Medicamentos = () => {
             </div>
           </div>
 
-          <button className={modalStyles.buttonSalvar} onClick={createMedicamento}>Salvar</button>
+      <button className={modalStyles.buttonSalvar} onClick={createMedicamento}>Salvar</button>
+        </div>
+      </div>
+    )}
+
+    {showMovModal && movMedicamento && (
+      <div className={modalStyles.overlay} onClick={() => setShowMovModal(false)}>
+        <div className={modalStyles.modal} onClick={e => e.stopPropagation()}>
+          <button className={modalStyles.closeButton} onClick={() => setShowMovModal(false)}>X</button>
+          <h3>{movType === 'entrada' ? 'Registrar Entrada' : 'Registrar Saída'}</h3>
+          <div className={modalStyles.formGrid}>
+            <div className={modalStyles.fieldWrapper}>
+              <label className={modalStyles.label}>Quantidade</label>
+              <input
+                type="number"
+                className={modalStyles.input}
+                value={movQuantidade}
+                onChange={e => setMovQuantidade(Number(e.target.value))}
+              />
+            </div>
+            <div className={modalStyles.fieldWrapper} style={{ gridColumn: 'span 3' }}>
+              <label className={modalStyles.label}>Motivo</label>
+              <textarea
+                className={modalStyles.textarea}
+                value={movMotivo}
+                onChange={e => setMovMotivo(e.target.value)}
+              />
+            </div>
+            {movType === 'saida' && (
+              <>
+                <div className={modalStyles.fieldWrapper}>
+                  <label className={modalStyles.label}>Paciente</label>
+                  <select
+                    className={modalStyles.input}
+                    value={movPaciente}
+                    onChange={e => setMovPaciente(e.target.value)}
+                  >
+                    <option value="">Selecione</option>
+                    {pacientes.map(p => (
+                      <option key={p.id} value={p.nome}>{p.nome}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className={modalStyles.fieldWrapper}>
+                  <label className={modalStyles.label}>Profissional</label>
+                  <select
+                    className={modalStyles.input}
+                    value={movProfissional}
+                    onChange={e => setMovProfissional(e.target.value)}
+                  >
+                    <option value="">Selecione</option>
+                    {profissionais.map(p => (
+                      <option key={p.id} value={p.nome}>{p.nome}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
+          </div>
+          <button className={modalStyles.buttonSalvar} onClick={registrarMov}>Salvar</button>
         </div>
       </div>
     )}
@@ -519,7 +668,7 @@ const Medicamentos = () => {
               <p><strong>Nome Comercial:</strong> {selectedMedicamento.nome_comercial}</p>
               <p><strong>DCB:</strong> {selectedMedicamento.dcb}</p>
               <p><strong>Quantidade:</strong> {selectedMedicamento.quantidade}</p>
-              <p><strong>Valor:</strong> {selectedMedicamento.valor}</p>
+              <p><strong>Valor:</strong> {formatValor(selectedMedicamento.valor)}</p>
               <p><strong>Lote:</strong> {selectedMedicamento.lote}</p>
               <p><strong>Validade:</strong> {selectedMedicamento.validade ? format(new Date(selectedMedicamento.validade), 'dd/MM/yyyy') : ''}</p>
               <p><strong>Forma Farmacêutica:</strong> {selectedMedicamento.forma_farmaceutica}</p>
