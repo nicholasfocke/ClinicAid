@@ -41,6 +41,7 @@ interface Props {
   profissionais: { id: string; nome: string }[];
   fetchAvailableTimes: (date: string, profissional: string) => void;
   availableDays: string[];
+  hideTime?: boolean;
 }
 
 const CreateAppointmentModal: React.FC<Props> = ({
@@ -55,6 +56,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
   profissionais,
   fetchAvailableTimes,
   availableDays,
+  hideTime = false,
 }) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedPeriod, setSelectedPeriod] = useState<'Manhã' | 'Tarde' | 'Noite'>('Manhã');
@@ -496,43 +498,47 @@ const CreateAppointmentModal: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Botões de período */}
-        <div className={styles.periodFilter}>
-          {periodLabels.map((label) => (
-            <button
-              key={label}
-              type="button"
-              className={`${styles.periodButton} ${selectedPeriod === label ? styles.activePeriod : ''}`}
-              onClick={() => handlePeriodClick(label as 'Manhã' | 'Tarde' | 'Noite')}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Horários disponíveis com scroll, sem setas */}
-        <div className={styles.timesNavWrapper}>
-          <div
-            className={styles.timeSelectorWrapper}
-            ref={timesContainerRef}
-          >
-            {(horariosGerados.length > 0) ? (
-              horariosGerados.map((time) => (
+        {!hideTime && (
+          <>
+            {/* Botões de período */}
+            <div className={styles.periodFilter}>
+              {periodLabels.map((label) => (
                 <button
-                  key={time}
+                  key={label}
                   type="button"
-                  className={`${styles.timeButton} ${appointmentData.time === time ? styles.activeTime : ''} ${isTimeDisabled(time) ? styles.disabledTime : ''}`}
-                  onClick={() => setAppointmentData((prev: any) => ({ ...prev, time }))}
-                  disabled={isTimeDisabled(time)}
+                  className={`${styles.periodButton} ${selectedPeriod === label ? styles.activePeriod : ''}`}
+                  onClick={() => handlePeriodClick(label as 'Manhã' | 'Tarde' | 'Noite')}
                 >
-                  {time}
+                  {label}
                 </button>
-              ))
-            ) : (
-              <p className={styles.noTime}>Nenhum horário disponível para este período ou selecione um profissional e dia da semana para visualizar os horários disponíveis.</p>
-            )}
-          </div>
-        </div>
+              ))}
+            </div>
+
+            {/* Horários disponíveis com scroll, sem setas */}
+            <div className={styles.timesNavWrapper}>
+              <div
+                className={styles.timeSelectorWrapper}
+                ref={timesContainerRef}
+              >
+                {(horariosGerados.length > 0) ? (
+                  horariosGerados.map((time) => (
+                    <button
+                      key={time}
+                      type="button"
+                      className={`${styles.timeButton} ${appointmentData.time === time ? styles.activeTime : ''} ${isTimeDisabled(time) ? styles.disabledTime : ''}`}
+                      onClick={() => setAppointmentData((prev: any) => ({ ...prev, time }))}
+                      disabled={isTimeDisabled(time)}
+                    >
+                      {time}
+                    </button>
+                  ))
+                ) : (
+                  <p className={styles.noTime}>Nenhum horário disponível para este período ou selecione um profissional e dia da semana para visualizar os horários disponíveis.</p>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Box de resumo, seleção de profissional e paciente */}
         <div className={styles.summaryBoxStyled}>
