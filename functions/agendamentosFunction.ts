@@ -60,57 +60,6 @@ export const buscarAgendamentosDeHoje = async () => {
   return [];
 };
 
-export const buscarHorariosDisponiveis = async (
-  date: Date | null,
-  profissional: string,
-  tipoUsuario: string | undefined,
-  horariosBloqueados: BlockedTime[],
-  horariosPadrao: string[],
-  horariosAdmin: string[]
-) => {
-  if (!date || !profissional) return [] as string[];
-
-  const formattedDate = format(date, 'yyyy-MM-dd');
-
-  const consultaDiaBloqueadoFuncionario = query(
-    collection(firestore, 'blockedDaysByEmployee'),
-    where('date', '==', formattedDate),
-    where('funcionaria', '==', profissional)
-  );
-
-  const resultadoFuncionarioBloqueado = await getDocs(consultaDiaBloqueadoFuncionario);
-  if (!resultadoFuncionarioBloqueado.empty) {
-    return [];
-  }
-
-  const consultaAgendamentosDia = query(
-    collection(firestore, 'agendamentos'),
-    where('data', '==', formattedDate),
-    where('profissional', '==', profissional)
-  );
-  const documentosAgendamentos = await getDocs(consultaAgendamentosDia);
-  const horariosReservados = documentosAgendamentos.docs.map(doc => doc.data().hora);
-
-  const agora = new Date();
-  const todosHorarios = tipoUsuario === 'admin' ? [...horariosPadrao, ...horariosAdmin] : horariosPadrao;
-
-  return todosHorarios.filter(time => {
-    if (
-      horariosReservados.includes(time.trim()) ||
-      horariosBloqueados.some(bt => bt.time === time.trim() && bt.profissional === profissional)
-    ) {
-      return false;
-    }
-    if (formattedDate === format(agora, 'yyyy-MM-dd')) {
-      const [h, m] = time.split(':');
-      const horarioAgendamento = new Date();
-      horarioAgendamento.setHours(parseInt(h));
-      horarioAgendamento.setMinutes(parseInt(m));
-      return horarioAgendamento > agora;
-    }
-    return true;
-  });
-};
 
 export const buscarDiasBloqueados = async () => {
   const q = query(collection(firestore, 'blockedDays'));
