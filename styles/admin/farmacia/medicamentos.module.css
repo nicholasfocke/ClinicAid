@@ -164,3 +164,17 @@
 .expired {
   color: #dc2626;
 }
+
+.externalLink {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  color: #8b98a9;
+}
+
+.externalLink:hover {
+  transform: scale(1.1);
+  color: #2563eb;
+}

@@ -7,6 +7,8 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import layoutStyles from '@/styles/admin/farmacia/farmacia.module.css';
 import tableStyles from '@/styles/admin/farmacia/medicamentos.module.css';
 import modalStyles from '@/styles/admin/farmacia/modalMedicamento.module.css';
+import detailsStyles from '@/styles/admin/farmacia/medicamentosDetails.module.css';
+import { ExternalLink } from 'lucide-react';
 import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData } from '@/functions/medicamentosFunctions';
 import { format } from 'date-fns';
 
@@ -90,17 +92,8 @@ const Medicamentos = () => {
   const [user, setUser] = useState<User | null>(null);
   const [medicamentos, setMedicamentos] = useState<Medicamento[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const router = useRouter();
-
-  const [formData, setFormData] = useState<Partial<MedicamentoData>>({
-    nome_comercial: '',
-    quantidade: 0,
-    valor: 0,
-    lote: '',
-    validade: '',
-  });
 
   const [showModal, setShowModal] = useState(false);
   const [newMedicamento, setNewMedicamento] = useState<MedicamentoData>({
@@ -121,6 +114,12 @@ const Medicamentos = () => {
     classificacao: '',
     descricao: '',
   });
+
+  const [selectedMedicamento, setSelectedMedicamento] = useState<Medicamento | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [detailsData, setDetailsData] = useState<Partial<MedicamentoData>>({});
 
   const selectedIds = medicamentos.filter(m => m.selected).map(m => m.id);
   const allSelected = medicamentos.length > 0 && selectedIds.length === medicamentos.length;
@@ -153,33 +152,46 @@ const Medicamentos = () => {
     m.nome_comercial.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const startEdit = (m: Medicamento) => {
-    setEditingId(m.id);
-    setFormData({
-      nome_comercial: m.nome_comercial,
-      quantidade: m.quantidade,
-      valor: m.valor,
-      lote: m.lote,
-      validade: m.validade,
-    });
+  const openDetails = (m: Medicamento) => {
+    setSelectedMedicamento(m);
+    setDetailsData(m);
+    setShowDetails(true);
+    setEditing(false);
+    setConfirmDelete(false);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const closeDetails = () => setShowDetails(false);
+
+  const handleDetailsChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type, checked } = e.target as HTMLInputElement;
-    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    setDetailsData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const saveEdit = async (id: string) => {
+  const saveDetails = async () => {
+    if (!selectedMedicamento) return;
     try {
-      await atualizarMedicamento(id, formData);
-      setMedicamentos(prev => prev.map(m => (m.id === id ? { ...m, ...(formData as MedicamentoData) } : m)));
-      setEditingId(null);
+      await atualizarMedicamento(selectedMedicamento.id, detailsData);
+      setMedicamentos(prev =>
+        prev.map(m =>
+          m.id === selectedMedicamento.id ? { ...m, ...(detailsData as MedicamentoData) } : m
+        )
+      );
+      setEditing(false);
+      setShowDetails(false);
     } catch (err) {
       setError('Erro ao atualizar.');
     }
   };
 
-  const cancelEdit = () => setEditingId(null);
+  const confirmDeleteMedicamento = async () => {
+    if (!selectedMedicamento) return;
+    await excluirMedicamento(selectedMedicamento.id);
+    setMedicamentos(prev => prev.filter(m => m.id !== selectedMedicamento.id));
+    setShowDetails(false);
+  };
+
 
   const handleNewChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type, checked } = e.target as HTMLInputElement;
@@ -315,33 +327,22 @@ const Medicamentos = () => {
                 <td className={tableStyles.checkboxCell}>
                   <input type="checkbox" checked={m.selected || false} onChange={() => toggleSelect(m.id)} />
                 </td>
-                {editingId === m.id ? (
-                  <>
-                    <td><input name="nome_comercial" value={formData.nome_comercial} onChange={handleChange} /></td>
-                    <td><input name="quantidade" type="number" value={formData.quantidade} onChange={handleChange} /></td>
-                    <td><input name="valor" type="number" value={formData.valor} onChange={handleChange} /></td>
-                    <td><input name="lote" value={formData.lote} onChange={handleChange} /></td>
-                    <td><input name="validade" type="date" value={formData.validade} onChange={handleChange} /></td>
-                    <td>
-                      <button className={tableStyles.buttonAcao} onClick={() => saveEdit(m.id)}>Salvar</button>
-                      <button className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`} onClick={cancelEdit}>Cancelar</button>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td>{m.nome_comercial}</td>
-                    <td>{m.quantidade}</td>
-                    <td>{Number(m.valor).toFixed(2)}</td>
-                    <td>{m.lote}</td>
-                    <td className={isExpired(m.validade) ? tableStyles.expired : ''}>
-                      {m.validade ? format(new Date(m.validade), 'dd/MM/yyyy') : ''}
-                    </td>
-                    <td>
-                      <button className={tableStyles.buttonAcao} onClick={() => startEdit(m)}>Editar</button>
-                      <button className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`} onClick={() => handleDelete(m.id)}>Excluir</button>
-                    </td>
-                  </>
-                )}
+                <td>{m.nome_comercial}</td>
+                <td>{m.quantidade}</td>
+                <td>{Number(m.valor).toFixed(2)}</td>
+                <td>{m.lote}</td>
+                <td className={isExpired(m.validade) ? tableStyles.expired : ''}>
+                  {m.validade ? format(new Date(m.validade), 'dd/MM/yyyy') : ''}
+                </td>
+                <td>
+                  <button
+                    className={tableStyles.externalLink}
+                    title="Ver detalhes"
+                    onClick={() => openDetails(m)}
+                  >
+                    <ExternalLink size={19} />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -423,6 +424,121 @@ const Medicamentos = () => {
           </div>
 
           <button className={modalStyles.buttonSalvar} onClick={createMedicamento}>Salvar</button>
+        </div>
+      </div>
+    )}
+
+    {showDetails && selectedMedicamento && (
+      <div className={detailsStyles.overlay} onClick={closeDetails}>
+        <div className={detailsStyles.card} onClick={e => e.stopPropagation()}>
+          {confirmDelete ? (
+            <div>
+              <p>Confirmar exclusão?</p>
+              <div className={detailsStyles.buttons}>
+                <button className={detailsStyles.buttonExcluir} onClick={confirmDeleteMedicamento}>Confirmar</button>
+                <button className={detailsStyles.buttonEditar} onClick={() => setConfirmDelete(false)}>Cancelar</button>
+              </div>
+            </div>
+          ) : editing ? (
+            <div>
+              <div className={modalStyles.formGrid}>
+                {[
+                  { label: 'Nome Comercial', name: 'nome_comercial' },
+                  { label: 'DCB', name: 'dcb' },
+                  { label: 'Quantidade', name: 'quantidade', type: 'number' },
+                  { label: 'Valor', name: 'valor', type: 'number' },
+                  { label: 'Lote', name: 'lote' },
+                  { label: 'Validade', name: 'validade', type: 'date' },
+                  { label: 'Concentração', name: 'concentracao' },
+                  { label: 'Fabricante', name: 'fabricante' },
+                  { label: 'Registro ANVISA', name: 'registro_anvisa' },
+                ].map(({ label, name, type = 'text' }) => (
+                  <div key={name} className={modalStyles.fieldWrapper}>
+                    <label className={modalStyles.label}>{label}</label>
+                    <input
+                      name={name}
+                      type={type}
+                      className={detailsStyles.inputEditar}
+                      value={(detailsData as any)[name] || ''}
+                      onChange={handleDetailsChange}
+                    />
+                  </div>
+                ))}
+
+                {[
+                  { label: 'Forma Farmacêutica', name: 'forma_farmaceutica', options: formasFarmaceuticas },
+                  { label: 'Unidade', name: 'unidade', options: unidades },
+                  { label: 'Via de Administração', name: 'via_administracao', options: viasAdministracao },
+                  { label: 'Tipo de Receita', name: 'tipo_receita', options: tiposReceita },
+                  { label: 'Classificação', name: 'classificacao', options: classificacoes },
+                ].map(({ label, name, options }) => (
+                  <div key={name} className={modalStyles.fieldWrapper}>
+                    <label className={modalStyles.label}>{label}</label>
+                    <select
+                      name={name}
+                      className={detailsStyles.inputEditar}
+                      value={(detailsData as any)[name] || ''}
+                      onChange={handleDetailsChange}
+                    >
+                      <option value="">Selecione</option>
+                      {options.map(o => (
+                        <option key={o} value={o}>{o}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+
+                <div className={modalStyles.checkboxWrapper}>
+                  <input
+                    type="checkbox"
+                    name="controlado"
+                    checked={!!(detailsData as any).controlado}
+                    onChange={handleDetailsChange}
+                  />
+                  <label className={modalStyles.label}>Controlado</label>
+                </div>
+
+                <div className={modalStyles.fieldWrapper} style={{ gridColumn: 'span 3' }}>
+                  <label className={modalStyles.label}>Descrição</label>
+                  <textarea
+                    name="descricao"
+                    className={modalStyles.textarea}
+                    value={(detailsData as any).descricao || ''}
+                    onChange={handleDetailsChange}
+                  />
+                </div>
+              </div>
+              <div className={detailsStyles.buttons}>
+                <button className={detailsStyles.buttonEditar} onClick={saveDetails}>Salvar</button>
+                <button className={detailsStyles.buttonCancelar} onClick={() => { setEditing(false); setDetailsData(selectedMedicamento!); }}>Cancelar</button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <h3>Informações do medicamento</h3>
+              <p><strong>Nome Comercial:</strong> {selectedMedicamento.nome_comercial}</p>
+              <p><strong>DCB:</strong> {selectedMedicamento.dcb}</p>
+              <p><strong>Quantidade:</strong> {selectedMedicamento.quantidade}</p>
+              <p><strong>Valor:</strong> {selectedMedicamento.valor}</p>
+              <p><strong>Lote:</strong> {selectedMedicamento.lote}</p>
+              <p><strong>Validade:</strong> {selectedMedicamento.validade ? format(new Date(selectedMedicamento.validade), 'dd/MM/yyyy') : ''}</p>
+              <p><strong>Forma Farmacêutica:</strong> {selectedMedicamento.forma_farmaceutica}</p>
+              <p><strong>Concentração:</strong> {selectedMedicamento.concentracao}</p>
+              <p><strong>Unidade:</strong> {selectedMedicamento.unidade}</p>
+              <p><strong>Via de Administração:</strong> {selectedMedicamento.via_administracao}</p>
+              <p><strong>Fabricante:</strong> {selectedMedicamento.fabricante}</p>
+              <p><strong>Registro ANVISA:</strong> {selectedMedicamento.registro_anvisa}</p>
+              <p><strong>Controlado:</strong> {selectedMedicamento.controlado ? 'Sim' : 'Não'}</p>
+              <p><strong>Tipo de Receita:</strong> {selectedMedicamento.tipo_receita}</p>
+              <p><strong>Classificação:</strong> {selectedMedicamento.classificacao}</p>
+              <p><strong>Descrição:</strong> {selectedMedicamento.descricao}</p>
+              <div className={detailsStyles.buttons}>
+                <button className={detailsStyles.buttonExcluir} onClick={() => setConfirmDelete(true)}>Excluir medicamento</button>
+                <button className={detailsStyles.buttonEditar} onClick={() => { setEditing(true); setDetailsData(selectedMedicamento); }}>Editar medicamento</button>
+              </div>
+              <button className={detailsStyles.buttonFechar} onClick={closeDetails}>X</button>
+            </div>
+          )}
         </div>
       </div>
     )}
