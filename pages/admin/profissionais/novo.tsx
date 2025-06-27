@@ -56,7 +56,6 @@ interface MedicoForm {
   horaFim: string;
   almocoInicio: string;
   almocoFim: string;
-  intervaloConsultas: number;
   telefone: string;
   cpf: string;
   email: string;
@@ -85,7 +84,6 @@ const NovoMedico = () => {
     horaFim: '',
     almocoInicio: '',
     almocoFim: '',
-    intervaloConsultas: 0,
     telefone: '',
     cpf: '',
     email: '',
@@ -154,7 +152,6 @@ const NovoMedico = () => {
     let newValue: string | number = value;
     if (name === 'cpf') newValue = formatCPF(value);
     if (name === 'telefone') newValue = formatTelefone(value);
-    if (name === 'intervaloConsultas') { newValue = Number(value); }
     setFormData((prev) => ({ ...prev, [name]: newValue as any }));
   };
 
@@ -259,7 +256,6 @@ const NovoMedico = () => {
         cpf: formData.cpf,
         email: formData.email,
         convenio: formData.convenio,
-        intervaloConsultas: formData.intervaloConsultas,
         foto: fotoUrl,
         fotoPath,
         procedimentos: formData.procedimentos, // Envia procedimentos selecionados
@@ -273,7 +269,7 @@ const NovoMedico = () => {
             horaFim: formData.horaFim,
             almocoInicio: formData.almocoInicio,
             almocoFim: formData.almocoFim,
-            intervaloConsultas: formData.intervaloConsultas,
+            intervaloConsultas: 30,
           });
         }
       }
@@ -352,15 +348,6 @@ const NovoMedico = () => {
           value={formData.almocoFim}
           onChange={handleChange}
           placeholder="Intervalo almoço fim"
-          className={styles.input}
-        />
-        <div className={styles.convenioHeader}>Intervalo entre consultas</div>
-        <input
-          type="number"
-          name="intervaloConsultas"
-          value={formData.intervaloConsultas}
-          onChange={handleChange}
-          placeholder="Intervalo das consultas (min)"
           className={styles.input}
         />
         <input name="telefone" value={formData.telefone} onChange={handleChange} placeholder="Telefone" className={styles.input} />
