@@ -453,14 +453,15 @@ const fetchAgendamentos = async () => {
       };
       const addMinutes = (d: Date, m: number) => new Date(d.getTime() + m * 60000);
       const normalize = (t: string) => t.trim().slice(0, 5);
-      const duration = procedimento
-        ? procedimentosMap[procedimento] ?? schedule.intervaloConsultas
-        : schedule.intervaloConsultas;
+      const duration =
+        procedimento && procedimentosMap[procedimento]
+          ? procedimentosMap[procedimento]
+          : 30;
       const reserved = ags
         .filter(ag => ag.profissional === profissional)
         .map(ag => ({
           start: normalize(ag.hora),
-          dur: procedimentosMap[ag.procedimento] ?? schedule.intervaloConsultas,
+          dur: procedimentosMap[ag.procedimento] ?? 30,
         }));
       const generated = generateTimes(
         schedule.horaInicio,

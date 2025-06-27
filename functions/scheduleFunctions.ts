@@ -7,7 +7,6 @@ export interface ScheduleData {
   horaFim: string;
   almocoInicio: string;
   almocoFim: string;
-  intervaloConsultas: number; // Adicione este campo no tipo!
 }
 
 export async function criarHorario(
@@ -18,7 +17,6 @@ export async function criarHorario(
     horaFim: string;
     almocoInicio: string;
     almocoFim: string;
-    intervaloConsultas: number; // Adicione este campo no tipo!
   }
 ) {
   // Salva na subcoleção 'horarios' do profissional
