@@ -375,8 +375,9 @@ const Pacientes = () => {
       </div>
       <h1 className={styles.titlePacientes}>Pacientes</h1>
       <div className={styles.subtitlePacientes}>Lista de pacientes cadastrados</div>
+      {/* Barra de ações: botão + barra de pesquisa lado a lado */}
       <div className={styles.topBar}>
-        <div className={styles.actionButtonsWrapper}>
+        <div className={styles.actionButtonsWrapper} style={{ marginBottom: 0 }}>
           <button
             className={styles.buttonAdicionar}
             onClick={() => setShowCreateModal(true)}
@@ -384,7 +385,7 @@ const Pacientes = () => {
             + Adicionar paciente
           </button>
         </div>
-        <div className={styles.searchContainer}>
+        <div className={styles.searchContainer} style={{ marginBottom: 0 }}>
           <input
             type="text"
             placeholder="🔍 Pesquisar paciente"

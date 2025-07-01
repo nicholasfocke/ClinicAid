@@ -27,6 +27,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 18px;
 }
 
 .actionButtonsWrapper {
@@ -39,7 +40,7 @@
 .searchContainer {
   display: flex;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
 }
 
 .searchInput {
@@ -47,9 +48,7 @@
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 1rem;
-  margin-left: 12px;
-  width: 260px;
-  height: 44px;
+  margin-top: -6px;
 }
 
 .pacientesTableWrapper {
