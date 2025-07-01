@@ -146,6 +146,126 @@ const Pacientes = () => {
     [statusAgendamento.PENDENTE]: detailsStyles.statusPendente,
   };
 
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser({ uid: currentUser.uid, email: currentUser.email || '' });
+      } else {
+        router.push('/auth/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  useEffect(() => {
+    const fetchPacientes = async () => {
+      try {
+        const snap = await getDocs(collection(firestore, 'pacientes'));
+        const lista: Paciente[] = [];
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          lista.push({
+            id: docSnap.id,
+            nome: data.nome || '',
+            email: data.email || '',
+            cpf: data.cpf || '',
+            telefone: data.telefone || '',
+            convenio: data.convenio || '',
+            dataNascimento: data.dataNascimento || '',
+            arquivos: data.arquivos || [],
+            infoArquivos: data.infoArquivos || [],
+            prontuarios: data.prontuarios || [],
+            conversasIA: data.conversasIA || [],
+            conversasArquivos: data.conversasArquivos || [],
+            agendamentos: data.agendamentos || [],
+            profissionaisAtendimentos: data.profissionaisAtendimentos || [],
+            profissionaisArquivos: data.profissionaisArquivos || [],
+            observacoes: data.observacoes || '',
+            alertas: data.alertas || [],
+            tags: data.tags || [],
+          });
+        });
+        setPacientes(lista);
+      } catch (err) {
+        console.error('Erro ao buscar pacientes:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPacientes();
+  }, []);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const snap = await getDocs(collection(firestore, 'agendamentos'));
+        const list: HistoricoAgendamento[] = [];
+        snap.forEach(d => {
+          const data = d.data();
+          list.push({
+            id: d.id,
+            data: data.data || '',
+            hora: data.hora || '',
+            profissional: data.profissional || '',
+            procedimento: data.procedimento || '',
+            status: data.status || '',
+            descricao: data.detalhes || '',
+          });
+        });
+        setAvailableAppointments(list);
+      } catch (err) {
+        console.error('Erro ao buscar agendamentos:', err);
+      }
+    };
+    fetchAppointments();
+  }, []);
+
+  // Máscaras de formatação
+  const formatCPF = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+      .slice(0, 14);
+  };
+
+  const formatTelefone = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/^(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .slice(0, 15);
+  };
+
+  const maskDataNascimento = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/^(\d{2})(\d)/, '$1/$2')
+      .replace(/^(\d{2})\/(\d{2})(\d)/, '$1/$2/$3')
+      .slice(0, 10);
+  };
+
+  // Validação de CPF
+  function isValidCPF(cpf: string): boolean {
+    cpf = cpf.replace(/\D/g, '');
+    if (cpf.length !== 11 || /(\d)\1+$/.test(cpf)) return false;
+    let soma = 0,
+      resto;
+    for (let i = 1; i <= 9; i++) soma += parseInt(cpf[i - 1]) * (11 - i);
+    resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(cpf[9])) return false;
+    soma = 0;
+    for (let i = 1; i <= 10; i++) soma += parseInt(cpf[i - 1]) * (12 - i);
+    resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(cpf[10])) return false;
+    return true;
+  }
+
   const filteredPacientes = pacientes.filter(p =>
     p.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -240,15 +360,6 @@ const Pacientes = () => {
     setActiveTab('info');
   };
 
-  // Função para aplicar máscara de data DD/MM/AAAA
-  function maskDataNascimento(value: string) {
-    return value
-      .replace(/\D/g, '')
-      .replace(/^(\d{2})(\d)/, '$1/$2')
-      .replace(/^(\d{2})\/(\d{2})(\d)/, '$1/$2/$3')
-      .slice(0, 10);
-  }
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (name === 'dataNascimento') {
@@ -260,8 +371,12 @@ const Pacientes = () => {
 
   const handleNewChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    if (name === 'dataNascimento') {
-      setNewPaciente(prev => ({ ...prev, [name]: maskDataNascimento(value) }));
+    if (name === 'cpf') {
+      setNewPaciente(prev => ({ ...prev, cpf: formatCPF(value) }));
+    } else if (name === 'telefone') {
+      setNewPaciente(prev => ({ ...prev, telefone: formatTelefone(value) }));
+    } else if (name === 'dataNascimento') {
+      setNewPaciente(prev => ({ ...prev, dataNascimento: maskDataNascimento(value) }));
     } else {
       setNewPaciente(prev => ({ ...prev, [name]: value }));
     }
@@ -512,6 +627,7 @@ const Pacientes = () => {
               className={modalStyles.input}
               value={newPaciente.cpf}
               onChange={handleNewChange}
+              maxLength={14}
             />
             <label className={modalStyles.label}>Telefone</label>
             <input
@@ -519,6 +635,7 @@ const Pacientes = () => {
               className={modalStyles.input}
               value={newPaciente.telefone}
               onChange={handleNewChange}
+              maxLength={15}
             />
             <label className={modalStyles.label}>Convênio</label>
             <input
