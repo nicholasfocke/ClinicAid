@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, arrayUnion } from 'firebase/firestore';
 import { auth, firestore } from '@/firebase/firebaseConfig';
 import { useRouter } from 'next/router';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
@@ -40,6 +40,7 @@ interface ConversaIA {
 }
 
 interface HistoricoAgendamento {
+  id?: string;
   data: string;
   hora?: string;
   profissional: string;
@@ -123,6 +124,8 @@ const Pacientes = () => {
     convenio: '',
     dataNascimento: '',
   });
+  const [availableAppointments, setAvailableAppointments] = useState<HistoricoAgendamento[]>([]);
+  const [selectedAppointmentIdToLink, setSelectedAppointmentIdToLink] = useState('');
   const [activeTab, setActiveTab] = useState<
     'info' | 'prontuarios' | 'conversas' | 'agendamentos' | 'documentos' | 'profissionais'
   >('info');
@@ -195,6 +198,31 @@ const Pacientes = () => {
     };
 
     fetchPacientes();
+  }, []);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const snap = await getDocs(collection(firestore, 'agendamentos'));
+        const list: HistoricoAgendamento[] = [];
+        snap.forEach(d => {
+          const data = d.data();
+          list.push({
+            id: d.id,
+            data: data.data || '',
+            hora: data.hora || '',
+            profissional: data.profissional || '',
+            procedimento: data.procedimento || '',
+            status: data.status || '',
+            descricao: data.detalhes || '',
+          });
+        });
+        setAvailableAppointments(list);
+      } catch (err) {
+        console.error('Erro ao buscar agendamentos:', err);
+      }
+    };
+    fetchAppointments();
   }, []);
 
   const openDetails = (p: Paciente) => {
@@ -336,6 +364,23 @@ const Pacientes = () => {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleLinkAppointment = async () => {
+    if (!selectedPaciente || !selectedAppointmentIdToLink) return;
+    const ag = availableAppointments.find(a => a.id === selectedAppointmentIdToLink);
+    if (!ag) return;
+    await atualizarPaciente(selectedPaciente.id, {
+      agendamentos: arrayUnion(ag),
+    });
+    const updated = {
+      ...selectedPaciente,
+      agendamentos: [...(selectedPaciente.agendamentos || []), ag],
+    } as Paciente;
+    setPacientes(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+    setSelectedPaciente(updated);
+    setPacienteInfo(updated);
+    setSelectedAppointmentIdToLink('');
   };
 
   const createPaciente = async () => {
@@ -974,6 +1019,27 @@ const Pacientes = () => {
                     ) : (
                       <p>Sem agendamentos anteriores.</p>
                     )}
+                    <div style={{ marginTop: 8 }}>
+                      <select
+                        className={detailsStyles.input}
+                        value={selectedAppointmentIdToLink}
+                        onChange={e => setSelectedAppointmentIdToLink(e.target.value)}
+                      >
+                        <option value="">Selecionar agendamento</option>
+                        {availableAppointments.map(a => (
+                          <option key={a.id} value={a.id}>
+                            {`${a.data} ${a.hora} - ${a.profissional}`}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        className={detailsStyles.buttonEditar}
+                        onClick={handleLinkAppointment}
+                        disabled={!selectedAppointmentIdToLink}
+                      >
+                        Vincular
+                      </button>
+                    </div>
                   </div>
                 )}
 
