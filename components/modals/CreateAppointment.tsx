@@ -3,8 +3,8 @@ import Modal from 'react-modal';
 import styles from '@/styles/admin/agendamentos/CreateAppointment.module.css';
 import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { auth, firestore } from '@/firebase/firebaseConfig';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { firestore } from '@/firebase/firebaseConfig';
+import { collection, getDocs } from 'firebase/firestore';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 
@@ -32,6 +32,10 @@ interface Props {
     profissional: string;
     detalhes: string;
     nomePaciente: string;
+    email: string;
+    cpf: string;
+    telefone: string;
+    dataNascimento: string;
     convenio: string;
     procedimento: string;
   };
@@ -159,6 +163,10 @@ const CreateAppointmentModal: React.FC<Props> = ({
       profissional: '',
       detalhes: '',
       nomePaciente: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      dataNascimento: '',
       convenio: '',
       procedimento: '',
     });
@@ -233,7 +241,6 @@ const CreateAppointmentModal: React.FC<Props> = ({
   const [timesScrollIndex, setTimesScrollIndex] = useState(0);
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
   const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
-  const [userInfo, setUserInfo] = useState<{ nome: string } | null>(null);
 
   // Atualiza o índice de scroll dos horários ao mudar o período
   useEffect(() => {
@@ -250,17 +257,6 @@ const CreateAppointmentModal: React.FC<Props> = ({
           ]);
           setConvenios(convDocs as any);
           setProcedimentos(procDocs as any);
-
-          const current = auth.currentUser;
-          if (current) {
-            const snap = await getDoc(doc(firestore, 'users', current.uid));
-            if (snap.exists()) {
-              const data = snap.data();
-              const nome = data.nome || '';
-              setUserInfo({ nome });
-              setAppointmentData((prev: typeof appointmentData) => ({ ...prev, nomePaciente: nome }));
-            }
-          }
         } catch (err) {
           console.error('Erro ao buscar dados:', err);
         }
@@ -540,16 +536,59 @@ const CreateAppointmentModal: React.FC<Props> = ({
             <span className={styles.summaryLabel}>Profissional:</span>
             <span className={styles.summaryValue}>{appointmentData.profissional || 'Sem preferência'}</span>
           </div>
-          {/* Usuário como primeiro campo */}
+          {/* Nome do paciente */}
           <div className={styles.selectGroup}>
             <input
               type="text"
-              value={userInfo?.nome || appointmentData.nomePaciente || ''}
-              readOnly
+              value={appointmentData.nomePaciente}
+              onChange={e =>
+                setAppointmentData((prev: any) => ({ ...prev, nomePaciente: e.target.value }))
+              }
+              placeholder="Nome do paciente"
               className={styles.selectStyled}
             />
           </div>
-          {/* Profissional como segundo campo */}
+          {/* Email */}
+          <div className={styles.selectGroup}>
+            <input
+              type="email"
+              value={appointmentData.email}
+              onChange={e => setAppointmentData((prev: any) => ({ ...prev, email: e.target.value }))}
+              placeholder="Email"
+              className={styles.selectStyled}
+            />
+          </div>
+          {/* CPF */}
+          <div className={styles.selectGroup}>
+            <input
+              type="text"
+              value={appointmentData.cpf}
+              onChange={e => setAppointmentData((prev: any) => ({ ...prev, cpf: e.target.value }))}
+              placeholder="CPF"
+              className={styles.selectStyled}
+            />
+          </div>
+          {/* Telefone */}
+          <div className={styles.selectGroup}>
+            <input
+              type="text"
+              value={appointmentData.telefone}
+              onChange={e => setAppointmentData((prev: any) => ({ ...prev, telefone: e.target.value }))}
+              placeholder="Telefone"
+              className={styles.selectStyled}
+            />
+          </div>
+          {/* Nascimento */}
+          <div className={styles.selectGroup}>
+            <input
+              type="text"
+              value={appointmentData.dataNascimento}
+              onChange={e => setAppointmentData((prev: any) => ({ ...prev, dataNascimento: e.target.value }))}
+              placeholder="Nascimento (DD/MM/AAAA)"
+              className={styles.selectStyled}
+            />
+          </div>
+          {/* Profissional */}
           <div className={styles.selectGroup}>
             <select
               value={appointmentData.profissional}

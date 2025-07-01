@@ -63,6 +63,10 @@ const Agendamentos = () => {
     date: '',
     time: '',
     nomePaciente: '',
+    email: '',
+    cpf: '',
+    telefone: '',
+    dataNascimento: '',
     profissional: '',
     detalhes: '',
     convenio: '',
@@ -452,6 +456,7 @@ const fetchAgendamentos = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      const pacienteId = doc(collection(firestore, 'pacientes')).id;
       await criarAgendamento(
         {
           date: appointmentData.date,
@@ -461,15 +466,31 @@ const fetchAgendamentos = async () => {
           detalhes: appointmentData.detalhes,
           convenio: appointmentData.convenio,
           procedimento: appointmentData.procedimento,
+          email: appointmentData.email,
+          cpf: appointmentData.cpf,
+          telefone: appointmentData.telefone,
+          dataNascimento: appointmentData.dataNascimento,
         },
-        { uid: user.uid, email: user.email }
+        { uid: pacienteId, email: appointmentData.email }
       );
       await fetchAvailableTimes(
         appointmentData.date,
         appointmentData.profissional
       );
       setCreateModalOpen(false);
-      setAppointmentData({ date: '', time: '', nomePaciente: '', profissional: '', detalhes: '', convenio: '', procedimento: '' });
+      setAppointmentData({
+        date: '',
+        time: '',
+        nomePaciente: '',
+        email: '',
+        cpf: '',
+        telefone: '',
+        dataNascimento: '',
+        profissional: '',
+        detalhes: '',
+        convenio: '',
+        procedimento: '',
+      });
       await fetchAgendamentos();
     } catch (err) {
       console.error('Erro ao criar agendamento:', err);
