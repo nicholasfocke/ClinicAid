@@ -9,6 +9,50 @@ import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 import { buscarPacientesComDetalhes, PacienteDetails } from '@/functions/pacientesFunctions';
 
+// Máscaras de formatação
+const formatCPF = (value: string) => {
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+    .slice(0, 14);
+};
+
+const formatTelefone = (value: string) => {
+  return value
+    .replace(/\D/g, '')
+    .replace(/^(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2')
+    .slice(0, 15);
+};
+
+const maskDataNascimento = (value: string) => {
+  return value
+    .replace(/\D/g, '')
+    .replace(/^(\d{2})(\d)/, '$1/$2')
+    .replace(/^(\d{2})\/(\d{2})(\d)/, '$1/$2/$3')
+    .slice(0, 10);
+};
+
+// Validação de CPF
+function isValidCPF(cpf: string): boolean {
+  cpf = cpf.replace(/\D/g, '');
+  if (cpf.length !== 11 || /(\d)\1+$/.test(cpf)) return false;
+  let soma = 0,
+    resto;
+  for (let i = 1; i <= 9; i++) soma += parseInt(cpf[i - 1]) * (11 - i);
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf[9])) return false;
+  soma = 0;
+  for (let i = 1; i <= 10; i++) soma += parseInt(cpf[i - 1]) * (12 - i);
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf[10])) return false;
+  return true;
+}
+
 const getPeriod = (time: string) => {
   const [h, m] = time.split(':').map(Number);
   if (h < 12 || (h === 12 && m === 0)) return 'Manhã';
@@ -66,6 +110,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
   const [selectedPeriod, setSelectedPeriod] = useState<'Manhã' | 'Tarde' | 'Noite'>('Manhã');
   const daysContainerRef = useRef<HTMLDivElement>(null);
   const timesContainerRef = useRef<HTMLDivElement>(null);
+  const [cpfError, setCpfError] = useState('');
 
   // Gera todos os dias do mês atual exibido
   const getDaysOfMonth = (month: Date) => {
@@ -472,6 +517,16 @@ const CreateAppointmentModal: React.FC<Props> = ({
     p.nome.toLowerCase().includes(pacienteQuery.toLowerCase())
   );
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (appointmentData.cpf && !isValidCPF(appointmentData.cpf)) {
+      setCpfError('CPF inválido');
+      return;
+    }
+    setCpfError('');
+    onSubmit(e);
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -479,7 +534,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
       className={styles.modalContent}
       overlayClassName={styles.modalOverlay}
     >
-      <form onSubmit={onSubmit} className={styles.form} style={{ position: 'relative' }}>
+      <form onSubmit={handleFormSubmit} className={styles.form} style={{ position: 'relative' }}>
         {isSubmitting && (
           <div className={styles.modalLoadingOverlay}>
             <div className={styles.modalSpinner}></div>
@@ -618,16 +673,34 @@ const CreateAppointmentModal: React.FC<Props> = ({
                 <input
                   type="text"
                   value={appointmentData.cpf}
-                  onChange={e => setAppointmentData((prev: any) => ({ ...prev, cpf: e.target.value }))}
+                  onChange={e =>
+                    setAppointmentData((prev: any) => ({
+                      ...prev,
+                      cpf: formatCPF(e.target.value),
+                    }))
+                  }
+                  onBlur={() =>
+                    setCpfError(
+                      appointmentData.cpf && !isValidCPF(appointmentData.cpf)
+                        ? 'CPF inválido'
+                        : ''
+                    )
+                  }
                   placeholder="CPF"
                   className={styles.selectStyled}
                 />
+                {cpfError && <span className={styles.error}>{cpfError}</span>}
               </div>
               <div className={styles.selectGroup}>
                 <input
                   type="text"
                   value={appointmentData.telefone}
-                  onChange={e => setAppointmentData((prev: any) => ({ ...prev, telefone: e.target.value }))}
+                  onChange={e =>
+                    setAppointmentData((prev: any) => ({
+                      ...prev,
+                      telefone: formatTelefone(e.target.value),
+                    }))
+                  }
                   placeholder="Telefone"
                   className={styles.selectStyled}
                 />
@@ -636,7 +709,12 @@ const CreateAppointmentModal: React.FC<Props> = ({
                 <input
                   type="text"
                   value={appointmentData.dataNascimento}
-                  onChange={e => setAppointmentData((prev: any) => ({ ...prev, dataNascimento: e.target.value }))}
+                  onChange={e =>
+                    setAppointmentData((prev: any) => ({
+                      ...prev,
+                      dataNascimento: maskDataNascimento(e.target.value),
+                    }))
+                  }
                   placeholder="Nascimento (DD/MM/AAAA)"
                   className={styles.selectStyled}
                 />
