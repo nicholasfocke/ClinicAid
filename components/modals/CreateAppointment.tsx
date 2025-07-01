@@ -644,6 +644,14 @@ const CreateAppointmentModal: React.FC<Props> = ({
             </>
           ) : (
             <div className={styles.selectGroup}>
+              <input
+                type="text"
+                placeholder="Buscar paciente"
+                value={pacienteQuery}
+                onChange={e => setPacienteQuery(e.target.value)}
+                className={styles.selectStyled}
+                style={{ marginBottom: 8 }}
+              />
               <select
                 value={appointmentData.pacienteId || ''}
                 onChange={e => {
@@ -651,6 +659,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
                   setAppointmentData((prev: typeof appointmentData) => {
                     const selected = pacientes.find(p => p.id === selectedId);
                     if (selected) {
+                      setPacienteQuery(selected.nome);
                       return {
                         ...prev,
                         pacienteId: selected.id,
@@ -666,15 +675,13 @@ const CreateAppointmentModal: React.FC<Props> = ({
                   });
                 }}
                 className={styles.selectStyled}
-                onInput={e => {
-                  // Filtra pacientes conforme digitação no select (funciona em navegadores modernos)
-                  const input = (e.target as HTMLSelectElement).value.toLowerCase();
-                  setPacienteQuery(input);
-                }}
               >
-                <option value="">Buscar paciente</option>
+                <option value="">Selecione um paciente</option>
                 {pacientes
-                  .filter(p => p.nome.toLowerCase().includes(pacienteQuery.toLowerCase()))
+                  .filter(p =>
+                    p.nome.toLowerCase().includes(pacienteQuery.toLowerCase()) ||
+                    (p.cpf || '').toLowerCase().includes(pacienteQuery.toLowerCase())
+                  )
                   .map(p => (
                     <option key={p.id} value={p.id}>
                       {p.nome} {p.cpf ? `- ${p.cpf}` : ''}
