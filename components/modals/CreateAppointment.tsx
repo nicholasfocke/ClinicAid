@@ -7,6 +7,7 @@ import { firestore } from '@/firebase/firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
+import { buscarPacientesComDetalhes, PacienteDetails } from '@/functions/pacientesFunctions';
 
 const getPeriod = (time: string) => {
   const [h, m] = time.split(':').map(Number);
@@ -31,6 +32,7 @@ interface Props {
     time: string;
     profissional: string;
     detalhes: string;
+    pacienteId?: string;
     nomePaciente: string;
     email: string;
     cpf: string;
@@ -162,6 +164,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
       time: '',
       profissional: '',
       detalhes: '',
+      pacienteId: '',
       nomePaciente: '',
       email: '',
       cpf: '',
@@ -171,6 +174,9 @@ const CreateAppointmentModal: React.FC<Props> = ({
       procedimento: '',
     });
     setSelectedPeriod('Manhã');
+    setIsNewPatient(true);
+    setPacientes([]);
+    setPacienteQuery('');
     onClose();
   };
 
@@ -241,6 +247,9 @@ const CreateAppointmentModal: React.FC<Props> = ({
   const [timesScrollIndex, setTimesScrollIndex] = useState(0);
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
   const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
+  const [isNewPatient, setIsNewPatient] = useState(true);
+  const [pacientes, setPacientes] = useState<PacienteDetails[]>([]);
+  const [pacienteQuery, setPacienteQuery] = useState('');
 
   // Atualiza o índice de scroll dos horários ao mudar o período
   useEffect(() => {
@@ -264,6 +273,20 @@ const CreateAppointmentModal: React.FC<Props> = ({
     };
     fetchData();
   }, [isOpen, setAppointmentData]);
+
+  useEffect(() => {
+    const fetchPacientes = async () => {
+      if (isOpen && !isNewPatient) {
+        try {
+          const list = await buscarPacientesComDetalhes();
+          setPacientes(list);
+        } catch (err) {
+          console.error('Erro ao buscar pacientes:', err);
+        }
+      }
+    };
+    fetchPacientes();
+  }, [isOpen, isNewPatient]);
 
   // Navegação dos horários
   const scrollTimes = (direction: 'left' | 'right') => {
@@ -431,6 +454,9 @@ const CreateAppointmentModal: React.FC<Props> = ({
   const normalize = (t: string) => t.trim().slice(0, 5);
   const normalizedReserved = reservedTimes.map(normalize);
   const isTimeDisabled = (time: string) => normalizedReserved.includes(normalize(time));
+  const filteredPacientes = pacientes.filter(p =>
+    p.nome.toLowerCase().includes(pacienteQuery.toLowerCase())
+  );
 
   return (
     <Modal
@@ -536,58 +562,107 @@ const CreateAppointmentModal: React.FC<Props> = ({
             <span className={styles.summaryLabel}>Profissional:</span>
             <span className={styles.summaryValue}>{appointmentData.profissional || 'Sem preferência'}</span>
           </div>
-          {/* Nome do paciente */}
-          <div className={styles.selectGroup}>
-            <input
-              type="text"
-              value={appointmentData.nomePaciente}
-              onChange={e =>
-                setAppointmentData((prev: any) => ({ ...prev, nomePaciente: e.target.value }))
-              }
-              placeholder="Nome do paciente"
-              className={styles.selectStyled}
-            />
+          <div className={styles.patientTypeContainer}>
+            <button
+              type="button"
+              className={`${styles.patientTypeButton} ${isNewPatient ? styles.activeType : ''}`}
+              onClick={() => setIsNewPatient(true)}
+            >
+              Paciente Novo
+            </button>
+            <button
+              type="button"
+              className={`${styles.patientTypeButton} ${!isNewPatient ? styles.activeType : ''}`}
+              onClick={() => setIsNewPatient(false)}
+            >
+              Paciente Existente
+            </button>
           </div>
-          {/* Email */}
-          <div className={styles.selectGroup}>
-            <input
-              type="email"
-              value={appointmentData.email}
-              onChange={e => setAppointmentData((prev: any) => ({ ...prev, email: e.target.value }))}
-              placeholder="Email"
-              className={styles.selectStyled}
-            />
-          </div>
-          {/* CPF */}
-          <div className={styles.selectGroup}>
-            <input
-              type="text"
-              value={appointmentData.cpf}
-              onChange={e => setAppointmentData((prev: any) => ({ ...prev, cpf: e.target.value }))}
-              placeholder="CPF"
-              className={styles.selectStyled}
-            />
-          </div>
-          {/* Telefone */}
-          <div className={styles.selectGroup}>
-            <input
-              type="text"
-              value={appointmentData.telefone}
-              onChange={e => setAppointmentData((prev: any) => ({ ...prev, telefone: e.target.value }))}
-              placeholder="Telefone"
-              className={styles.selectStyled}
-            />
-          </div>
-          {/* Nascimento */}
-          <div className={styles.selectGroup}>
-            <input
-              type="text"
-              value={appointmentData.dataNascimento}
-              onChange={e => setAppointmentData((prev: any) => ({ ...prev, dataNascimento: e.target.value }))}
-              placeholder="Nascimento (DD/MM/AAAA)"
-              className={styles.selectStyled}
-            />
-          </div>
+          {isNewPatient ? (
+            <>
+              <div className={styles.selectGroup}>
+                <input
+                  type="text"
+                  value={appointmentData.nomePaciente}
+                  onChange={e =>
+                    setAppointmentData((prev: any) => ({ ...prev, nomePaciente: e.target.value }))
+                  }
+                  placeholder="Nome do paciente"
+                  className={styles.selectStyled}
+                />
+              </div>
+              <div className={styles.selectGroup}>
+                <input
+                  type="email"
+                  value={appointmentData.email}
+                  onChange={e => setAppointmentData((prev: any) => ({ ...prev, email: e.target.value }))}
+                  placeholder="Email"
+                  className={styles.selectStyled}
+                />
+              </div>
+              <div className={styles.selectGroup}>
+                <input
+                  type="text"
+                  value={appointmentData.cpf}
+                  onChange={e => setAppointmentData((prev: any) => ({ ...prev, cpf: e.target.value }))}
+                  placeholder="CPF"
+                  className={styles.selectStyled}
+                />
+              </div>
+              <div className={styles.selectGroup}>
+                <input
+                  type="text"
+                  value={appointmentData.telefone}
+                  onChange={e => setAppointmentData((prev: any) => ({ ...prev, telefone: e.target.value }))}
+                  placeholder="Telefone"
+                  className={styles.selectStyled}
+                />
+              </div>
+              <div className={styles.selectGroup}>
+                <input
+                  type="text"
+                  value={appointmentData.dataNascimento}
+                  onChange={e => setAppointmentData((prev: any) => ({ ...prev, dataNascimento: e.target.value }))}
+                  placeholder="Nascimento (DD/MM/AAAA)"
+                  className={styles.selectStyled}
+                />
+              </div>
+            </>
+          ) : (
+            <div className={styles.selectGroup}>
+              <input
+                type="text"
+                list="pacientes-list"
+                value={appointmentData.nomePaciente}
+                onChange={e => {
+                  const val = e.target.value;
+                  setPacienteQuery(val);
+                  setAppointmentData(prev => ({ ...prev, nomePaciente: val }));
+                  const selected = pacientes.find(p => p.nome === val);
+                  if (selected) {
+                    setAppointmentData(prev => ({
+                      ...prev,
+                      pacienteId: selected.id,
+                      email: selected.email || '',
+                      cpf: selected.cpf || '',
+                      telefone: selected.telefone || '',
+                      dataNascimento: selected.dataNascimento || '',
+                      convenio: selected.convenio || '',
+                    }));
+                  } else {
+                    setAppointmentData(prev => ({ ...prev, pacienteId: '' }));
+                  }
+                }}
+                placeholder="Buscar paciente"
+                className={styles.selectStyled}
+              />
+              <datalist id="pacientes-list">
+                {filteredPacientes.map(p => (
+                  <option key={p.id} value={p.nome} />
+                ))}
+              </datalist>
+            </div>
+          )}
           {/* Profissional */}
           <div className={styles.selectGroup}>
             <select

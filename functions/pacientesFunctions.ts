@@ -81,6 +81,32 @@ export const buscarPacientes = async (): Promise<PacienteMin[]> => {
   return snap.docs.map(doc => ({ id: doc.id, nome: doc.data().nome || '' }));
 };
 
+export interface PacienteDetails {
+  id: string;
+  nome: string;
+  email?: string;
+  cpf?: string;
+  telefone?: string;
+  dataNascimento?: string;
+  convenio?: string;
+}
+
+export const buscarPacientesComDetalhes = async (): Promise<PacienteDetails[]> => {
+  const snap = await getDocs(collection(firestore, 'pacientes'));
+  return snap.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      nome: data.nome || '',
+      email: data.email || '',
+      cpf: data.cpf || '',
+      telefone: data.telefone || '',
+      dataNascimento: data.dataNascimento || '',
+      convenio: data.convenio || '',
+    };
+  });
+};
+
 export interface CriarPacienteData {
   nome: string;
   email: string;
