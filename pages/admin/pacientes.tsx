@@ -7,6 +7,7 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/pacientes.module.css';
 import { ExternalLink } from 'lucide-react';
 import detailsStyles from '@/styles/admin/pacienteDetails.module.css';
+import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { statusAgendamento } from '@/functions/agendamentosFunction';
 import {
   atualizarPaciente,
@@ -15,6 +16,7 @@ import {
   uploadArquivoPacienteSecao,
   uploadArquivoTemp,
   adicionarEvolucaoPaciente,
+  criarPaciente,
   PacienteArquivo,
 } from '@/functions/pacientesFunctions';
 import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage';
@@ -112,6 +114,15 @@ const Pacientes = () => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [pacienteInfo, setPacienteInfo] = useState<Paciente | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newPaciente, setNewPaciente] = useState({
+    nome: '',
+    email: '',
+    cpf: '',
+    telefone: '',
+    convenio: '',
+    dataNascimento: '',
+  });
   const [activeTab, setActiveTab] = useState<
     'info' | 'prontuarios' | 'conversas' | 'agendamentos' | 'documentos' | 'profissionais'
   >('info');
@@ -219,6 +230,15 @@ const Pacientes = () => {
     }
   };
 
+  const handleNewChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name === 'dataNascimento') {
+      setNewPaciente(prev => ({ ...prev, [name]: maskDataNascimento(value) }));
+    } else {
+      setNewPaciente(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
   const handleSave = async () => {
     if (!selectedPaciente) return;
     await atualizarPaciente(selectedPaciente.id, {
@@ -318,6 +338,21 @@ const Pacientes = () => {
     }
   };
 
+  const createPaciente = async () => {
+    const id = await criarPaciente(newPaciente);
+    const novo: Paciente = { id, ...newPaciente };
+    setPacientes(prev => [...prev, novo]);
+    setShowCreateModal(false);
+    setNewPaciente({
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      convenio: '',
+      dataNascimento: '',
+    });
+  };
+
   // Busca todas as informações do paciente ao abrir o modal de detalhes
   useEffect(() => {
     if (showDetails && selectedPaciente) {
@@ -340,14 +375,24 @@ const Pacientes = () => {
       </div>
       <h1 className={styles.titlePacientes}>Pacientes</h1>
       <div className={styles.subtitlePacientes}>Lista de pacientes cadastrados</div>
-      <div className={styles.searchContainer}>
-        <input
-          type="text"
-          placeholder="🔍 Pesquisar paciente"
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          className={styles.searchInput}
-        />
+      <div className={styles.topBar}>
+        <div className={styles.actionButtonsWrapper}>
+          <button
+            className={styles.buttonAdicionar}
+            onClick={() => setShowCreateModal(true)}
+          >
+            + Adicionar paciente
+          </button>
+        </div>
+        <div className={styles.searchContainer}>
+          <input
+            type="text"
+            placeholder="🔍 Pesquisar paciente"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className={styles.searchInput}
+          />
+        </div>
       </div>
       <div className={styles.pacientesTableWrapper}>
         <table className={styles.pacientesTable}>
@@ -385,6 +430,74 @@ const Pacientes = () => {
           </tbody>
         </table>
       </div>
+      {showCreateModal && (
+        <div
+          className={modalStyles.overlay}
+          onClick={() => setShowCreateModal(false)}
+        >
+          <div
+            className={modalStyles.modal}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              className={modalStyles.closeButton}
+              onClick={() => setShowCreateModal(false)}
+            >
+              X
+            </button>
+            <h3>Novo Paciente</h3>
+            <label className={modalStyles.label}>Nome</label>
+            <input
+              name="nome"
+              className={modalStyles.input}
+              value={newPaciente.nome}
+              onChange={handleNewChange}
+            />
+            <label className={modalStyles.label}>Email</label>
+            <input
+              name="email"
+              className={modalStyles.input}
+              value={newPaciente.email}
+              onChange={handleNewChange}
+            />
+            <label className={modalStyles.label}>CPF</label>
+            <input
+              name="cpf"
+              className={modalStyles.input}
+              value={newPaciente.cpf}
+              onChange={handleNewChange}
+            />
+            <label className={modalStyles.label}>Telefone</label>
+            <input
+              name="telefone"
+              className={modalStyles.input}
+              value={newPaciente.telefone}
+              onChange={handleNewChange}
+            />
+            <label className={modalStyles.label}>Convênio</label>
+            <input
+              name="convenio"
+              className={modalStyles.input}
+              value={newPaciente.convenio}
+              onChange={handleNewChange}
+            />
+            <label className={modalStyles.label}>Nascimento (DD/MM/AAAA)</label>
+            <input
+              name="dataNascimento"
+              maxLength={10}
+              className={modalStyles.input}
+              value={newPaciente.dataNascimento}
+              onChange={handleNewChange}
+            />
+            <button
+              className={modalStyles.buttonSalvar}
+              onClick={createPaciente}
+            >
+              Salvar
+            </button>
+          </div>
+        </div>
+      )}
       {showDetails && selectedPaciente && (
         <div className={detailsStyles.overlay} onClick={closeModal}>
           <div

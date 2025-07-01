@@ -1,4 +1,4 @@
-import { doc, updateDoc, deleteDoc, arrayUnion, collection, getDocs } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { firestore } from '@/firebase/firebaseConfig';
 
@@ -79,4 +79,18 @@ export interface PacienteMin {
 export const buscarPacientes = async (): Promise<PacienteMin[]> => {
   const snap = await getDocs(collection(firestore, 'pacientes'));
   return snap.docs.map(doc => ({ id: doc.id, nome: doc.data().nome || '' }));
+};
+
+export interface CriarPacienteData {
+  nome: string;
+  email: string;
+  cpf?: string;
+  telefone?: string;
+  convenio?: string;
+  dataNascimento?: string;
+}
+
+export const criarPaciente = async (data: CriarPacienteData) => {
+  const docRef = await addDoc(collection(firestore, 'pacientes'), data);
+  return docRef.id;
 };
