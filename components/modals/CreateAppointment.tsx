@@ -274,19 +274,33 @@ const CreateAppointmentModal: React.FC<Props> = ({
     fetchData();
   }, [isOpen, setAppointmentData]);
 
+  // Novo: busca pacientes do banco ao abrir o modal
   useEffect(() => {
     const fetchPacientes = async () => {
-      if (isOpen && !isNewPatient) {
+      if (isOpen) {
         try {
-          const list = await buscarPacientesComDetalhes();
+          const snap = await getDocs(collection(firestore, 'pacientes'));
+          const list: PacienteDetails[] = [];
+          snap.forEach(doc => {
+            const data = doc.data();
+            list.push({
+              id: doc.id,
+              nome: data.nome || '',
+              email: data.email || '',
+              cpf: data.cpf || '',
+              telefone: data.telefone || '',
+              dataNascimento: data.dataNascimento || '',
+              convenio: data.convenio || '',
+            });
+          });
           setPacientes(list);
         } catch (err) {
-          console.error('Erro ao buscar pacientes:', err);
+          setPacientes([]);
         }
       }
     };
     fetchPacientes();
-  }, [isOpen, isNewPatient]);
+  }, [isOpen]);
 
   // Navegação dos horários
   const scrollTimes = (direction: 'left' | 'right') => {
@@ -630,37 +644,43 @@ const CreateAppointmentModal: React.FC<Props> = ({
             </>
           ) : (
             <div className={styles.selectGroup}>
-              <input
-                type="text"
-                list="pacientes-list"
-                value={appointmentData.nomePaciente}
+              <select
+                value={appointmentData.pacienteId || ''}
                 onChange={e => {
-                  const val = e.target.value;
-                  setPacienteQuery(val);
-                  setAppointmentData(prev => ({ ...prev, nomePaciente: val }));
-                  const selected = pacientes.find(p => p.nome === val);
-                  if (selected) {
-                    setAppointmentData(prev => ({
-                      ...prev,
-                      pacienteId: selected.id,
-                      email: selected.email || '',
-                      cpf: selected.cpf || '',
-                      telefone: selected.telefone || '',
-                      dataNascimento: selected.dataNascimento || '',
-                      convenio: selected.convenio || '',
-                    }));
-                  } else {
-                    setAppointmentData(prev => ({ ...prev, pacienteId: '' }));
-                  }
+                  const selectedId = e.target.value;
+                  setAppointmentData((prev: typeof appointmentData) => {
+                    const selected = pacientes.find(p => p.id === selectedId);
+                    if (selected) {
+                      return {
+                        ...prev,
+                        pacienteId: selected.id,
+                        nomePaciente: selected.nome,
+                        email: selected.email || '',
+                        cpf: selected.cpf || '',
+                        telefone: selected.telefone || '',
+                        dataNascimento: selected.dataNascimento || '',
+                        convenio: selected.convenio || '',
+                      };
+                    }
+                    return { ...prev, pacienteId: '', nomePaciente: '' };
+                  });
                 }}
-                placeholder="Buscar paciente"
                 className={styles.selectStyled}
-              />
-              <datalist id="pacientes-list">
-                {filteredPacientes.map(p => (
-                  <option key={p.id} value={p.nome} />
-                ))}
-              </datalist>
+                onInput={e => {
+                  // Filtra pacientes conforme digitação no select (funciona em navegadores modernos)
+                  const input = (e.target as HTMLSelectElement).value.toLowerCase();
+                  setPacienteQuery(input);
+                }}
+              >
+                <option value="">Buscar paciente</option>
+                {pacientes
+                  .filter(p => p.nome.toLowerCase().includes(pacienteQuery.toLowerCase()))
+                  .map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.nome} {p.cpf ? `- ${p.cpf}` : ''}
+                    </option>
+                  ))}
+              </select>
             </div>
           )}
           {/* Profissional */}

@@ -1019,27 +1019,6 @@ const Pacientes = () => {
                     ) : (
                       <p>Sem agendamentos anteriores.</p>
                     )}
-                    <div style={{ marginTop: 8 }}>
-                      <select
-                        className={detailsStyles.input}
-                        value={selectedAppointmentIdToLink}
-                        onChange={e => setSelectedAppointmentIdToLink(e.target.value)}
-                      >
-                        <option value="">Selecionar agendamento</option>
-                        {availableAppointments.map(a => (
-                          <option key={a.id} value={a.id}>
-                            {`${a.data} ${a.hora} - ${a.profissional}`}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        className={detailsStyles.buttonEditar}
-                        onClick={handleLinkAppointment}
-                        disabled={!selectedAppointmentIdToLink}
-                      >
-                        Vincular
-                      </button>
-                    </div>
                   </div>
                 )}
 
