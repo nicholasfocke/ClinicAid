@@ -62,6 +62,7 @@ const Agendamentos = () => {
   const [appointmentData, setAppointmentData] = useState({
     date: '',
     time: '',
+    pacienteId: '',
     nomePaciente: '',
     email: '',
     cpf: '',
@@ -456,7 +457,7 @@ const fetchAgendamentos = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const pacienteId = doc(collection(firestore, 'pacientes')).id;
+      const pacienteId = appointmentData.pacienteId || doc(collection(firestore, 'pacientes')).id;
       await criarAgendamento(
         {
           date: appointmentData.date,
@@ -481,6 +482,7 @@ const fetchAgendamentos = async () => {
       setAppointmentData({
         date: '',
         time: '',
+        pacienteId: '',
         nomePaciente: '',
         email: '',
         cpf: '',
