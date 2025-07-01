@@ -22,10 +22,25 @@
   margin: 0.1rem 0 2rem 0;
 }
 
+
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.actionButtonsWrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 0;
+}
+
 .searchContainer {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 1rem;
+  align-items: center;
+  margin-bottom: 0;
 }
 
 .searchInput {
@@ -33,6 +48,7 @@
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 1rem;
+  margin-top: -6px;
 }
 
 .pacientesTableWrapper {
@@ -113,4 +129,25 @@
 .externalLink:hover {
   transform: scale(1.1);
   color: #2563eb;
+}
+
+.buttonAdicionar {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: inline-block;
+  text-align: center;
+  min-width: 180px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.buttonAdicionar:hover {
+  background: #1746a2;
 }

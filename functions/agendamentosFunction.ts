@@ -13,6 +13,10 @@ export interface AppointmentData { //mudar a estrutura para incluir ao nosso nov
   detalhes: string;
   convenio?: string;
   procedimento?: string;
+  email?: string;
+  cpf?: string;
+  telefone?: string;
+  dataNascimento?: string;
 }
 
 export interface UserLike {
@@ -147,26 +151,15 @@ export const buscarHorariosBloqueados = async (date: Date): Promise<BlockedTime[
 };
 
 export const criarAgendamento = async (data: AppointmentData, user: UserLike) => {
-  // Busca dados do usuário fora da transaction para salvar em 'pacientes'
-  let pacienteData: any = {
+  // Dados do paciente vindos do formulário
+  const pacienteData: any = {
     nome: data.nomesPacientes[0],
     email: user.email,
-     convenio: data.convenio || 'Particular',
+    cpf: data.cpf || '',
+    telefone: data.telefone || '',
+    dataNascimento: data.dataNascimento || '',
+    convenio: data.convenio || 'Particular',
   };
-  try {
-    const userDoc = await getDoc(doc(firestore, 'users', user.uid));
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      pacienteData = {
-        ...pacienteData,
-        cpf: userData.cpf || '',
-        telefone: userData.telefone || '',
-        dataNascimento: userData.dataNascimento || '',
-      };
-    }
-  } catch (e) {
-    // Se não encontrar, salva só nome/email
-  }
 
   await runTransaction(firestore, async transaction => {
     for (let i = 0; i < data.nomesPacientes.length; i++) {
@@ -240,6 +233,8 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
       profissionaisAtendimentos: profs,
       convenio: data.convenio || pacienteAtual.convenio || 'Particular',
       dataNascimento: pacienteData.dataNascimento || pacienteAtual.dataNascimento || '',
+      cpf: pacienteData.cpf || pacienteAtual.cpf || '',
+      telefone: pacienteData.telefone || pacienteAtual.telefone || '',
     });
   }
 };

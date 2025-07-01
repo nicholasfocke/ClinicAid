@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, arrayUnion } from 'firebase/firestore';
 import { auth, firestore } from '@/firebase/firebaseConfig';
 import { useRouter } from 'next/router';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/pacientes.module.css';
 import { ExternalLink } from 'lucide-react';
 import detailsStyles from '@/styles/admin/pacienteDetails.module.css';
+import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { statusAgendamento } from '@/functions/agendamentosFunction';
 import {
   atualizarPaciente,
@@ -15,6 +16,7 @@ import {
   uploadArquivoPacienteSecao,
   uploadArquivoTemp,
   adicionarEvolucaoPaciente,
+  criarPaciente,
   PacienteArquivo,
 } from '@/functions/pacientesFunctions';
 import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage';
@@ -38,6 +40,7 @@ interface ConversaIA {
 }
 
 interface HistoricoAgendamento {
+  id?: string;
   data: string;
   hora?: string;
   profissional: string;
@@ -112,6 +115,17 @@ const Pacientes = () => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [pacienteInfo, setPacienteInfo] = useState<Paciente | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newPaciente, setNewPaciente] = useState({
+    nome: '',
+    email: '',
+    cpf: '',
+    telefone: '',
+    convenio: '',
+    dataNascimento: '',
+  });
+  const [availableAppointments, setAvailableAppointments] = useState<HistoricoAgendamento[]>([]);
+  const [selectedAppointmentIdToLink, setSelectedAppointmentIdToLink] = useState('');
   const [activeTab, setActiveTab] = useState<
     'info' | 'prontuarios' | 'conversas' | 'agendamentos' | 'documentos' | 'profissionais'
   >('info');
@@ -131,6 +145,126 @@ const Pacientes = () => {
     [statusAgendamento.CONCLUIDO]: detailsStyles.statusConcluido,
     [statusAgendamento.PENDENTE]: detailsStyles.statusPendente,
   };
+
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser({ uid: currentUser.uid, email: currentUser.email || '' });
+      } else {
+        router.push('/auth/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  useEffect(() => {
+    const fetchPacientes = async () => {
+      try {
+        const snap = await getDocs(collection(firestore, 'pacientes'));
+        const lista: Paciente[] = [];
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          lista.push({
+            id: docSnap.id,
+            nome: data.nome || '',
+            email: data.email || '',
+            cpf: data.cpf || '',
+            telefone: data.telefone || '',
+            convenio: data.convenio || '',
+            dataNascimento: data.dataNascimento || '',
+            arquivos: data.arquivos || [],
+            infoArquivos: data.infoArquivos || [],
+            prontuarios: data.prontuarios || [],
+            conversasIA: data.conversasIA || [],
+            conversasArquivos: data.conversasArquivos || [],
+            agendamentos: data.agendamentos || [],
+            profissionaisAtendimentos: data.profissionaisAtendimentos || [],
+            profissionaisArquivos: data.profissionaisArquivos || [],
+            observacoes: data.observacoes || '',
+            alertas: data.alertas || [],
+            tags: data.tags || [],
+          });
+        });
+        setPacientes(lista);
+      } catch (err) {
+        console.error('Erro ao buscar pacientes:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPacientes();
+  }, []);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const snap = await getDocs(collection(firestore, 'agendamentos'));
+        const list: HistoricoAgendamento[] = [];
+        snap.forEach(d => {
+          const data = d.data();
+          list.push({
+            id: d.id,
+            data: data.data || '',
+            hora: data.hora || '',
+            profissional: data.profissional || '',
+            procedimento: data.procedimento || '',
+            status: data.status || '',
+            descricao: data.detalhes || '',
+          });
+        });
+        setAvailableAppointments(list);
+      } catch (err) {
+        console.error('Erro ao buscar agendamentos:', err);
+      }
+    };
+    fetchAppointments();
+  }, []);
+
+  // Máscaras de formatação
+  const formatCPF = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+      .slice(0, 14);
+  };
+
+  const formatTelefone = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/^(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .slice(0, 15);
+  };
+
+  const maskDataNascimento = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/^(\d{2})(\d)/, '$1/$2')
+      .replace(/^(\d{2})\/(\d{2})(\d)/, '$1/$2/$3')
+      .slice(0, 10);
+  };
+
+  // Validação de CPF
+  function isValidCPF(cpf: string): boolean {
+    cpf = cpf.replace(/\D/g, '');
+    if (cpf.length !== 11 || /(\d)\1+$/.test(cpf)) return false;
+    let soma = 0,
+      resto;
+    for (let i = 1; i <= 9; i++) soma += parseInt(cpf[i - 1]) * (11 - i);
+    resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(cpf[9])) return false;
+    soma = 0;
+    for (let i = 1; i <= 10; i++) soma += parseInt(cpf[i - 1]) * (12 - i);
+    resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(cpf[10])) return false;
+    return true;
+  }
 
   const filteredPacientes = pacientes.filter(p =>
     p.nome.toLowerCase().includes(searchTerm.toLowerCase())
@@ -186,6 +320,31 @@ const Pacientes = () => {
     fetchPacientes();
   }, []);
 
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const snap = await getDocs(collection(firestore, 'agendamentos'));
+        const list: HistoricoAgendamento[] = [];
+        snap.forEach(d => {
+          const data = d.data();
+          list.push({
+            id: d.id,
+            data: data.data || '',
+            hora: data.hora || '',
+            profissional: data.profissional || '',
+            procedimento: data.procedimento || '',
+            status: data.status || '',
+            descricao: data.detalhes || '',
+          });
+        });
+        setAvailableAppointments(list);
+      } catch (err) {
+        console.error('Erro ao buscar agendamentos:', err);
+      }
+    };
+    fetchAppointments();
+  }, []);
+
   const openDetails = (p: Paciente) => {
     setSelectedPaciente(p);
     setFormData(p);
@@ -201,21 +360,25 @@ const Pacientes = () => {
     setActiveTab('info');
   };
 
-  // Função para aplicar máscara de data DD/MM/AAAA
-  function maskDataNascimento(value: string) {
-    return value
-      .replace(/\D/g, '')
-      .replace(/^(\d{2})(\d)/, '$1/$2')
-      .replace(/^(\d{2})\/(\d{2})(\d)/, '$1/$2/$3')
-      .slice(0, 10);
-  }
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (name === 'dataNascimento') {
       setFormData(prev => ({ ...prev, [name]: maskDataNascimento(value) }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleNewChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name === 'cpf') {
+      setNewPaciente(prev => ({ ...prev, cpf: formatCPF(value) }));
+    } else if (name === 'telefone') {
+      setNewPaciente(prev => ({ ...prev, telefone: formatTelefone(value) }));
+    } else if (name === 'dataNascimento') {
+      setNewPaciente(prev => ({ ...prev, dataNascimento: maskDataNascimento(value) }));
+    } else {
+      setNewPaciente(prev => ({ ...prev, [name]: value }));
     }
   };
 
@@ -318,6 +481,38 @@ const Pacientes = () => {
     }
   };
 
+  const handleLinkAppointment = async () => {
+    if (!selectedPaciente || !selectedAppointmentIdToLink) return;
+    const ag = availableAppointments.find(a => a.id === selectedAppointmentIdToLink);
+    if (!ag) return;
+    await atualizarPaciente(selectedPaciente.id, {
+      agendamentos: arrayUnion(ag),
+    });
+    const updated = {
+      ...selectedPaciente,
+      agendamentos: [...(selectedPaciente.agendamentos || []), ag],
+    } as Paciente;
+    setPacientes(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+    setSelectedPaciente(updated);
+    setPacienteInfo(updated);
+    setSelectedAppointmentIdToLink('');
+  };
+
+  const createPaciente = async () => {
+    const id = await criarPaciente(newPaciente);
+    const novo: Paciente = { id, ...newPaciente };
+    setPacientes(prev => [...prev, novo]);
+    setShowCreateModal(false);
+    setNewPaciente({
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      convenio: '',
+      dataNascimento: '',
+    });
+  };
+
   // Busca todas as informações do paciente ao abrir o modal de detalhes
   useEffect(() => {
     if (showDetails && selectedPaciente) {
@@ -340,14 +535,25 @@ const Pacientes = () => {
       </div>
       <h1 className={styles.titlePacientes}>Pacientes</h1>
       <div className={styles.subtitlePacientes}>Lista de pacientes cadastrados</div>
-      <div className={styles.searchContainer}>
-        <input
-          type="text"
-          placeholder="🔍 Pesquisar paciente"
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          className={styles.searchInput}
-        />
+      {/* Barra de ações: botão + barra de pesquisa lado a lado */}
+      <div className={styles.topBar}>
+        <div className={styles.actionButtonsWrapper} style={{ marginBottom: 0 }}>
+          <button
+            className={styles.buttonAdicionar}
+            onClick={() => setShowCreateModal(true)}
+          >
+            + Adicionar paciente
+          </button>
+        </div>
+        <div className={styles.searchContainer} style={{ marginBottom: 0 }}>
+          <input
+            type="text"
+            placeholder="🔍 Pesquisar paciente"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className={styles.searchInput}
+          />
+        </div>
       </div>
       <div className={styles.pacientesTableWrapper}>
         <table className={styles.pacientesTable}>
@@ -385,6 +591,76 @@ const Pacientes = () => {
           </tbody>
         </table>
       </div>
+      {showCreateModal && (
+        <div
+          className={modalStyles.overlay}
+          onClick={() => setShowCreateModal(false)}
+        >
+          <div
+            className={modalStyles.modal}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              className={modalStyles.closeButton}
+              onClick={() => setShowCreateModal(false)}
+            >
+              X
+            </button>
+            <h3>Novo Paciente</h3>
+            <label className={modalStyles.label}>Nome</label>
+            <input
+              name="nome"
+              className={modalStyles.input}
+              value={newPaciente.nome}
+              onChange={handleNewChange}
+            />
+            <label className={modalStyles.label}>Email</label>
+            <input
+              name="email"
+              className={modalStyles.input}
+              value={newPaciente.email}
+              onChange={handleNewChange}
+            />
+            <label className={modalStyles.label}>CPF</label>
+            <input
+              name="cpf"
+              className={modalStyles.input}
+              value={newPaciente.cpf}
+              onChange={handleNewChange}
+              maxLength={14}
+            />
+            <label className={modalStyles.label}>Telefone</label>
+            <input
+              name="telefone"
+              className={modalStyles.input}
+              value={newPaciente.telefone}
+              onChange={handleNewChange}
+              maxLength={15}
+            />
+            <label className={modalStyles.label}>Convênio</label>
+            <input
+              name="convenio"
+              className={modalStyles.input}
+              value={newPaciente.convenio}
+              onChange={handleNewChange}
+            />
+            <label className={modalStyles.label}>Nascimento (DD/MM/AAAA)</label>
+            <input
+              name="dataNascimento"
+              maxLength={10}
+              className={modalStyles.input}
+              value={newPaciente.dataNascimento}
+              onChange={handleNewChange}
+            />
+            <button
+              className={modalStyles.buttonSalvar}
+              onClick={createPaciente}
+            >
+              Salvar
+            </button>
+          </div>
+        </div>
+      )}
       {showDetails && selectedPaciente && (
         <div className={detailsStyles.overlay} onClick={closeModal}>
           <div

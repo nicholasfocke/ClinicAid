@@ -502,6 +502,37 @@
   box-shadow: 0 0 0 2px #00c6ff33;
 }
 
+/* --- TIPO PACIENTE --- */
+.patientTypeContainer {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.patientTypeButton {
+  border: none;
+  background: #e5e7eb;
+  color: #222;
+  padding: 10px 24px;
+  border-radius: 18px;
+  font-size: 1.08rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  box-shadow: 0 2px 8px #0000000a;
+}
+.patientTypeButton:hover,
+.patientTypeButton:focus {
+  background: #00c6ff;
+  color: #fff;
+}
+.activeType {
+  background: #0099ff !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px #0099ff22;
+}
+
 /* --- FOOTER --- */
 .modalFooter {
   display: flex;
@@ -664,6 +695,10 @@
 .timeSelectorWrapper::-webkit-scrollbar-corner {
   background: transparent;
 }
-.timeSelectorWrapper::-webkit-scrollbar-corner {
-  background: transparent;
+
+.error {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 4px;
+  text-align: left;
 }

@@ -3,10 +3,55 @@ import Modal from 'react-modal';
 import styles from '@/styles/admin/agendamentos/CreateAppointment.module.css';
 import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { auth, firestore } from '@/firebase/firebaseConfig';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { firestore } from '@/firebase/firebaseConfig';
+import { collection, getDocs } from 'firebase/firestore';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
+import { buscarPacientesComDetalhes, PacienteDetails } from '@/functions/pacientesFunctions';
+
+// Máscaras de formatação
+const formatCPF = (value: string) => {
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+    .slice(0, 14);
+};
+
+const formatTelefone = (value: string) => {
+  return value
+    .replace(/\D/g, '')
+    .replace(/^(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2')
+    .slice(0, 15);
+};
+
+const maskDataNascimento = (value: string) => {
+  return value
+    .replace(/\D/g, '')
+    .replace(/^(\d{2})(\d)/, '$1/$2')
+    .replace(/^(\d{2})\/(\d{2})(\d)/, '$1/$2/$3')
+    .slice(0, 10);
+};
+
+// Validação de CPF
+function isValidCPF(cpf: string): boolean {
+  cpf = cpf.replace(/\D/g, '');
+  if (cpf.length !== 11 || /(\d)\1+$/.test(cpf)) return false;
+  let soma = 0,
+    resto;
+  for (let i = 1; i <= 9; i++) soma += parseInt(cpf[i - 1]) * (11 - i);
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf[9])) return false;
+  soma = 0;
+  for (let i = 1; i <= 10; i++) soma += parseInt(cpf[i - 1]) * (12 - i);
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf[10])) return false;
+  return true;
+}
 
 const getPeriod = (time: string) => {
   const [h, m] = time.split(':').map(Number);
@@ -31,7 +76,12 @@ interface Props {
     time: string;
     profissional: string;
     detalhes: string;
+    pacienteId?: string;
     nomePaciente: string;
+    email: string;
+    cpf: string;
+    telefone: string;
+    dataNascimento: string;
     convenio: string;
     procedimento: string;
   };
@@ -60,6 +110,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
   const [selectedPeriod, setSelectedPeriod] = useState<'Manhã' | 'Tarde' | 'Noite'>('Manhã');
   const daysContainerRef = useRef<HTMLDivElement>(null);
   const timesContainerRef = useRef<HTMLDivElement>(null);
+  const [cpfError, setCpfError] = useState('');
 
   // Gera todos os dias do mês atual exibido
   const getDaysOfMonth = (month: Date) => {
@@ -158,11 +209,19 @@ const CreateAppointmentModal: React.FC<Props> = ({
       time: '',
       profissional: '',
       detalhes: '',
+      pacienteId: '',
       nomePaciente: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      dataNascimento: '',
       convenio: '',
       procedimento: '',
     });
     setSelectedPeriod('Manhã');
+    setIsNewPatient(true);
+    setPacientes([]);
+    setPacienteQuery('');
     onClose();
   };
 
@@ -233,7 +292,9 @@ const CreateAppointmentModal: React.FC<Props> = ({
   const [timesScrollIndex, setTimesScrollIndex] = useState(0);
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
   const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
-  const [userInfo, setUserInfo] = useState<{ nome: string } | null>(null);
+  const [isNewPatient, setIsNewPatient] = useState(true);
+  const [pacientes, setPacientes] = useState<PacienteDetails[]>([]);
+  const [pacienteQuery, setPacienteQuery] = useState('');
 
   // Atualiza o índice de scroll dos horários ao mudar o período
   useEffect(() => {
@@ -250,17 +311,6 @@ const CreateAppointmentModal: React.FC<Props> = ({
           ]);
           setConvenios(convDocs as any);
           setProcedimentos(procDocs as any);
-
-          const current = auth.currentUser;
-          if (current) {
-            const snap = await getDoc(doc(firestore, 'users', current.uid));
-            if (snap.exists()) {
-              const data = snap.data();
-              const nome = data.nome || '';
-              setUserInfo({ nome });
-              setAppointmentData((prev: typeof appointmentData) => ({ ...prev, nomePaciente: nome }));
-            }
-          }
         } catch (err) {
           console.error('Erro ao buscar dados:', err);
         }
@@ -268,6 +318,34 @@ const CreateAppointmentModal: React.FC<Props> = ({
     };
     fetchData();
   }, [isOpen, setAppointmentData]);
+
+  // Novo: busca pacientes do banco ao abrir o modal
+  useEffect(() => {
+    const fetchPacientes = async () => {
+      if (isOpen) {
+        try {
+          const snap = await getDocs(collection(firestore, 'pacientes'));
+          const list: PacienteDetails[] = [];
+          snap.forEach(doc => {
+            const data = doc.data();
+            list.push({
+              id: doc.id,
+              nome: data.nome || '',
+              email: data.email || '',
+              cpf: data.cpf || '',
+              telefone: data.telefone || '',
+              dataNascimento: data.dataNascimento || '',
+              convenio: data.convenio || '',
+            });
+          });
+          setPacientes(list);
+        } catch (err) {
+          setPacientes([]);
+        }
+      }
+    };
+    fetchPacientes();
+  }, [isOpen]);
 
   // Navegação dos horários
   const scrollTimes = (direction: 'left' | 'right') => {
@@ -435,6 +513,19 @@ const CreateAppointmentModal: React.FC<Props> = ({
   const normalize = (t: string) => t.trim().slice(0, 5);
   const normalizedReserved = reservedTimes.map(normalize);
   const isTimeDisabled = (time: string) => normalizedReserved.includes(normalize(time));
+  const filteredPacientes = pacientes.filter(p =>
+    p.nome.toLowerCase().includes(pacienteQuery.toLowerCase())
+  );
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (appointmentData.cpf && !isValidCPF(appointmentData.cpf)) {
+      setCpfError('CPF inválido');
+      return;
+    }
+    setCpfError('');
+    onSubmit(e);
+  };
 
   return (
     <Modal
@@ -443,7 +534,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
       className={styles.modalContent}
       overlayClassName={styles.modalOverlay}
     >
-      <form onSubmit={onSubmit} className={styles.form} style={{ position: 'relative' }}>
+      <form onSubmit={handleFormSubmit} className={styles.form} style={{ position: 'relative' }}>
         {isSubmitting && (
           <div className={styles.modalLoadingOverlay}>
             <div className={styles.modalSpinner}></div>
@@ -540,16 +631,144 @@ const CreateAppointmentModal: React.FC<Props> = ({
             <span className={styles.summaryLabel}>Profissional:</span>
             <span className={styles.summaryValue}>{appointmentData.profissional || 'Sem preferência'}</span>
           </div>
-          {/* Usuário como primeiro campo */}
-          <div className={styles.selectGroup}>
-            <input
-              type="text"
-              value={userInfo?.nome || appointmentData.nomePaciente || ''}
-              readOnly
-              className={styles.selectStyled}
-            />
+          <div className={styles.patientTypeContainer}>
+            <button
+              type="button"
+              className={`${styles.patientTypeButton} ${isNewPatient ? styles.activeType : ''}`}
+              onClick={() => setIsNewPatient(true)}
+            >
+              Paciente Novo
+            </button>
+            <button
+              type="button"
+              className={`${styles.patientTypeButton} ${!isNewPatient ? styles.activeType : ''}`}
+              onClick={() => setIsNewPatient(false)}
+            >
+              Paciente Existente
+            </button>
           </div>
-          {/* Profissional como segundo campo */}
+          {isNewPatient ? (
+            <>
+              <div className={styles.selectGroup}>
+                <input
+                  type="text"
+                  value={appointmentData.nomePaciente}
+                  onChange={e =>
+                    setAppointmentData((prev: any) => ({ ...prev, nomePaciente: e.target.value }))
+                  }
+                  placeholder="Nome do paciente"
+                  className={styles.selectStyled}
+                />
+              </div>
+              <div className={styles.selectGroup}>
+                <input
+                  type="email"
+                  value={appointmentData.email}
+                  onChange={e => setAppointmentData((prev: any) => ({ ...prev, email: e.target.value }))}
+                  placeholder="Email"
+                  className={styles.selectStyled}
+                />
+              </div>
+              <div className={styles.selectGroup}>
+                <input
+                  type="text"
+                  value={appointmentData.cpf}
+                  onChange={e =>
+                    setAppointmentData((prev: any) => ({
+                      ...prev,
+                      cpf: formatCPF(e.target.value),
+                    }))
+                  }
+                  onBlur={() =>
+                    setCpfError(
+                      appointmentData.cpf && !isValidCPF(appointmentData.cpf)
+                        ? 'CPF inválido'
+                        : ''
+                    )
+                  }
+                  placeholder="CPF"
+                  className={styles.selectStyled}
+                />
+                {cpfError && <span className={styles.error}>{cpfError}</span>}
+              </div>
+              <div className={styles.selectGroup}>
+                <input
+                  type="text"
+                  value={appointmentData.telefone}
+                  onChange={e =>
+                    setAppointmentData((prev: any) => ({
+                      ...prev,
+                      telefone: formatTelefone(e.target.value),
+                    }))
+                  }
+                  placeholder="Telefone"
+                  className={styles.selectStyled}
+                />
+              </div>
+              <div className={styles.selectGroup}>
+                <input
+                  type="text"
+                  value={appointmentData.dataNascimento}
+                  onChange={e =>
+                    setAppointmentData((prev: any) => ({
+                      ...prev,
+                      dataNascimento: maskDataNascimento(e.target.value),
+                    }))
+                  }
+                  placeholder="Nascimento (DD/MM/AAAA)"
+                  className={styles.selectStyled}
+                />
+              </div>
+            </>
+          ) : (
+            <div className={styles.selectGroup}>
+              <input
+                type="text"
+                placeholder="Buscar paciente"
+                value={pacienteQuery}
+                onChange={e => setPacienteQuery(e.target.value)}
+                className={styles.selectStyled}
+                style={{ marginBottom: 8 }}
+              />
+              <select
+                value={appointmentData.pacienteId || ''}
+                onChange={e => {
+                  const selectedId = e.target.value;
+                  setAppointmentData((prev: typeof appointmentData) => {
+                    const selected = pacientes.find(p => p.id === selectedId);
+                    if (selected) {
+                      setPacienteQuery(selected.nome);
+                      return {
+                        ...prev,
+                        pacienteId: selected.id,
+                        nomePaciente: selected.nome,
+                        email: selected.email || '',
+                        cpf: selected.cpf || '',
+                        telefone: selected.telefone || '',
+                        dataNascimento: selected.dataNascimento || '',
+                        convenio: selected.convenio || '',
+                      };
+                    }
+                    return { ...prev, pacienteId: '', nomePaciente: '' };
+                  });
+                }}
+                className={styles.selectStyled}
+              >
+                <option value="">Selecione um paciente</option>
+                {pacientes
+                  .filter(p =>
+                    p.nome.toLowerCase().includes(pacienteQuery.toLowerCase()) ||
+                    (p.cpf || '').toLowerCase().includes(pacienteQuery.toLowerCase())
+                  )
+                  .map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.nome} {p.cpf ? `- ${p.cpf}` : ''}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
+          {/* Profissional */}
           <div className={styles.selectGroup}>
             <select
               value={appointmentData.profissional}
