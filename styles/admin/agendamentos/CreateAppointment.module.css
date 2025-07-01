@@ -695,6 +695,10 @@
 .timeSelectorWrapper::-webkit-scrollbar-corner {
   background: transparent;
 }
-.timeSelectorWrapper::-webkit-scrollbar-corner {
-  background: transparent;
+
+.error {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 4px;
+  text-align: left;
 }
