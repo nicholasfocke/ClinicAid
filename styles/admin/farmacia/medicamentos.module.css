@@ -213,3 +213,50 @@
   color: #b91c1c;
   transform: scale(1.1);
 }
+
+.loteButton {
+  background: none;
+  border: none;
+  padding: 6px;
+  margin-right: 6px;
+  cursor: pointer;
+  color: #2563eb;
+  transition: transform 0.2s;
+}
+
+.loteButton:hover {
+  transform: scale(1.1);
+}
+
+.expandHeader {
+  width: 40px;
+}
+
+.expandCell {
+  width: 40px;
+  text-align: center;
+}
+
+.expandButton {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.lotesRow td {
+  background: #f9fafb;
+  padding: 0;
+}
+
+.lotesTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lotesTable th,
+.lotesTable td {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}

@@ -18,6 +18,7 @@ export interface MedicamentoData {
   tipo_receita: string;
   classificacao: string;
   descricao: string;
+  estoque_minimo: number;
 }
 
 export const buscarMedicamentos = async () => {
