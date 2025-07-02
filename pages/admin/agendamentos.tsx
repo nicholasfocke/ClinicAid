@@ -455,7 +455,7 @@ const fetchAgendamentos = async () => {
         .forEach(ag => {
           const start = normalize(ag.hora);
           const proc = procedimentos.find(
-            p => p.nome === ag.procedimento || p.id === ag.procedimento
+            p => p.nome === ag.procedimento
           );
           const dur = proc?.duracao || schedule.intervaloConsultas;
           const step = schedule.intervaloConsultas;
