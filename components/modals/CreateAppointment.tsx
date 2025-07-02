@@ -468,7 +468,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
     const duracao = selProc ? selProc.duracao : Number(horarioDoDia.intervaloConsultas);
     if (!duracao || duracao < 5) return [] as string[];
 
-    return calculateAvailableSlots(
+    const slots = calculateAvailableSlots(
       {
         start: horarioDoDia.horaInicio,
         end: horarioDoDia.horaFim,
@@ -478,6 +478,9 @@ const CreateAppointmentModal: React.FC<Props> = ({
       },
       duracao
     );
+
+    // Garanta que nenhum horário já reservado seja exibido
+    return slots.filter(s => !reservedTimes.includes(s));
   };
 
   const horariosGerados = horarioDoDia ? gerarHorarios() : availableTimes;
