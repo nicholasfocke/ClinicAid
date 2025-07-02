@@ -605,7 +605,10 @@ const Medicamentos = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {(lotes[m.id] || []).map((l) => (
+                          {(lotes[m.id] || [])
+                            .slice()
+                            .sort((a, b) => a.validade.localeCompare(b.validade))
+                            .map((l) => (
                             <tr key={l.numero_lote}>
                               <td>{l.numero_lote}</td>
                               <td>{format(parseISO(l.validade), "dd/MM/yy")}</td>

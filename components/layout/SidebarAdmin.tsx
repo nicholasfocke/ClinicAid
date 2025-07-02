@@ -150,11 +150,8 @@ const SidebarAdmin = () => {
                 <Link href="/admin/farmacia/medicamentos" className={styles.subNavItem}>
                   Medicamentos
                 </Link>
-                <Link href="/admin/farmacia/entrada" className={styles.subNavItem}>
-                  Entrada de Remédios
-                </Link>
-                <Link href="/admin/farmacia/saida" className={styles.subNavItem}>
-                  Saída de Remédios
+                <Link href="/admin/farmacia/movimentacoes" className={styles.subNavItem}>
+                  Movimentações
                 </Link>
               </div>
             )}

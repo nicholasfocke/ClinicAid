@@ -15,11 +15,13 @@ export interface Lote {
 
 export const buscarLotes = async () => {
   const snap = await getDocs(collectionGroup(firestore, 'lotes'));
-  return snap.docs.map(doc => ({
-    id: doc.id,
-    medicamentoId: doc.ref.parent.parent?.id,
-    ...(doc.data() as Lote),
-  }));
+  return snap.docs
+    .map(doc => ({
+      id: doc.id,
+      medicamentoId: doc.ref.parent.parent?.id,
+      ...(doc.data() as Lote),
+    }))
+    .sort((a, b) => a.validade.localeCompare(b.validade));
 };
 
 export const criarLote = async (medicamentoId: string, data: Lote) => {
