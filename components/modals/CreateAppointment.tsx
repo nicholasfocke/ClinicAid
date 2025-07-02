@@ -7,6 +7,7 @@ import { firestore } from '@/firebase/firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
+import { calculateAvailableSlots } from '@/utils/schedule';
 import { buscarPacientesComDetalhes, PacienteDetails } from '@/functions/pacientesFunctions';
 
 // Máscaras de formatação
@@ -291,7 +292,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
   // Novo estado para controlar o índice de scroll dos horários
   const [timesScrollIndex, setTimesScrollIndex] = useState(0);
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
-  const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
+  const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string; duracao: number }[]>([]);
   const [isNewPatient, setIsNewPatient] = useState(true);
   const [pacientes, setPacientes] = useState<PacienteDetails[]>([]);
   const [pacienteQuery, setPacienteQuery] = useState('');
@@ -460,53 +461,26 @@ const CreateAppointmentModal: React.FC<Props> = ({
     fetchHorario();
   }, [appointmentData.profissional, selectedDate]);
 
-  // Gera todos os horários disponíveis do dia, sem filtrar por período
+  // Gera horários disponíveis considerando a duração do procedimento
   const gerarHorarios = () => {
-    if (
-      !horarioDoDia ||
-      typeof horarioDoDia.horaInicio !== 'string' ||
-      typeof horarioDoDia.horaFim !== 'string' ||
-      !horarioDoDia.horaInicio.match(/^\d{2}:\d{2}$/) ||
-      !horarioDoDia.horaFim.match(/^\d{2}:\d{2}$/) ||
-      !horarioDoDia.intervaloConsultas ||
-      isNaN(Number(horarioDoDia.intervaloConsultas)) ||
-      Number(horarioDoDia.intervaloConsultas) < 5
-    ) return [];
+    if (!horarioDoDia) return [] as string[];
+    const selProc = procedimentos.find(p => p.nome === appointmentData.procedimento);
+    const duracao = selProc ? selProc.duracao : Number(horarioDoDia.intervaloConsultas);
+    if (!duracao || duracao < 5) return [] as string[];
 
-    const horarios: string[] = [];
-    let [h, m] = horarioDoDia.horaInicio.split(':').map(Number);
-    const [endH, endM] = horarioDoDia.horaFim.split(':').map(Number);
-    const almocoInicio = typeof horarioDoDia.almocoInicio === 'string' && horarioDoDia.almocoInicio.match(/^\d{2}:\d{2}$/)
-      ? horarioDoDia.almocoInicio
-      : null;
-    const almocoFim = typeof horarioDoDia.almocoFim === 'string' && horarioDoDia.almocoFim.match(/^\d{2}:\d{2}$/)
-      ? horarioDoDia.almocoFim
-      : null;
-    const intervalo = Number(horarioDoDia.intervaloConsultas);
+    const slots = calculateAvailableSlots(
+      {
+        start: horarioDoDia.horaInicio,
+        end: horarioDoDia.horaFim,
+        lunchStart: horarioDoDia.almocoInicio,
+        lunchEnd: horarioDoDia.almocoFim,
+        reserved: reservedTimes,
+      },
+      duracao
+    );
 
-    const pad = (n: number) => n.toString().padStart(2, '0');
-
-    while (h < endH || (h === endH && m <= endM)) {
-      const horaStr = `${pad(h)}:${pad(m)}`;
-      // Pula horários dentro do intervalo de almoço
-      if (
-        almocoInicio && almocoFim &&
-        horaStr >= almocoInicio && horaStr < almocoFim
-      ) {
-        const [almocoEndH, almocoEndM] = almocoFim.split(':').map(Number);
-        h = almocoEndH;
-        m = almocoEndM;
-        continue;
-      }
-      horarios.push(horaStr);
-      m += intervalo;
-      while (m >= 60) {
-        m -= 60;
-        h += 1;
-      }
-      if (h > endH || (h === endH && m > endM)) break;
-    }
-    return horarios;
+    // Garanta que nenhum horário já reservado seja exibido
+    return slots.filter(s => !reservedTimes.includes(s));
   };
 
   const horariosGerados = horarioDoDia ? gerarHorarios() : availableTimes;
