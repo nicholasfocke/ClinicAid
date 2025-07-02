@@ -13,6 +13,7 @@ import Modal from 'react-modal';
 import { statusAgendamento, buscarAgendamentosPorData, criarAgendamento } from '@/functions/agendamentosFunction';
 import CreateAppointment from '@/components/modals/CreateAppointment';
 import { buscarHorariosPorMedico, ScheduleData } from '@/functions/scheduleFunctions';
+import { buscarProcedimentos, ProcedimentoData } from '@/functions/procedimentosFunctions';
 
 
 Modal.setAppElement('#__next');
@@ -79,6 +80,7 @@ const Agendamentos = () => {
 
   const [horariosProfissional, setHorariosProfissional] = useState<ScheduleData[]>([]);
   const [diasDisponiveis, setDiasDisponiveis] = useState<string[]>([]);
+  const [procedimentos, setProcedimentos] = useState<ProcedimentoData[]>([]);
 
   const statusClassMap: Record<string, string> = {
     [statusAgendamento.AGENDADO]: styles.statusAgendado,
@@ -261,6 +263,18 @@ const fetchAgendamentos = async () => {
   }, [user]);
 
   useEffect(() => {
+    const fetchProcs = async () => {
+      try {
+        const procs = await buscarProcedimentos();
+        setProcedimentos(procs as ProcedimentoData[]);
+      } catch (err) {
+        setProcedimentos([]);
+      }
+    };
+    fetchProcs();
+  }, []);
+
+  useEffect(() => {
     const loadSchedule = async () => {
       if (!appointmentData.profissional) {
         setHorariosProfissional([]);
@@ -402,6 +416,15 @@ const fetchAgendamentos = async () => {
     return times;
   };
 
+  const addMinutesToTime = (time: string, minutes: number) => {
+    const [h, m] = time.split(':').map(Number);
+    const d = new Date();
+    d.setHours(h, m + minutes, 0, 0);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  };
+
   const getScheduleForDate = (dateStr: string) => {
     const dayName = getDayName(dateStr);
     return (
@@ -425,14 +448,33 @@ const fetchAgendamentos = async () => {
       }
       const ags = await buscarAgendamentosPorData(date);
       const normalize = (t: string) => t.trim().slice(0, 5);
-      const reserved = ags
+      const reserved: string[] = [];
+
+      ags
         .filter(ag => ag.profissional === profissional)
-        .map(ag => normalize(ag.hora));
+        .forEach(ag => {
+          const start = normalize(ag.hora);
+          const proc = procedimentos.find(
+            p => p.nome === ag.procedimento || p.id === ag.procedimento
+          );
+          const dur = proc?.duracao || schedule.intervaloConsultas;
+          const step = schedule.intervaloConsultas;
+
+          let minutes = 0;
+          let t = start;
+          while (minutes < dur) {
+            if (!reserved.includes(t)) reserved.push(t);
+            t = addMinutesToTime(t, step);
+            minutes += step;
+          }
+        });
+
       const generated = generateTimes(
         schedule.horaInicio,
         schedule.horaFim,
         schedule.almocoInicio,
-        schedule.almocoFim
+        schedule.almocoFim,
+        schedule.intervaloConsultas
       );
       const normalizedGenerated = generated.map(normalize);
       setAvailableTimes(normalizedGenerated.filter(t => !reserved.includes(t)));
