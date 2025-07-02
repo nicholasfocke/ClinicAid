@@ -10,11 +10,12 @@ import modalStyles from "@/styles/admin/farmacia/modalMedicamento.module.css";
 import detailsStyles from "@/styles/admin/farmacia/medicamentosDetails.module.css";
 import { ExternalLink, LogIn, LogOut, PlusCircle, ChevronDown, ChevronRight, } from "lucide-react";
 import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData } from "@/functions/medicamentosFunctions";
-import { registrarEntradaMedicamento, registrarSaidaMedicamento } from "@/functions/movimentacoesMedicamentosFunctions";
+import { registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, } from "@/functions/movimentacoesMedicamentosFunctions";
 import { format, parseISO } from "date-fns";
+import { formatDateSafe } from "@/utils/dateUtils";
 import { buscarMedicos } from "@/functions/medicosFunctions";
 import { buscarPacientes, PacienteMin } from "@/functions/pacientesFunctions";
-import { buscarLotes, criarLote } from "@/functions/lotesFunctions";
+import { buscarLotes, criarLote, atualizarLote } from "@/functions/lotesFunctions";
 
 const formatValor = (valor: number) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -25,6 +26,7 @@ interface Medicamento extends MedicamentoData {
 }
 
 interface Lote {
+  id?: string;
   numero_lote: string;
   data_fabricacao: string;
   validade: string;
@@ -135,6 +137,8 @@ const Medicamentos = () => {
   const [movMedicamento, setMovMedicamento] = useState<Medicamento | null>( null );
   const [movQuantidade, setMovQuantidade] = useState(0);
   const [movMotivo, setMovMotivo] = useState("");
+  const [movLote, setMovLote] = useState("");
+  const [movDocumento, setMovDocumento] = useState<File | null>(null);
   const [movPaciente, setMovPaciente] = useState("");
   const [movProfissional, setMovProfissional] = useState("");
   const [pacientes, setPacientes] = useState<PacienteMin[]>([]);
@@ -233,6 +237,8 @@ const Medicamentos = () => {
     setMovType(tipo);
     setMovQuantidade(0);
     setMovMotivo("");
+    setMovLote("");
+    setMovDocumento(null);
     setMovPaciente("");
     setMovProfissional("");
     setShowMovModal(true);
@@ -243,12 +249,18 @@ const Medicamentos = () => {
     const data = new Date().toISOString();
     const usuario = user?.email || "";
     if (movType === "entrada") {
+      let docUrl = "";
+      if (movDocumento) {
+        docUrl = await uploadDocumentoMovimentacao(movDocumento);
+      }
       await registrarEntradaMedicamento({
         medicamento: movMedicamento.nome_comercial,
         quantidade: movQuantidade,
         motivo: movMotivo,
         data,
         usuario,
+        lote: movLote,
+        documentoUrl: docUrl,
       });
       const nova = movMedicamento.quantidade + movQuantidade;
       await atualizarMedicamento(movMedicamento.id, { quantidade: nova });
@@ -257,7 +269,37 @@ const Medicamentos = () => {
           m.id === movMedicamento.id ? { ...m, quantidade: nova } : m,
         ),
       );
+      if (movLote) {
+        const loteArr = lotes[movMedicamento.id] || [];
+        const lote = loteArr.find((l) => l.numero_lote === movLote);
+        if (lote && (lote as any).id) {
+          const atual = lote.quantidade_inicial + movQuantidade;
+          await atualizarLote(movMedicamento.id, (lote as any).id, {
+            quantidade_inicial: atual,
+          });
+          setLotes((prev) => ({
+            ...prev,
+            [movMedicamento.id]: loteArr.map((l) =>
+              l.numero_lote === movLote
+                ? { ...l, quantidade_inicial: atual }
+                : l,
+            ),
+          }));
+        }
+      }
     } else {
+      if (movLote) {
+        const loteArr = lotes[movMedicamento.id] || [];
+        const lote = loteArr.find((l) => l.numero_lote === movLote);
+        if (lote && movQuantidade > lote.quantidade_inicial) {
+          alert('Quantidade superior à disponível no lote.');
+          return;
+        }
+      }
+      let docUrl = '';
+      if (movDocumento) {
+        docUrl = await uploadDocumentoMovimentacao(movDocumento);
+      }
       await registrarSaidaMedicamento({
         medicamento: movMedicamento.nome_comercial,
         quantidade: movQuantidade,
@@ -266,6 +308,8 @@ const Medicamentos = () => {
         usuario,
         paciente: movPaciente,
         profissional: movProfissional,
+        lote: movLote,
+        receitaUrl: docUrl,
       });
       const nova = Math.max(0, movMedicamento.quantidade - movQuantidade);
       await atualizarMedicamento(movMedicamento.id, { quantidade: nova });
@@ -274,6 +318,24 @@ const Medicamentos = () => {
           m.id === movMedicamento.id ? { ...m, quantidade: nova } : m,
         ),
       );
+      if (movLote) {
+        const loteArr = lotes[movMedicamento.id] || [];
+        const lote = loteArr.find((l) => l.numero_lote === movLote);
+        if (lote && (lote as any).id) {
+          const atual = Math.max(0, lote.quantidade_inicial - movQuantidade);
+          await atualizarLote(movMedicamento.id, (lote as any).id, {
+            quantidade_inicial: atual,
+          });
+          setLotes((prev) => ({
+            ...prev,
+            [movMedicamento.id]: loteArr.map((l) =>
+              l.numero_lote === movLote
+                ? { ...l, quantidade_inicial: atual }
+                : l,
+            ),
+          }));
+        }
+      }
     }
     setShowMovModal(false);
   };
@@ -342,11 +404,11 @@ const Medicamentos = () => {
       return;
     }
     try {
-      await criarMedicamento(newMedicamento);
+      const id = await criarMedicamento(newMedicamento);
       setMedicamentos((prev) => [
         ...prev,
         {
-          id: Date.now().toString(),
+          id,
           ...newMedicamento,
           selected: false,
         } as Medicamento,
@@ -417,10 +479,13 @@ const Medicamentos = () => {
   };
 
   const createLote = async () => {
-    await criarLote(currentMedId, { ...newLote });
+    const id = await criarLote(currentMedId, { ...newLote });
     setLotes((prev) => ({
       ...prev,
-      [currentMedId]: [...(prev[currentMedId] || []), newLote],
+      [currentMedId]: [
+        ...(prev[currentMedId] || []),
+        { ...newLote, id },
+      ],
     }));
     setNewLote({
       numero_lote: "",
@@ -464,7 +529,9 @@ const Medicamentos = () => {
         <div className={tableStyles.subtitleMedicamentos}>
           Gerencie os medicamentos cadastrados
         </div>
-        {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
+        {error && (
+          <p className={tableStyles.errorMessage}>{error}</p>
+        )}
         <div className={tableStyles.topBar}>
           <div className={tableStyles.actionButtonsWrapper}>
             <button
@@ -554,7 +621,7 @@ const Medicamentos = () => {
                       const sorted = [...ls].sort((a, b) =>
                         a.validade.localeCompare(b.validade),
                       );
-                      return format(parseISO(sorted[0].validade), "dd/MM/yyyy");
+                      return formatDateSafe(sorted[0].validade, "dd/MM/yyyy");
                     })()}
                   </td>
                   <td>
@@ -611,7 +678,7 @@ const Medicamentos = () => {
                             .map((l) => (
                             <tr key={l.numero_lote}>
                               <td>{l.numero_lote}</td>
-                              <td>{format(parseISO(l.validade), "dd/MM/yy")}</td>
+                              <td>{formatDateSafe(l.validade, "dd/MM/yy")}</td>
                               <td>{l.quantidade_inicial}</td>
                               <td>{l.localizacao_fisica}</td>
                               <td>
@@ -712,6 +779,16 @@ const Medicamentos = () => {
                 </div>
               ))}
 
+              <div className={modalStyles.checkboxWrapper}>
+                <input
+                  type="checkbox"
+                  name="controlado"
+                  checked={newMedicamento.controlado}
+                  onChange={handleNewChange}
+                />
+                <label className={modalStyles.label}>Medicamento controlado</label>
+              </div>
+
               <div
                 className={modalStyles.fieldWrapper}
                 style={{ gridColumn: "span 3" }}
@@ -755,6 +832,43 @@ const Medicamentos = () => {
               {movType === "entrada" ? "Registrar Entrada" : "Registrar Saída"}
             </h3>
             <div className={modalStyles.formGrid}>
+              {(movType === "entrada" || movType === "saida") && (
+                <div className={modalStyles.fieldWrapper}>
+                  <label className={modalStyles.label}>Lote</label>
+                  <select
+                    className={modalStyles.select}
+                    value={movLote}
+                    onChange={(e) => setMovLote(e.target.value)}
+                  >
+                    <option value="">Selecione</option>
+                    {(lotes[movMedicamento.id] || []).map((l) => (
+                      <option key={l.numero_lote} value={l.numero_lote}>
+                        {`${l.numero_lote} - Val: ${formatDateSafe(l.validade, "dd/MM/yyyy")} - Qtde: ${l.quantidade_inicial}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {movType === "entrada" && (
+                <div className={modalStyles.fieldWrapper}>
+                  <label className={modalStyles.label}>Documento (XML/NF-e)</label>
+                  <input
+                    type="file"
+                    className={modalStyles.input}
+                    onChange={(e) => setMovDocumento(e.target.files?.[0] || null)}
+                  />
+                </div>
+              )}
+              {movType === "saida" && (
+                <div className={modalStyles.fieldWrapper}>
+                  <label className={modalStyles.label}>Receita</label>
+                  <input
+                    type="file"
+                    className={modalStyles.input}
+                    onChange={(e) => setMovDocumento(e.target.files?.[0] || null)}
+                  />
+                </div>
+              )}
               <div className={modalStyles.fieldWrapper}>
                 <label className={modalStyles.label}>Quantidade</label>
                 <input
@@ -970,6 +1084,16 @@ const Medicamentos = () => {
                     </div>
                   ))}
 
+                  <div className={modalStyles.checkboxWrapper}>
+                    <input
+                      type="checkbox"
+                      name="controlado"
+                      checked={(detailsData as any).controlado || false}
+                      onChange={handleDetailsChange}
+                    />
+                    <label className={modalStyles.label}>Medicamento controlado</label>
+                  </div>
+
                   <div
                     className={modalStyles.fieldWrapper}
                     style={{ gridColumn: "span 3" }}
@@ -1040,6 +1164,10 @@ const Medicamentos = () => {
                 <p>
                   <strong>Classificação:</strong>{" "}
                   {selectedMedicamento.classificacao}
+                </p>
+                <p>
+                  <strong>Medicamento controlado:</strong>{" "}
+                  {selectedMedicamento.controlado ? "Sim" : "Não"}
                 </p>
                 <p>
                   <strong>Descrição:</strong> {selectedMedicamento.descricao}

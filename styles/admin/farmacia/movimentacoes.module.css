@@ -1,0 +1,197 @@
+.medicamentosTableWrapper {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(16, 30, 54, 0.08);
+  padding: 0;
+  margin-bottom: 32px;
+  width: 100%;
+  max-width: 1600px;
+  min-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.medicamentosTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 800px;
+}
+
+.medicamentosTable th {
+  text-align: left;
+  font-size: 1.05rem;
+  color: #8b98a9;
+  font-weight: 700;
+  padding: 18px 0 12px 32px;
+  border-bottom: 1px solid #f1f1f1;
+  background: #f9fafb;
+  letter-spacing: 0.5px;
+}
+
+.medicamentosTable th,
+.medicamentosTable td {
+  padding-left: 32px;
+  padding-right: 16px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.medicamentosTable th:first-child,
+.medicamentosTable td:first-child {
+  padding-left: 40px;
+}
+
+.medicamentosTable th:last-child,
+.medicamentosTable td:last-child {
+  padding-right: 24px;
+}
+
+.medicamentosTable td {
+  font-size: 1.08rem;
+  color: #222;
+  padding: 18px 0 18px 32px;
+  border-bottom: 1px solid #f6f6f6;
+  vertical-align: middle;
+}
+
+.buttonExcluir {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.buttonExcluir:hover {
+  background: #b91c1c;
+}
+
+.buttonEntrada,
+.buttonSaida {
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-width: 180px;
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.buttonEntrada {
+  background: #22c55e;
+}
+
+.buttonEntrada:hover {
+  background: #16a34a;
+}
+
+.buttonSaida {
+  background: #dc2626;
+}
+
+.buttonSaida:hover {
+  background: #b91c1c;
+}
+
+.actionButtonsWrapper {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.searchContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0;
+  margin-top: -10px;
+}
+
+.searchInput {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-top: -6px;
+}
+
+.tipoQuad {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 6px;
+}
+
+.entrada {
+  background: #16a34a;
+}
+
+.saida {
+  background: #dc2626;
+}
+
+.snackbar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 6px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  z-index: 1001;
+}
+
+.snackbar button {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.snackbar button:last-child {
+  background: #6b7280;
+}
+
+.tabsWrapper {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.tabButton {
+  background: #e5e7eb;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.activeTab {
+  background: #2563eb;
+  color: #fff;
+}

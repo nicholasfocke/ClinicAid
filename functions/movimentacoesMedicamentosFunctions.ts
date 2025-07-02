@@ -1,4 +1,5 @@
 import { addDoc, collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { firestore } from '@/firebase/firebaseConfig';
 
 export interface MovimentacaoMedicamento {
@@ -7,16 +8,25 @@ export interface MovimentacaoMedicamento {
   motivo: string;
   data: string;
   usuario: string;
+  lote?: string;
+  documentoUrl?: string;
+  receitaUrl?: string;
   paciente?: string;
   profissional?: string;
 }
 
-export const registrarEntradaMedicamento = async (data: MovimentacaoMedicamento) => {
-  await addDoc(collection(firestore, 'entradasMedicamentos'), data);
+export const registrarEntradaMedicamento = async (
+  data: MovimentacaoMedicamento,
+) => {
+  const docRef = await addDoc(collection(firestore, 'entradasMedicamentos'), data);
+  return docRef.id;
 };
 
-export const registrarSaidaMedicamento = async (data: MovimentacaoMedicamento) => {
-  await addDoc(collection(firestore, 'saidasMedicamentos'), data);
+export const registrarSaidaMedicamento = async (
+  data: MovimentacaoMedicamento,
+) => {
+  const docRef = await addDoc(collection(firestore, 'saidasMedicamentos'), data);
+  return docRef.id;
 };
 
 export const buscarEntradasMedicamentos = async () => {
@@ -35,4 +45,12 @@ export const excluirEntradaMedicamento = async (id: string) => {
 
 export const excluirSaidaMedicamento = async (id: string) => {
   await deleteDoc(doc(firestore, 'saidasMedicamentos', id));
+};
+
+export const uploadDocumentoMovimentacao = async (file: File) => {
+  const storage = getStorage();
+  const uniqueName = `${Date.now()}_${file.name}`;
+  const storageRef = ref(storage, `movimentacoes_docs/${uniqueName}`);
+  await uploadBytes(storageRef, file);
+  return await getDownloadURL(storageRef);
 };

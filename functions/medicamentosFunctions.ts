@@ -27,7 +27,8 @@ export const buscarMedicamentos = async () => {
 };
 
 export const criarMedicamento = async (data: MedicamentoData) => {
-  await addDoc(collection(firestore, 'medicamentos'), data);
+  const docRef = await addDoc(collection(firestore, 'medicamentos'), data);
+  return docRef.id;
 };
 
 export const excluirMedicamento = async (id: string) => {

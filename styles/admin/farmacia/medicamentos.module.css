@@ -22,6 +22,12 @@
   margin: 0.1rem 0 2rem 0;
 }
 
+.errorMessage {
+  color: red;
+  margin-top: 10px;
+  text-align: center;
+}
+
 .medicamentosTableWrapper {
   background: #fff;
   border-radius: 18px;
@@ -191,7 +197,7 @@
   background: none;
   border: none;
   padding: 6px;
-  margin-right: 6px;
+  margin-right: 10px;
   cursor: pointer;
   transition: transform 0.2s;
 }
@@ -218,7 +224,7 @@
   background: none;
   border: none;
   padding: 6px;
-  margin-right: 6px;
+  margin-right: 10px;
   cursor: pointer;
   color: #2563eb;
   transition: transform 0.2s;
@@ -259,4 +265,12 @@
 .lotesTable td {
   padding: 8px 12px;
   font-size: 0.9rem;
+}
+
+.entryRow td {
+  color: #16a34a;
+}
+
+.exitRow td {
+  color: #dc2626;
 }
