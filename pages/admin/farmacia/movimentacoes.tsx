@@ -16,6 +16,9 @@ import { buscarMedicos } from '@/functions/medicosFunctions';
 import { format } from 'date-fns';
 import { formatDateSafe } from '@/utils/dateUtils';
 
+const formatValor = (valor: number) =>
+  valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
 interface Movimentacao extends MovimentacaoMedicamento {
   id: string;
   tipo: 'entrada' | 'saida';
@@ -39,6 +42,7 @@ interface Lote {
   quantidade_inicial: number;
   validade: string;
   medicamentoId?: string;
+  custo_unitario: number;
 }
 
 const Movimentacoes = () => {
@@ -167,6 +171,11 @@ const Movimentacoes = () => {
     if (documentoFile) {
       docUrl = await uploadDocumentoMovimentacao(documentoFile);
     }
+
+    const loteArr = lotes[selectedProduto.id] || [];
+    const lote = loteArr.find(l => l.numero_lote === selectedLote);
+    const valorTotal = lote ? quantidade * lote.custo_unitario : 0;
+
     const data = {
       medicamento: selectedProduto.nome_comercial,
       quantidade,
@@ -175,13 +184,12 @@ const Movimentacoes = () => {
       usuario: user?.email || '',
       lote: selectedLote,
       documentoUrl: docUrl,
+      valorTotal
     } as MovimentacaoMedicamento;
     await registrarEntradaMedicamento(data);
     await atualizarMedicamento(selectedProduto.id, {
       quantidade: selectedProduto.quantidade + quantidade,
     });
-    const loteArr = lotes[selectedProduto.id] || [];
-    const lote = loteArr.find(l => l.numero_lote === selectedLote);
     if (lote && lote.id) {
       const novaQtd = lote.quantidade_inicial + quantidade;
       await atualizarLote(selectedProduto.id, lote.id, {
@@ -223,6 +231,7 @@ const Movimentacoes = () => {
     if (documentoSaida) {
       docUrl = await uploadDocumentoMovimentacao(documentoSaida);
     }
+    const valorTotal = lote ? quantidadeSaida * lote.custo_unitario : 0;
     const data = {
       medicamento: selectedProdutoSaida.nome_comercial,
       quantidade: quantidadeSaida,
@@ -233,6 +242,7 @@ const Movimentacoes = () => {
       receitaUrl: docUrl,
       paciente: pacienteSaida,
       profissional: profissionalSaida,
+      valorTotal,
     } as MovimentacaoMedicamento;
     await registrarSaidaMedicamento(data);
     await atualizarMedicamento(selectedProdutoSaida.id, {
@@ -355,6 +365,7 @@ const Movimentacoes = () => {
                   <th>PRODUTO</th>
                   <th>Nº Lote</th>
                   <th>QTDE</th>
+                  <th>VALOR</th>
                   <th>VALIDADE</th>
                   <th>TIPO</th>
                   <th></th>
@@ -368,6 +379,7 @@ const Movimentacoes = () => {
                   <th>PROFISSIONAL</th>
                   <th>MOTIVO</th>
                   <th>QTDE</th>
+                  <th>VALOR</th>
                   <th>RECEITA</th>
                   <th></th>
                 </tr>
@@ -378,6 +390,7 @@ const Movimentacoes = () => {
                   <th>Nº Lote</th>
                   <th>MOTIVO</th>
                   <th>QTDE</th>
+                  <th>VALOR</th>
                   <th></th>
                 </tr>
               )}
@@ -390,6 +403,7 @@ const Movimentacoes = () => {
                       <td>{e.medicamento}</td>
                       <td>{e.lote || '-'}</td>
                       <td>{e.quantidade}</td>
+                      <td>{formatValor(e.valorTotal || 0)}</td>
                       <td>{e.lote ? validadeLote(e.lote) : '-'}</td>
                       <td>
                         <span
@@ -411,6 +425,7 @@ const Movimentacoes = () => {
                       <td>{e.profissional || '-'}</td>
                       <td>{e.motivo}</td>
                       <td>{e.quantidade}</td>
+                      <td>{formatValor(e.valorTotal || 0)}</td>
                       <td>
                         {e.receitaUrl ? (
                           <a href={e.receitaUrl} target="_blank" rel="noopener noreferrer">
@@ -428,6 +443,7 @@ const Movimentacoes = () => {
                       <td>{e.lote || '-'}</td>
                       <td>{e.motivo}</td>
                       <td>{e.quantidade}</td>
+                      <td>{formatValor(e.valorTotal || 0)}</td>
                     </>
                   )}
                   <td>
