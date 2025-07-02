@@ -260,6 +260,9 @@ const Medicamentos = () => {
       if (movDocumento) {
         docUrl = await uploadDocumentoMovimentacao(movDocumento);
       }
+      const loteArr = lotes[movMedicamento.id] || [];
+      const lote = loteArr.find((l) => l.numero_lote === movLote);
+      const valorTotal = lote ? movQuantidade * lote.custo_unitario : 0;
       await registrarEntradaMedicamento({
         medicamento: movMedicamento.nome_comercial,
         quantidade: movQuantidade,
@@ -268,6 +271,7 @@ const Medicamentos = () => {
         usuario,
         lote: movLote,
         documentoUrl: docUrl,
+        valorTotal,
       });
       const nova = movMedicamento.quantidade + movQuantidade;
       await atualizarMedicamento(movMedicamento.id, { quantidade: nova });
@@ -307,6 +311,9 @@ const Medicamentos = () => {
       if (movDocumento) {
         docUrl = await uploadDocumentoMovimentacao(movDocumento);
       }
+      const loteArrSaida = lotes[movMedicamento.id] || [];
+      const loteSaida = loteArrSaida.find((l) => l.numero_lote === movLote);
+      const valorTotalSaida = loteSaida ? movQuantidade * loteSaida.custo_unitario : 0;
       await registrarSaidaMedicamento({
         medicamento: movMedicamento.nome_comercial,
         quantidade: movQuantidade,
@@ -317,6 +324,7 @@ const Medicamentos = () => {
         profissional: movProfissional,
         lote: movLote,
         receitaUrl: docUrl,
+        valorTotal: valorTotalSaida,
       });
       const nova = Math.max(0, movMedicamento.quantidade - movQuantidade);
       await atualizarMedicamento(movMedicamento.id, { quantidade: nova });
@@ -487,6 +495,27 @@ const Medicamentos = () => {
 
   const createLote = async () => {
     const id = await criarLote(currentMedId, { ...newLote });
+
+    const med = medicamentos.find(m => m.id === currentMedId);
+    if (med) {
+      const data = new Date().toISOString();
+      const usuario = user?.email || "";
+      await registrarEntradaMedicamento({
+        medicamento: med.nome_comercial,
+        quantidade: newLote.quantidade_inicial,
+        motivo: "Cadastro de novo lote",
+        data,
+        usuario,
+        lote: newLote.numero_lote,
+      });
+
+      const novaQtd = med.quantidade + newLote.quantidade_inicial;
+      await atualizarMedicamento(med.id, { quantidade: novaQtd });
+      setMedicamentos(prev =>
+        prev.map(m => (m.id === med.id ? { ...m, quantidade: novaQtd } : m)),
+      );
+    }
+
     setLotes((prev) => ({
       ...prev,
       [currentMedId]: [

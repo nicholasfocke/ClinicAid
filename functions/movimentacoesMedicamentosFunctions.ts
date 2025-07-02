@@ -13,6 +13,7 @@ export interface MovimentacaoMedicamento {
   receitaUrl?: string;
   paciente?: string;
   profissional?: string;
+  valorTotal?: number;
 }
 
 export const registrarEntradaMedicamento = async (
