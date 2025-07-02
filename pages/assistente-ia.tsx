@@ -5,28 +5,29 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/ia/assistente.module.css';
 import pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import {
+  IAChat,
+  IAFolder,
+  IAChatMessage,
+  buscarPastas,
+  criarPasta,
+  buscarChats,
+  criarChat as criarChatDB,
+  excluirChat as excluirChatDB,
+  atualizarChat,
+  excluirPasta as excluirPastaDB,
+} from '@/functions/iaFunctions';
+import { useAuth } from '@/context/AuthContext';
 
 (pdfMake as any).vfs = (pdfFonts as any).vfs;
 
 
-interface Message {
-  sender: 'user' | 'bot';
-  text: string;
-}
-
-interface Chat {
-  id: string;
-  title: string;
-  folderId: string;
-  messages: Message[];
-}
-
-interface Folder {
-  id: string;
-  name: string;
-}
+type Message = IAChatMessage;
+type Chat = IAChat;
+type Folder = IAFolder;
 
 export default function AssistenteIA() {
+  const { user } = useAuth();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -34,42 +35,30 @@ export default function AssistenteIA() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const generateId = () => Math.random().toString(36).slice(2);
-
   useEffect(() => {
-    const stored = localStorage.getItem('iaChats');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as {
-          folders: Folder[];
-          chats: Chat[];
-          activeChatId: string | null;
-        };
-        setFolders(parsed.folders || []);
-        setChats(parsed.chats || []);
-        setActiveChatId(parsed.activeChatId || null);
-        if (parsed.activeChatId) {
-          const chat = parsed.chats.find(c => c.id === parsed.activeChatId);
-          if (chat) setMessages(chat.messages);
-        }
-      } catch {
-        // ignore parse errors
+    if (!user) return;
+
+    (async () => {
+      const pastas = await buscarPastas(user.uid);
+      if (pastas.length === 0) {
+        const pasta = await criarPasta('Geral', user.uid);
+        const chatInicial = await criarChatDB(pasta.id, 'Novo Chat');
+        setFolders([pasta]);
+        setChats([chatInicial]);
+        setActiveChatId(chatInicial.id);
+        return;
       }
-    } else {
-      const folderId = generateId();
-      const chatId = generateId();
-      const folder = { id: folderId, name: 'Geral' } as Folder;
-      const chat = { id: chatId, title: 'Novo Chat', folderId, messages: [] } as Chat;
-      setFolders([folder]);
-      setChats([chat]);
-      setActiveChatId(chatId);
-    }
-  }, []);
+      setFolders(pastas);
+      const allChats: Chat[] = [];
+      for (const p of pastas) {
+        const ch = await buscarChats(p.id);
+        allChats.push(...ch);
+      }
+      setChats(allChats);
+      if (allChats.length > 0) setActiveChatId(allChats[0].id);
+    })();
+  }, [user]);
 
-  useEffect(() => {
-    const data = JSON.stringify({ folders, chats, activeChatId });
-    localStorage.setItem('iaChats', data);
-  }, [folders, chats, activeChatId]);
 
   useEffect(() => {
     if (!activeChatId) {
@@ -80,22 +69,24 @@ export default function AssistenteIA() {
     setMessages(chat ? chat.messages : []);
   }, [activeChatId, chats]);
 
-  const createFolder = () => {
+  const createFolder = async () => {
+    if (!user) return;
     const name = prompt('Nome da pasta');
     if (!name) return;
-    const folder = { id: generateId(), name } as Folder;
+    const folder = await criarPasta(name, user.uid);
     setFolders(prev => [...prev, folder]);
   };
 
-  const createChat = (folderId: string) => {
+  const createChat = async (folderId: string) => {
     const title = prompt('Título do chat') || 'Novo Chat';
-    const chat = { id: generateId(), title, folderId, messages: [] } as Chat;
+    const chat = await criarChatDB(folderId, title);
     setChats(prev => [...prev, chat]);
     setActiveChatId(chat.id);
   };
 
-  const deleteChat = (id: string) => {
+  const deleteChat = async (id: string, folderId: string) => {
     if (!confirm('Deseja excluir este chat?')) return;
+    await excluirChatDB(folderId, id);
     setChats(prev => prev.filter(c => c.id !== id));
     if (activeChatId === id) setActiveChatId(null);
   };
@@ -115,16 +106,46 @@ export default function AssistenteIA() {
     pdfMake.createPdf(doc).download(`${chat.title}.pdf`);
   };
 
+  const exportFolder = (folderId: string) => {
+    const folder = folders.find(f => f.id === folderId);
+    const data = {
+      folder: folder?.name || 'pasta',
+      chats: chats.filter(c => c.folderId === folderId),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: 'application/json',
+    });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${folder?.name || 'pasta'}.json`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  const deleteFolder = async (folderId: string) => {
+    if (!confirm('Excluir pasta e todos os chats?')) return;
+    const related = chats.filter(c => c.folderId === folderId);
+    for (const ch of related) {
+      await excluirChatDB(folderId, ch.id);
+    }
+    await excluirPastaDB(folderId);
+    setFolders(prev => prev.filter(f => f.id !== folderId));
+    setChats(prev => prev.filter(c => c.folderId !== folderId));
+    if (related.some(c => c.id === activeChatId)) setActiveChatId(null);
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || !activeChatId) return;
-    const userMsg = { sender: 'user', text: input } as Message;
+    const userMsg: Message = { sender: 'user', text: input, timestamp: Date.now() };
     setMessages(prev => {
-          const msgs: Message[] = [...prev, userMsg];
-          setChats(chats =>
-            chats.map(c => (c.id === activeChatId ? { ...c, messages: msgs } : c))
-          );
-          return msgs;
-        });
+      const msgs: Message[] = [...prev, userMsg];
+      setChats(chats =>
+        chats.map(c => (c.id === activeChatId ? { ...c, messages: msgs } : c))
+      );
+      const ch = chats.find(c => c.id === activeChatId);
+      if (ch) atualizarChat(ch.folderId, ch.id, { messages: msgs });
+      return msgs;
+    });
     setInput('');
     setLoading(true);
     try {
@@ -136,12 +157,14 @@ export default function AssistenteIA() {
       const data = await res.json();
       if (data.reply) {
         setMessages(prev => {
-                  const msgs: Message[] = [...prev, { sender: 'bot' as const, text: data.reply }];
-                  setChats(chats =>
-                    chats.map(c => (c.id === activeChatId ? { ...c, messages: msgs } : c))
-                  );
-                  return msgs;
-                });
+          const msgs: Message[] = [...prev, { sender: 'bot', text: data.reply, timestamp: Date.now() }];
+          setChats(chats =>
+            chats.map(c => (c.id === activeChatId ? { ...c, messages: msgs } : c))
+          );
+          const ch = chats.find(c => c.id === activeChatId);
+          if (ch) atualizarChat(ch.folderId, ch.id, { messages: msgs });
+          return msgs;
+        });
       }
     } catch (err) {
       console.error('Erro ao enviar mensagem', err);
@@ -182,10 +205,14 @@ export default function AssistenteIA() {
                 {folders.map(folder => (
                   <div key={folder.id} className={styles.folder}>
                     <div className={styles.folderHeader}>
-                      {folder.name}
-                      <button className={styles.newChatButton} onClick={() => createChat(folder.id)}>
-                        + Novo chat
-                      </button>
+                      <span>{folder.name}</span>
+                      <div className={styles.folderActions}>
+                        <button onClick={() => exportFolder(folder.id)} title="Baixar pasta">⬇️</button>
+                        <button onClick={() => deleteFolder(folder.id)} title="Excluir pasta">🗑️</button>
+                        <button className={styles.newChatButton} onClick={() => createChat(folder.id)}>
+                          + Novo chat
+                        </button>
+                      </div>
                     </div>
                     <ul className={styles.chatList}>
                       {chats.filter(c => c.folderId === folder.id).map(chat => (
@@ -196,7 +223,7 @@ export default function AssistenteIA() {
                           <span onClick={() => setActiveChatId(chat.id)}>{chat.title}</span>
                           <div className={styles.chatActions}>
                             <button onClick={() => exportChat(chat)} title="Baixar PDF">⬇️</button>
-                            <button onClick={() => deleteChat(chat.id)} title="Excluir">🗑️</button>
+                            <button onClick={() => deleteChat(chat.id, chat.folderId)} title="Excluir">🗑️</button>
                           </div>
                         </li>
                       ))}

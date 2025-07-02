@@ -215,6 +215,18 @@
   font-weight: 700;
 }
 
+.folderActions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.folderActions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
 .chatList {
   list-style: none;
   padding: 0;
