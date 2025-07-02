@@ -8,6 +8,7 @@ import layoutStyles from "@/styles/admin/farmacia/farmacia.module.css";
 import tableStyles from "@/styles/admin/farmacia/medicamentos.module.css";
 import modalStyles from "@/styles/admin/farmacia/modalMedicamento.module.css";
 import detailsStyles from "@/styles/admin/farmacia/medicamentosDetails.module.css";
+import loteDetailsStyles from "@/styles/admin/farmacia/loteDetails.module.css";
 import { ExternalLink, LogIn, LogOut, PlusCircle, ChevronDown, ChevronRight, } from "lucide-react";
 import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData } from "@/functions/medicamentosFunctions";
 import { registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, } from "@/functions/movimentacoesMedicamentosFunctions";
@@ -15,7 +16,7 @@ import { format, parseISO } from "date-fns";
 import { formatDateSafe } from "@/utils/dateUtils";
 import { buscarMedicos } from "@/functions/medicosFunctions";
 import { buscarPacientes, PacienteMin } from "@/functions/pacientesFunctions";
-import { buscarLotes, criarLote, atualizarLote } from "@/functions/lotesFunctions";
+import { buscarLotes, criarLote, atualizarLote, excluirLote } from "@/functions/lotesFunctions";
 
 const formatValor = (valor: number) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -157,6 +158,12 @@ const Medicamentos = () => {
   });
   const [currentMedId, setCurrentMedId] = useState<string>("");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [showLoteDetails, setShowLoteDetails] = useState(false);
+  const [selectedLote, setSelectedLote] = useState<Lote | null>(null);
+  const [selectedLoteMedId, setSelectedLoteMedId] = useState("");
+  const [loteEditing, setLoteEditing] = useState(false);
+  const [confirmDeleteLote, setConfirmDeleteLote] = useState(false);
+  const [loteDetailsData, setLoteDetailsData] = useState<Partial<Lote>>({});
 
   const selectedIds = medicamentos.filter((m) => m.selected).map((m) => m.id);
   const allSelected =
@@ -511,6 +518,52 @@ const Medicamentos = () => {
     return diff > 0 && diff <= 30 * 24 * 60 * 60 * 1000;
   };
 
+  const openLoteDetails = (medId: string, lote: Lote) => {
+    setSelectedLote(lote);
+    setSelectedLoteMedId(medId);
+    setLoteDetailsData(lote);
+    setShowLoteDetails(true);
+    setLoteEditing(false);
+    setConfirmDeleteLote(false);
+  };
+
+  const closeLoteDetails = () => setShowLoteDetails(false);
+
+  const handleLoteDetailsChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const { name, value, type } = e.target;
+    setLoteDetailsData((prev) => ({
+      ...prev,
+      [name]: type === "number" ? Number(value) : value,
+    }));
+  };
+
+  const saveLoteDetails = async () => {
+    if (!selectedLote) return;
+    await atualizarLote(selectedLoteMedId, selectedLote.id!, loteDetailsData);
+    setLotes((prev) => ({
+      ...prev,
+      [selectedLoteMedId]: (prev[selectedLoteMedId] || []).map((l) =>
+        l.id === selectedLote.id ? { ...l, ...(loteDetailsData as Lote) } : l,
+      ),
+    }));
+    setLoteEditing(false);
+    setShowLoteDetails(false);
+  };
+
+  const confirmDeleteLoteFn = async () => {
+    if (!selectedLote) return;
+    await excluirLote(selectedLoteMedId, selectedLote.id!);
+    setLotes((prev) => ({
+      ...prev,
+      [selectedLoteMedId]: (prev[selectedLoteMedId] || []).filter(
+        (l) => l.id !== selectedLote.id,
+      ),
+    }));
+    setShowLoteDetails(false);
+  };
+
   return (
     <ProtectedRoute>
       <div className={layoutStyles.container}>
@@ -669,6 +722,7 @@ const Medicamentos = () => {
                             <th>QTD.</th>
                             <th>LOCAL</th>
                             <th>STATUS</th>
+                            <th></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -687,6 +741,15 @@ const Medicamentos = () => {
                                   : isNearExpiry(l.validade)
                                   ? "Próx. vencer"
                                   : l.status}
+                              </td>
+                              <td>
+                                <button
+                                  className={tableStyles.externalLink}
+                                  title="Ver detalhes do lote"
+                                  onClick={() => openLoteDetails(m.id, l)}
+                                >
+                                  <ExternalLink size={16} />
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -993,6 +1056,133 @@ const Medicamentos = () => {
             <button className={modalStyles.buttonSalvar} onClick={createLote}>
               Salvar
             </button>
+          </div>
+        </div>
+      )}
+
+      {showLoteDetails && selectedLote && (
+        <div className={loteDetailsStyles.overlay} onClick={closeLoteDetails}>
+          <div
+            className={loteDetailsStyles.card}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {confirmDeleteLote ? (
+              <div>
+                <p>Confirmar exclusão?</p>
+                <div className={loteDetailsStyles.buttons}>
+                  <button
+                    className={loteDetailsStyles.buttonExcluir}
+                    onClick={confirmDeleteLoteFn}
+                  >
+                    Confirmar
+                  </button>
+                  <button
+                    className={loteDetailsStyles.buttonEditar}
+                    onClick={() => setConfirmDeleteLote(false)}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : loteEditing ? (
+              <div>
+                <div className={modalStyles.formGrid}>
+                  {[
+                    { label: "Número do lote", name: "numero_lote" },
+                    { label: "Data de fabricação", name: "data_fabricacao", type: "date" },
+                    { label: "Validade", name: "validade", type: "date" },
+                    { label: "Quantidade inicial", name: "quantidade_inicial", type: "number" },
+                    { label: "Custo unitário", name: "custo_unitario", type: "number" },
+                    { label: "Fabricante", name: "fabricante" },
+                    { label: "Localização física", name: "localizacao_fisica" },
+                    { label: "Status", name: "status" },
+                  ].map(({ label, name, type = "text" }) => (
+                    <div key={name} className={modalStyles.fieldWrapper}>
+                      <label className={modalStyles.label}>{label}</label>
+                      <input
+                        name={name}
+                        type={type}
+                        className={loteDetailsStyles.inputEditar}
+                        value={(loteDetailsData as any)[name] || ""}
+                        onChange={handleLoteDetailsChange}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className={loteDetailsStyles.buttons}>
+                  <button
+                    className={loteDetailsStyles.buttonEditar}
+                    onClick={saveLoteDetails}
+                  >
+                    Salvar
+                  </button>
+                  <button
+                    className={loteDetailsStyles.buttonCancelar}
+                    onClick={() => {
+                      setLoteEditing(false);
+                      setLoteDetailsData(selectedLote!);
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <h3>Informações do lote</h3>
+                <p>
+                  <strong>Número do lote:</strong> {selectedLote.numero_lote}
+                </p>
+                <p>
+                  <strong>Data de fabricação:</strong>{" "}
+                  {formatDateSafe(selectedLote.data_fabricacao, "dd/MM/yyyy")}
+                </p>
+                <p>
+                  <strong>Validade:</strong>{" "}
+                  {formatDateSafe(selectedLote.validade, "dd/MM/yyyy")}
+                </p>
+                <p>
+                  <strong>Quantidade inicial:</strong>{" "}
+                  {selectedLote.quantidade_inicial}
+                </p>
+                <p>
+                  <strong>Custo unitário:</strong>{" "}
+                  {formatValor(selectedLote.custo_unitario)}
+                </p>
+                <p>
+                  <strong>Fabricante:</strong> {selectedLote.fabricante}
+                </p>
+                <p>
+                  <strong>Localização física:</strong> {selectedLote.localizacao_fisica}
+                </p>
+                <p>
+                  <strong>Status:</strong> {selectedLote.status}
+                </p>
+                <div className={loteDetailsStyles.buttons}>
+                  <button
+                    className={loteDetailsStyles.buttonExcluir}
+                    onClick={() => setConfirmDeleteLote(true)}
+                  >
+                    Excluir lote
+                  </button>
+                  <button
+                    className={loteDetailsStyles.buttonEditar}
+                    onClick={() => {
+                      setLoteEditing(true);
+                      setLoteDetailsData(selectedLote);
+                    }}
+                  >
+                    Editar lote
+                  </button>
+                </div>
+                <button
+                  className={loteDetailsStyles.buttonFechar}
+                  onClick={closeLoteDetails}
+                >
+                  X
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
