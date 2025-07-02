@@ -19,34 +19,53 @@ function formatTime(min: number): string {
   return `${h}:${m}`;
 }
 
+function mergeReserved(reserved: string[], step: number): { start: number; end: number }[] {
+  const times = reserved
+    .map(r => parseTime(r))
+    .sort((a, b) => a - b);
+  const intervals: { start: number; end: number }[] = [];
+  for (let i = 0; i < times.length; i++) {
+    let start = times[i];
+    let end = start + step;
+    while (i + 1 < times.length && times[i + 1] === end) {
+      end += step;
+      i++;
+    }
+    intervals.push({ start, end });
+  }
+  return intervals;
+}
+
 export function calculateAvailableSlots(
   config: ScheduleConfig,
-  duration: number
+  duration: number,
+  step: number
 ): string[] {
   const start = parseTime(config.start);
   const end = parseTime(config.end);
   const lunchStart = config.lunchStart ? parseTime(config.lunchStart) : null;
   const lunchEnd = config.lunchEnd ? parseTime(config.lunchEnd) : null;
-  const reserved = config.reserved?.map(r => parseTime(r)) || [];
+  const reservedIntervals = config.reserved
+    ? mergeReserved(config.reserved, step)
+    : [];
 
   const slots: string[] = [];
-  let current = start;
-  while (current + duration <= end) {
+  for (let current = start; current + duration <= end; current += step) {
     if (
       lunchStart !== null &&
       lunchEnd !== null &&
       ((current >= lunchStart && current < lunchEnd) ||
         (current < lunchStart && current + duration > lunchStart))
     ) {
-      current = lunchEnd;
       continue;
     }
-
-    const formatted = formatTime(current);
-    if (!reserved.includes(current)) {
-      slots.push(formatted);
+    const candidateEnd = current + duration;
+    const overlap = reservedIntervals.some(
+      r => current < r.end && candidateEnd > r.start
+    );
+    if (!overlap) {
+      slots.push(formatTime(current));
     }
-    current += duration;
   }
   return slots;
 }

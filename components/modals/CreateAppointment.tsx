@@ -476,11 +476,11 @@ const CreateAppointmentModal: React.FC<Props> = ({
         lunchEnd: horarioDoDia.almocoFim,
         reserved: reservedTimes,
       },
-      duracao
+      duracao,
+      Number(horarioDoDia.intervaloConsultas)
     );
 
-    // Garanta que nenhum horário já reservado seja exibido
-    return slots.filter(s => !reservedTimes.includes(s));
+    return slots;
   };
 
   const horariosGerados = horarioDoDia ? gerarHorarios() : availableTimes;
