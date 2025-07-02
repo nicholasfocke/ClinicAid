@@ -494,7 +494,7 @@ const Medicamentos = () => {
   };
 
   const createLote = async () => {
-    const id = await criarLote(currentMedId, { ...newLote });
+    const { id, status } = await criarLote(currentMedId, { ...newLote });
 
     const med = medicamentos.find(m => m.id === currentMedId);
     if (med) {
@@ -520,7 +520,7 @@ const Medicamentos = () => {
       ...prev,
       [currentMedId]: [
         ...(prev[currentMedId] || []),
-        { ...newLote, id },
+        { ...newLote, id, status },
       ],
     }));
     setNewLote({
@@ -707,7 +707,7 @@ const Medicamentos = () => {
                     })()}
                   </td>
                   <td>
-                    { (lotes[m.id] || []).filter((l) => l.status !== "Inativo").length  }
+                    {(lotes[m.id] || []).length}
                   </td>
                   <td>
                     <button
@@ -1060,7 +1060,6 @@ const Medicamentos = () => {
                 },
                 { label: "Fabricante", name: "fabricante" },
                 { label: "Localização física", name: "localizacao_fisica" },
-                { label: "Status", name: "status" },
               ].map(({ label, name, type = "text" }) => (
                 <div key={name} className={modalStyles.fieldWrapper}>
                   <label className={modalStyles.label}>{label}</label>
@@ -1124,7 +1123,6 @@ const Medicamentos = () => {
                     { label: "Custo unitário", name: "custo_unitario", type: "number" },
                     { label: "Fabricante", name: "fabricante" },
                     { label: "Localização física", name: "localizacao_fisica" },
-                    { label: "Status", name: "status" },
                   ].map(({ label, name, type = "text" }) => (
                     <div key={name} className={modalStyles.fieldWrapper}>
                       <label className={modalStyles.label}>{label}</label>
