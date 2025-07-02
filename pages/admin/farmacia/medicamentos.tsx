@@ -8,17 +8,10 @@ import layoutStyles from "@/styles/admin/farmacia/farmacia.module.css";
 import tableStyles from "@/styles/admin/farmacia/medicamentos.module.css";
 import modalStyles from "@/styles/admin/farmacia/modalMedicamento.module.css";
 import detailsStyles from "@/styles/admin/farmacia/medicamentosDetails.module.css";
-import {
-  ExternalLink,
-  LogIn,
-  LogOut,
-  PlusCircle,
-  ChevronDown,
-  ChevronRight,
-} from "lucide-react";
+import { ExternalLink, LogIn, LogOut, PlusCircle, ChevronDown, ChevronRight, } from "lucide-react";
 import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData } from "@/functions/medicamentosFunctions";
 import { registrarEntradaMedicamento, registrarSaidaMedicamento } from "@/functions/movimentacoesMedicamentosFunctions";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { buscarMedicos } from "@/functions/medicosFunctions";
 import { buscarPacientes, PacienteMin } from "@/functions/pacientesFunctions";
 import { buscarLotes, criarLote } from "@/functions/lotesFunctions";
@@ -515,9 +508,10 @@ const Medicamentos = () => {
                 <th>NOME</th>
                 <th>SALDO</th>
                 <th>MÍN.</th>
-                <th>COBERTURA(dias)</th>
+                <th>COBERTURA (dias)</th>
                 <th>PRÓX. VALIDADE</th>
                 <th>LOTES</th>
+                <th>AÇÕES</th>
                 <th></th>
               </tr>
             </thead>
@@ -560,14 +554,11 @@ const Medicamentos = () => {
                       const sorted = [...ls].sort((a, b) =>
                         a.validade.localeCompare(b.validade),
                       );
-                      return format(new Date(sorted[0].validade), "dd/MM/yyyy");
+                      return format(parseISO(sorted[0].validade), "dd/MM/yyyy");
                     })()}
                   </td>
                   <td>
-                    {
-                      (lotes[m.id] || []).filter((l) => l.status !== "Inativo")
-                        .length
-                    }
+                    { (lotes[m.id] || []).filter((l) => l.status !== "Inativo").length  }
                   </td>
                   <td>
                     <button
@@ -617,7 +608,7 @@ const Medicamentos = () => {
                           {(lotes[m.id] || []).map((l) => (
                             <tr key={l.numero_lote}>
                               <td>{l.numero_lote}</td>
-                              <td>{format(new Date(l.validade), "dd/MM/yy")}</td>
+                              <td>{format(parseISO(l.validade), "dd/MM/yy")}</td>
                               <td>{l.quantidade_inicial}</td>
                               <td>{l.localizacao_fisica}</td>
                               <td>
