@@ -49,6 +49,10 @@ export default function AssistenteIA() {
   // Controle de pastas expandidas/recolhidas
   const [expandedFolders, setExpandedFolders] = useState<string[]>(['root']);
 
+  // Novo: controle do menu de opções do chat
+  const [openChatMenuId, setOpenChatMenuId] = useState<string | null>(null);
+  const chatMenuRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (!user) return;
 
@@ -114,7 +118,7 @@ export default function AssistenteIA() {
 
     // Cria pasta se não existir nenhuma
     if (!folders.length) {
-      const pasta = await criarPasta('Geral', user!.uid);
+      const pasta = await criarPasta('Pasta sem nome', user!.uid); // <-- nome atualizado
       setFolders([pasta]);
       folderId = pasta.id;
       setActiveFolderId(pasta.id);
@@ -195,7 +199,9 @@ export default function AssistenteIA() {
           )
         );
         setMessages(prev => [...prev, { sender: 'bot', text: data.reply, timestamp: Date.now() }]);
-        if (chatAtual) atualizarChat(chatAtual.folderId, chatId, { messages: [...(chatAtual.messages || []), userMsg, { sender: 'bot', text: data.reply, timestamp: Date.now() }] });
+        if (chatAtual && chatAtual.folderId) {
+          atualizarChat(chatAtual.folderId, chatId, { messages: [...(chatAtual.messages || []), userMsg, { sender: 'bot', text: data.reply, timestamp: Date.now() }] });
+        }
       }
     } catch (err) {
       console.error('Erro ao enviar mensagem', err);
@@ -352,6 +358,33 @@ export default function AssistenteIA() {
     </svg>
   );
 
+  // Ícones SVG modernos em azul
+  const IconRename = (
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" style={{color: "#2563eb"}}>
+      <path d="M16.13 3.87a3 3 0 0 1 4.24 4.24l-1.06 1.06-4.24-4.24 1.06-1.06Zm-2.12 2.12-9 9V19h4.01l9-9-4.01-4.01Z" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  const IconDownload = (
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" style={{color: "#2563eb"}}>
+      <path d="M12 3v14m0 0l-5-5m5 5l5-5M5 21h14" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  const IconDelete = (
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" style={{color: "#2563eb"}}>
+      <path d="M6 7h12M10 11v4m4-4v4M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  const IconMove = (
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" style={{color: "#2563eb"}}>
+      <path d="M5 19l14-14M7 5h12v12" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  const IconRemoveFromFolder = (
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" style={{color: "#2563eb"}}>
+      <path d="M19 5L5 19M5 5h14v14" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+
   // Função para expandir/recolher pasta ao clicar
   const toggleFolder = (folderId: string) => {
     setExpandedFolders(prev =>
@@ -381,6 +414,46 @@ export default function AssistenteIA() {
     setChats(prev => [...prev, novoChat]);
     setActiveChatId(novoChat.id);
   };
+
+  // Fecha o menu de opções da pasta ao clicar fora
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        folderMenuRef.current &&
+        !folderMenuRef.current.contains(event.target as Node)
+      ) {
+        setOpenFolderMenuId(null);
+      }
+    }
+    if (openFolderMenuId) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openFolderMenuId]);
+
+  // Fecha o menu do chat ao clicar fora
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        chatMenuRef.current &&
+        !chatMenuRef.current.contains(event.target as Node)
+      ) {
+        setOpenChatMenuId(null);
+      }
+    }
+    if (openChatMenuId) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openChatMenuId]);
 
   return (
     <ProtectedRoute>
@@ -442,15 +515,15 @@ export default function AssistenteIA() {
                             <button
                               className={styles.folderMenuItem}
                               onClick={e => { e.stopPropagation(); setOpenFolderMenuId(null); renameFolder(folder.id); }}
-                            >✏️ Renomear</button>
+                            >{IconRename}Renomear</button>
                             <button
                               className={styles.folderMenuItem}
                               onClick={e => { e.stopPropagation(); setOpenFolderMenuId(null); exportFolder(folder.id); }}
-                            >⬇️ Baixar</button>
+                            >{IconDownload}Baixar</button>
                             <button
                               className={styles.folderMenuItem}
                               onClick={e => { e.stopPropagation(); setOpenFolderMenuId(null); deleteFolder(folder.id); }}
-                            >🗑️ Excluir</button>
+                            >{IconDelete}Excluir</button>
                             <button
                               className={styles.folderMenuItem}
                               onClick={e => { e.stopPropagation(); setOpenFolderMenuId(null); createChat(); }}
@@ -468,6 +541,7 @@ export default function AssistenteIA() {
                               <li
                                 key={chat.id}
                                 className={`${styles.chatItem} ${chat.id === activeChatId && activeFolderId === folder.id ? styles.activeChat : ''}`}
+                                style={{ position: 'relative' }}
                               >
                                 <span
                                   className={styles.chatItemTitle}
@@ -479,66 +553,59 @@ export default function AssistenteIA() {
                                   {ChatIcon}
                                   <span className={styles.chatItemText}>{chat.title}</span>
                                 </span>
-                                <div className={styles.chatActions}>
-                                  <button onClick={e => { e.stopPropagation(); renameChat(chat.id); }} title="Renomear chat">✏️</button>
-                                  <button onClick={e => { e.stopPropagation(); exportChat(chat); }} title="Baixar PDF">⬇️</button>
-                                  <button onClick={e => { e.stopPropagation(); removeFromFolder(chat); }} title="Remover da pasta">➖</button>
-                                  <button onClick={e => { e.stopPropagation(); moveChatPrompt(chat); }} title="Mover">📁</button>
-                                  <button onClick={e => { e.stopPropagation(); deleteChat(chat.id, chat.folderId); }} title="Excluir">🗑️</button>
-                                </div>
+                                <button
+                                  className={styles.folderMenuButton}
+                                  style={{marginLeft: 4}}
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    setOpenChatMenuId(openChatMenuId === chat.id ? null : chat.id);
+                                  }}
+                                  aria-label="Mais opções do chat"
+                                >
+                                  &#8230;
+                                </button>
+                                {openChatMenuId === chat.id && (
+                                  <div
+                                    ref={chatMenuRef}
+                                    className={styles.folderMenuDropdown}
+                                    style={{left: 60, top: '100%'}}
+                                  >
+                                    <button
+                                      className={styles.folderMenuItem}
+                                      onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); renameChat(chat.id); }}
+                                    >{IconRename}Renomear</button>
+                                    <button
+                                      className={styles.folderMenuItem}
+                                      onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); exportChat(chat); }}
+                                    >{IconDownload}Baixar</button>
+                                    <button
+                                      className={styles.folderMenuItem}
+                                      onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); removeFromFolder(chat); }}
+                                    >{IconRemoveFromFolder}Remover da pasta</button>
+                                    <button
+                                      className={styles.folderMenuItem}
+                                      onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); moveChatPrompt(chat); }}
+                                    >{IconMove}Mover</button>
+                                    <button
+                                      className={styles.folderMenuItem}
+                                      onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); deleteChat(chat.id, chat.folderId); }}
+                                    >{IconDelete}Excluir</button>
+                                  </div>
+                                )}
+                                {/* ...existing chat actions (podem ser removidos se desejar só no menu) ... */}
                               </li>
                             ))}
                         </ul>
                       )}
                     </div>
                   ))}
-                  {/* Chats fora de pasta */}
-                  <div className={styles.folder}>
-                    <div
-                      className={`${styles.folderHeader} ${activeFolderId === null ? styles.folderHeaderActive : ''}`}
-                      onClick={() => {
-                        setActiveFolderId(null);
-                        setExpandedFolders(prev => prev.includes('root') ? prev : [...prev, 'root']);
-                      }}
-                    >
-                      {FolderIcon}
-                      <span className={styles.folderName}>Chats</span>
-                    </div>
-                    {expandedFolders.includes('root') && (
-                      <ul className={styles.chatList}>
-                        {chats
-                          .filter(c => c.folderId === null)
-                          .map(chat => (
-                            <li
-                              key={chat.id}
-                              className={`${styles.chatItem} ${chat.id === activeChatId && activeFolderId === null ? styles.activeChat : ''}`}
-                            >
-                              <span
-                                className={styles.chatItemTitle}
-                                onClick={() => {
-                                  setActiveFolderId(null);
-                                  setActiveChatId(chat.id);
-                                }}
-                              >
-                                {ChatIcon}
-                                <span className={styles.chatItemText}>{chat.title}</span>
-                              </span>
-                              <div className={styles.chatActions}>
-                                <button onClick={e => { e.stopPropagation(); renameChat(chat.id); }} title="Renomear chat">✏️</button>
-                                <button onClick={e => { e.stopPropagation(); exportChat(chat); }} title="Baixar PDF">⬇️</button>
-                                <button onClick={e => { e.stopPropagation(); moveChatPrompt(chat); }} title="Mover">📁</button>
-                                <button onClick={e => { e.stopPropagation(); deleteChat(chat.id, chat.folderId); }} title="Excluir">🗑️</button>
-                              </div>
-                            </li>
-                          ))}
-                      </ul>
-                    )}
-                  </div>
                 </div>
               </aside>
               <div className={styles.chatBox}>
                 <div className={styles.chatTitle}>
-                  {activeFolderId ? (folders.find(f => f.id === activeFolderId)?.name || 'ClinicAid AI') : 'No que você está pensando hoje?'}
+                  {activeFolderId
+                    ? (folders.find(f => f.id === activeFolderId)?.name || 'ClinicAid IA')
+                    : 'No que você está pensando hoje?'}
                 </div>
                 <div className={styles.messages}>
                   {messages.map((msg, idx) => (
