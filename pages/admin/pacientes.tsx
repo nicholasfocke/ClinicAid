@@ -429,6 +429,7 @@ const Pacientes = () => {
 
   const handleDeleteArquivo = async (campo: string, arquivo: PacienteArquivo) => {
     if (!selectedPaciente) return;
+    if (!confirm('Deseja excluir este arquivo?')) return;
     try {
       // Remove do Storage se houver path
       if (arquivo.path) {

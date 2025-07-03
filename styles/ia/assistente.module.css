@@ -30,9 +30,8 @@
 
 .mainContent {
   display: flex;
-  justify-content: center;
   width: 100%;
-  margin-left: 90px;
+  margin-left: 50px;
 }
 
 .chatBox {
@@ -41,8 +40,8 @@
   box-shadow: 0 8px 32px rgba(37,99,235,0.10), 0 1.5px 6px rgba(0,0,0,0.04);
   padding: 0 0 32px 0;
   width: 100%;
-  max-width: 1000px;
-  min-width: 1000px;
+  min-width: 920px;
+  flex: 1;
   display: flex;
   flex-direction: column;
   height: 80vh;
@@ -173,4 +172,88 @@
 @keyframes fadeInLeft {
   from { opacity: 0; transform: translateX(-40px);}
   to { opacity: 1; transform: translateX(0);}
+}
+.chatLayout {
+  display: flex;
+  gap: 20px;
+}
+
+.sidebar {
+  width: 220px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+  overflow-y: auto;
+  margin-top: 23px;
+}
+
+.newFolderButton,
+.newChatButton {
+  background: linear-gradient(120deg, #2563eb 60%, #60a5fa 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.folder {
+  margin-bottom: 12px;
+}
+
+.folderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.folderActions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.folderActions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.chatList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.chatItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+
+.chatItem:hover {
+  background: #f3f4f6;
+}
+
+.activeChat {
+  background: #e0e7ef;
+}
+
+.chatActions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 4px;
 }

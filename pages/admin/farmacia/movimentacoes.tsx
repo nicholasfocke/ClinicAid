@@ -138,8 +138,55 @@ const Movimentacoes = () => {
 
   const handleDelete = async (id: string, tipo: 'entrada' | 'saida') => {
     if (!confirm('Deseja excluir este registro?')) return;
-    if (tipo === 'entrada') await excluirEntradaMedicamento(id);
-    else await excluirSaidaMedicamento(id);
+    const mov = movs.find(m => m.id === id);
+    if (!mov) return;
+    const med = produtos.find(p => p.nome_comercial === mov.medicamento);
+    const medId = med?.id || '';
+    let loteArr: Lote[] = [];
+    let lote: Lote | undefined;
+    if (med && mov.lote) {
+      loteArr = lotes[med.id] || [];
+      lote = loteArr.find(l => l.numero_lote === mov.lote);
+    }
+    if (tipo === 'entrada') {
+      await excluirEntradaMedicamento(id);
+      if (med) {
+        const novaQtdMed = Math.max(0, med.quantidade - mov.quantidade);
+        await atualizarMedicamento(med.id, { quantidade: novaQtdMed });
+        setProdutos(prev =>
+          prev.map(p => (p.id === med.id ? { ...p, quantidade: novaQtdMed } : p)),
+        );
+      }
+      if (med && lote && lote.id) {
+        const novaQtdLote = Math.max(0, lote.quantidade_inicial - mov.quantidade);
+        await atualizarLote(med.id, lote.id, { quantidade_inicial: novaQtdLote });
+        setLotes(prev => ({
+          ...prev,
+          [medId]: loteArr.map(l =>
+            l.numero_lote === mov.lote ? { ...l, quantidade_inicial: novaQtdLote } : l,
+          ),
+        }));
+      }
+    } else {
+      await excluirSaidaMedicamento(id);
+      if (med) {
+        const novaQtdMed = med.quantidade + mov.quantidade;
+        await atualizarMedicamento(med.id, { quantidade: novaQtdMed });
+        setProdutos(prev =>
+          prev.map(p => (p.id === med.id ? { ...p, quantidade: novaQtdMed } : p)),
+        );
+      }
+      if (med && lote && lote.id) {
+        const novaQtdLote = lote.quantidade_inicial + mov.quantidade;
+        await atualizarLote(med.id, lote.id, { quantidade_inicial: novaQtdLote });
+        setLotes(prev => ({
+          ...prev,
+          [medId]: loteArr.map(l =>
+            l.numero_lote === mov.lote ? { ...l, quantidade_inicial: novaQtdLote } : l,
+          ),
+        }));
+      }
+    }
     setMovs(prev => prev.filter(e => e.id !== id));
   };
 
