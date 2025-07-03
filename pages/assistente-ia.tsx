@@ -17,6 +17,11 @@ import {
   atualizarChat,
   excluirPasta as excluirPastaDB,
   atualizarPasta,
+  buscarChatsSoltos,
+  criarChatSolto,
+  excluirChatSolto,
+  atualizarChatSolto,
+  moverChat,
 } from '@/functions/iaFunctions';
 import { useAuth } from '@/context/AuthContext';
 
@@ -42,15 +47,15 @@ export default function AssistenteIA() {
   const folderMenuRef = useRef<HTMLDivElement | null>(null);
 
   // Controle de pastas expandidas/recolhidas
-  const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
+  const [expandedFolders, setExpandedFolders] = useState<string[]>(['root']);
 
   useEffect(() => {
     if (!user) return;
 
     (async () => {
       const pastas = await buscarPastas(user.uid);
-      if (pastas.length === 0) {
-        // Não cria pasta/chat automaticamente aqui
+      const soltos = await buscarChatsSoltos(user.uid);
+      if (pastas.length === 0 && soltos.length === 0) {
         setFolders([]);
         setChats([]);
         setActiveFolderId(null);
@@ -63,21 +68,22 @@ export default function AssistenteIA() {
         const ch = await buscarChats(p.id);
         allChats.push(...ch);
       }
+      allChats.push(...soltos);
       setChats(allChats);
-      setActiveFolderId(pastas[0].id);
-      const chatsDaPasta = allChats.filter(c => c.folderId === pastas[0].id);
-      if (chatsDaPasta.length > 0) setActiveChatId(chatsDaPasta[0].id);
-      else setActiveChatId(null);
+      if (pastas.length > 0) {
+        setActiveFolderId(pastas[0].id);
+        const chatsDaPasta = allChats.filter(c => c.folderId === pastas[0].id);
+        if (chatsDaPasta.length > 0) setActiveChatId(chatsDaPasta[0].id);
+        else setActiveChatId(null);
+      } else {
+        setActiveFolderId(null);
+        if (soltos.length > 0) setActiveChatId(soltos[0].id); else setActiveChatId(null);
+      }
     })();
   }, [user]);
 
   // Atualiza chats ao trocar de pasta
   useEffect(() => {
-    if (!activeFolderId) {
-      setActiveChatId(null);
-      return;
-    }
-    // Só seleciona automaticamente se o chat ativo não for da pasta atual
     setChats(prevChats => {
       const chatsDaPasta = prevChats.filter(c => c.folderId === activeFolderId);
       if (chatsDaPasta.length > 0 && (!activeChatId || !chatsDaPasta.some(c => c.id === activeChatId))) {
@@ -131,14 +137,29 @@ export default function AssistenteIA() {
       } else {
         chatAtual = chats.find(c => c.id === chatId);
       }
+    } else {
+      const chatsSoltos = chats.filter(c => c.folderId === null);
+      if (!chatsSoltos.length) {
+        const novoChat = await criarChatSolto(user!.uid, 'Novo Chat');
+        setChats(prev => [...prev, novoChat]);
+        chatId = novoChat.id;
+        setActiveChatId(novoChat.id);
+        chatAtual = novoChat;
+      } else if (!chatId || !chatsSoltos.some(c => c.id === chatId)) {
+        chatId = chatsSoltos[0].id;
+        setActiveChatId(chatId);
+        chatAtual = chatsSoltos[0];
+      } else {
+        chatAtual = chats.find(c => c.id === chatId);
+      }
     }
 
     // Atualiza estados locais se necessário
     if (!activeFolderId && folderId) setActiveFolderId(folderId);
     if (!activeChatId && chatId) setActiveChatId(chatId);
 
-    // Só envia mensagem se já tem pasta e chat
-    if (!folderId || !chatId) return;
+    // Só envia mensagem se já tem chat
+    if (!chatId) return;
 
     const userMsg: Message = { sender: 'user', text: input, timestamp: Date.now() };
     setChats(prevChats =>
@@ -149,7 +170,13 @@ export default function AssistenteIA() {
       )
     );
     setMessages(prev => [...prev, userMsg]);
-    if (chatAtual) atualizarChat(chatAtual.folderId, chatId, { messages: [...(chatAtual.messages || []), userMsg] });
+    if (chatAtual) {
+      if (chatAtual.folderId) {
+        atualizarChat(chatAtual.folderId, chatId, { messages: [...(chatAtual.messages || []), userMsg] });
+      } else {
+        atualizarChatSolto(chatId, { messages: [...(chatAtual.messages || []), userMsg] });
+      }
+    }
     setInput('');
     setLoading(true);
     try {
@@ -199,8 +226,30 @@ export default function AssistenteIA() {
     if (!chat) return;
     const newTitle = prompt('Novo título do chat:', chat.title);
     if (!newTitle || newTitle.trim() === chat.title) return;
-    await atualizarChat(chat.folderId, chatId, { title: newTitle.trim() });
+    if (chat.folderId) {
+      await atualizarChat(chat.folderId, chatId, { title: newTitle.trim() });
+    } else {
+      await atualizarChatSolto(chatId, { title: newTitle.trim() });
+    }
     setChats(prev => prev.map(c => c.id === chatId ? { ...c, title: newTitle.trim() } : c));
+  };
+
+  const moveChatPrompt = async (chat: Chat) => {
+    const destino = prompt('ID da pasta destino (vazio para fora de pastas)');
+    if (destino === null) return;
+    const targetId = destino.trim() === '' ? null : destino.trim();
+    await moverChat(chat.id, chat.folderId, targetId, user!.uid);
+    setChats(prev => prev.map(c => c.id === chat.id ? { ...c, folderId: targetId } : c));
+    if (activeChatId === chat.id) {
+      setActiveFolderId(targetId);
+    }
+  };
+
+  const removeFromFolder = async (chat: Chat) => {
+    if (!chat.folderId) return;
+    await moverChat(chat.id, chat.folderId, null, user!.uid);
+    setChats(prev => prev.map(c => c.id === chat.id ? { ...c, folderId: null } : c));
+    if (activeChatId === chat.id) setActiveFolderId(null);
   };
 
   // Exportar pasta como PDF
@@ -267,9 +316,13 @@ export default function AssistenteIA() {
   };
 
   // Excluir chat
-  const deleteChat = async (chatId: string, folderId: string) => {
+  const deleteChat = async (chatId: string, folderId: string | null) => {
     if (!window.confirm('Tem certeza que deseja excluir este chat?')) return;
-    await excluirChatDB(folderId, chatId);
+    if (folderId) {
+      await excluirChatDB(folderId, chatId);
+    } else {
+      await excluirChatSolto(chatId);
+    }
     setChats(prev => prev.filter(c => c.id !== chatId));
     if (activeChatId === chatId) {
       // Seleciona outro chat da pasta, se houver
@@ -429,6 +482,8 @@ export default function AssistenteIA() {
                                 <div className={styles.chatActions}>
                                   <button onClick={e => { e.stopPropagation(); renameChat(chat.id); }} title="Renomear chat">✏️</button>
                                   <button onClick={e => { e.stopPropagation(); exportChat(chat); }} title="Baixar PDF">⬇️</button>
+                                  <button onClick={e => { e.stopPropagation(); removeFromFolder(chat); }} title="Remover da pasta">➖</button>
+                                  <button onClick={e => { e.stopPropagation(); moveChatPrompt(chat); }} title="Mover">📁</button>
                                   <button onClick={e => { e.stopPropagation(); deleteChat(chat.id, chat.folderId); }} title="Excluir">🗑️</button>
                                 </div>
                               </li>
@@ -437,10 +492,54 @@ export default function AssistenteIA() {
                       )}
                     </div>
                   ))}
+                  {/* Chats fora de pasta */}
+                  <div className={styles.folder}>
+                    <div
+                      className={`${styles.folderHeader} ${activeFolderId === null ? styles.folderHeaderActive : ''}`}
+                      onClick={() => {
+                        setActiveFolderId(null);
+                        setExpandedFolders(prev => prev.includes('root') ? prev : [...prev, 'root']);
+                      }}
+                    >
+                      {FolderIcon}
+                      <span className={styles.folderName}>Chats</span>
+                    </div>
+                    {expandedFolders.includes('root') && (
+                      <ul className={styles.chatList}>
+                        {chats
+                          .filter(c => c.folderId === null)
+                          .map(chat => (
+                            <li
+                              key={chat.id}
+                              className={`${styles.chatItem} ${chat.id === activeChatId && activeFolderId === null ? styles.activeChat : ''}`}
+                            >
+                              <span
+                                className={styles.chatItemTitle}
+                                onClick={() => {
+                                  setActiveFolderId(null);
+                                  setActiveChatId(chat.id);
+                                }}
+                              >
+                                {ChatIcon}
+                                <span className={styles.chatItemText}>{chat.title}</span>
+                              </span>
+                              <div className={styles.chatActions}>
+                                <button onClick={e => { e.stopPropagation(); renameChat(chat.id); }} title="Renomear chat">✏️</button>
+                                <button onClick={e => { e.stopPropagation(); exportChat(chat); }} title="Baixar PDF">⬇️</button>
+                                <button onClick={e => { e.stopPropagation(); moveChatPrompt(chat); }} title="Mover">📁</button>
+                                <button onClick={e => { e.stopPropagation(); deleteChat(chat.id, chat.folderId); }} title="Excluir">🗑️</button>
+                              </div>
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               </aside>
               <div className={styles.chatBox}>
-                <div className={styles.chatTitle}>ClinicAid AI</div>
+                <div className={styles.chatTitle}>
+                  {activeFolderId ? (folders.find(f => f.id === activeFolderId)?.name || 'ClinicAid AI') : 'No que você está pensando hoje?'}
+                </div>
                 <div className={styles.messages}>
                   {messages.map((msg, idx) => (
                     <div
