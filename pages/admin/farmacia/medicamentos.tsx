@@ -21,6 +21,11 @@ import { buscarLotes, criarLote, atualizarLote, excluirLote, getStatusColor } fr
 const formatValor = (valor: number) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+const parseValor = (valor: string) => {
+  const digits = valor.replace(/\D/g, "");
+  return Number(digits) / 100;
+}
+
 interface Medicamento extends MedicamentoData {
   id: string;
   selected?: boolean;
@@ -32,7 +37,8 @@ interface Lote {
   data_fabricacao: string;
   validade: string;
   quantidade_inicial: number;
-  custo_unitario: number;
+  valor_compra: number;
+  valor_venda: number;
   fabricante: string;
   localizacao_fisica: string;
   status: string;
@@ -152,11 +158,14 @@ const Medicamentos = () => {
     data_fabricacao: "",
     validade: "",
     quantidade_inicial: 0,
-    custo_unitario: 0,
+    valor_compra: 0,
+    valor_venda: 0,
     fabricante: "",
     localizacao_fisica: "",
     status: "",
   });
+  const [valorCompraInput, setValorCompraInput] = useState("");
+  const [valorVendaInput, setValorVendaInput] = useState("");
   const [currentMedId, setCurrentMedId] = useState<string>("");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [showLoteDetails, setShowLoteDetails] = useState(false);
@@ -276,7 +285,7 @@ const Medicamentos = () => {
       }
       const loteArr = lotes[movMedicamento.id] || [];
       const lote = loteArr.find((l) => l.numero_lote === movLote);
-      const valorTotal = lote ? movQuantidade * lote.custo_unitario : 0;
+      const valorTotal = lote ? movQuantidade * lote.valor_compra : 0;
       await registrarEntradaMedicamento({
         medicamento: movMedicamento.nome_comercial,
         quantidade: movQuantidade,
@@ -327,7 +336,7 @@ const Medicamentos = () => {
       }
       const loteArrSaida = lotes[movMedicamento.id] || [];
       const loteSaida = loteArrSaida.find((l) => l.numero_lote === movLote);
-      const valorTotalSaida = loteSaida ? movQuantidade * loteSaida.custo_unitario : 0;
+      const valorTotalSaida = loteSaida ? movQuantidade * loteSaida.valor_venda : 0;
       await registrarSaidaMedicamento({
         medicamento: movMedicamento.nome_comercial,
         quantidade: movQuantidade,
@@ -500,6 +509,8 @@ const Medicamentos = () => {
 
   const openLoteModal = (medId: string) => {
     setCurrentMedId(medId);
+      setValorCompraInput("");
+    setValorVendaInput("");
     setShowLoteModal(true);
   };
 
@@ -542,11 +553,14 @@ const Medicamentos = () => {
       data_fabricacao: "",
       validade: "",
       quantidade_inicial: 0,
-      custo_unitario: 0,
+      valor_compra: 0,
+      valor_venda: 0,
       fabricante: "",
       localizacao_fisica: "",
       status: "",
     });
+    setValorCompraInput("");
+    setValorVendaInput("");
     setShowLoteModal(false);
   };
 
@@ -1088,22 +1102,11 @@ const Medicamentos = () => {
             <div className={modalStyles.formGrid}>
               {[
                 { label: "Número do lote", name: "numero_lote" },
-                {
-                  label: "Data de fabricação",
-                  name: "data_fabricacao",
-                  type: "date",
-                },
+                { label: "Data de fabricação", name: "data_fabricacao", type: "date", },
                 { label: "Validade", name: "validade", type: "date" },
-                {
-                  label: "Quantidade inicial",
-                  name: "quantidade_inicial",
-                  type: "number",
-                },
-                {
-                  label: "Custo unitário",
-                  name: "custo_unitario",
-                  type: "number",
-                },
+                { label: "Quantidade inicial", name: "quantidade_inicial", type: "number",},
+                { label: "Valor Compra", name: "valor_compra", type: "text" },
+                { label: "Valor Venda", name: "valor_venda", type: "text" },
                 { label: "Fabricante", name: "fabricante" },
                 { label: "Localização física", name: "localizacao_fisica" },
               ].map(({ label, name, type = "text" }) => (
@@ -1113,16 +1116,29 @@ const Medicamentos = () => {
                     name={name}
                     type={type}
                     className={modalStyles.input}
-                    value={(newLote as any)[name]}
-                    onChange={(e) =>
-                      setNewLote((prev) => ({
-                        ...prev,
-                        [name]:
-                          type === "number"
-                            ? Number(e.target.value)
-                            : e.target.value,
-                      }))
+                    value={
+                      name === "valor_compra"
+                        ? valorCompraInput
+                        : name === "valor_venda"
+                        ? valorVendaInput
+                        : (newLote as any)[name]
                     }
+                    onChange={(e) => {
+                      if (name === "valor_compra") {
+                        const numeric = parseValor(e.target.value);
+                        setValorCompraInput(formatValor(numeric));
+                        setNewLote(prev => ({ ...prev, valor_compra: numeric }));
+                      } else if (name === "valor_venda") {
+                        const numeric = parseValor(e.target.value);
+                        setValorVendaInput(formatValor(numeric));
+                        setNewLote(prev => ({ ...prev, valor_venda: numeric }));
+                      } else {
+                        setNewLote(prev => ({
+                          ...prev,
+                          [name]: type === "number" ? Number(e.target.value) : e.target.value,
+                        }));
+                      }
+                    }}
                   />
                 </div>
               ))}
@@ -1166,7 +1182,8 @@ const Medicamentos = () => {
                     { label: "Data de fabricação", name: "data_fabricacao", type: "date" },
                     { label: "Validade", name: "validade", type: "date" },
                     { label: "Quantidade inicial", name: "quantidade_inicial", type: "number" },
-                    { label: "Custo unitário", name: "custo_unitario", type: "number" },
+                    { label: "Valor Compra", name: "valor_compra", type: "number" },
+                    { label: "Valor Venda", name: "valor_venda", type: "number" },
                     { label: "Fabricante", name: "fabricante" },
                     { label: "Localização física", name: "localizacao_fisica" },
                   ].map(({ label, name, type = "text" }) => (
@@ -1220,8 +1237,12 @@ const Medicamentos = () => {
                   {selectedLote.quantidade_inicial}
                 </p>
                 <p>
-                  <strong>Custo unitário:</strong>{" "}
-                  {formatValor(selectedLote.custo_unitario)}
+                  <strong>Valor compra:</strong>{" "}
+                  {formatValor(selectedLote.valor_compra)}
+                </p>
+                <p>
+                  <strong>Valor venda:</strong>{" "}
+                  {formatValor(selectedLote.valor_venda)}
                 </p>
                 <p>
                   <strong>Fabricante:</strong> {selectedLote.fabricante}

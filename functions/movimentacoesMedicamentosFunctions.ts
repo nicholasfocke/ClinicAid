@@ -11,6 +11,7 @@ export interface MovimentacaoMedicamento {
   lote?: string;
   documentoUrl?: string;
   receitaUrl?: string;
+  dataHora?: string;
   paciente?: string;
   profissional?: string;
   valorTotal?: number;
@@ -19,14 +20,14 @@ export interface MovimentacaoMedicamento {
 export const registrarEntradaMedicamento = async (
   data: MovimentacaoMedicamento,
 ) => {
-  const docRef = await addDoc(collection(firestore, 'entradasMedicamentos'), data);
+  const docRef = await addDoc(collection(firestore, 'entradasMedicamentos'), {...data, dataHora: new Date().toISOString(),});
   return docRef.id;
 };
 
 export const registrarSaidaMedicamento = async (
   data: MovimentacaoMedicamento,
 ) => {
-  const docRef = await addDoc(collection(firestore, 'saidasMedicamentos'), data);
+  const docRef = await addDoc(collection(firestore, 'saidasMedicamentos'), {...data, dataHora: new Date().toISOString(),});
   return docRef.id;
 };
 

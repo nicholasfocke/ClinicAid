@@ -116,7 +116,7 @@ const Movimentacoes = () => {
         ...(entradas as any).map((e: any) => ({ ...e, tipo: 'entrada' })),
         ...(saidas as any).map((s: any) => ({ ...s, tipo: 'saida' })),
       ];
-      all.sort((a, b) => b.data.localeCompare(a.data));
+      all.sort((a, b) => (b.dataHora || b.data).localeCompare(a.dataHora || a.data));
       setMovs(all);
     };
     fetchData();
@@ -278,7 +278,7 @@ const Movimentacoes = () => {
       ...(entradas as any).map((e: any) => ({ ...e, tipo: 'entrada' })),
       ...(saidas as any).map((s: any) => ({ ...s, tipo: 'saida' })),
     ];
-    all.sort((a, b) => b.data.localeCompare(a.data));
+    all.sort((a, b) => (b.dataHora || b.data).localeCompare(a.dataHora || a.data));
     setMovs(all);
   };
 
@@ -429,6 +429,7 @@ const Movimentacoes = () => {
             <thead>
               {activeTab === 'todos' && (
                 <tr>
+                  <th>DATA/HORA</th>
                   <th>PRODUTO</th>
                   <th>Nº Lote</th>
                   <th>QTDE</th>
@@ -440,6 +441,7 @@ const Movimentacoes = () => {
               )}
               {activeTab === 'saidas' && (
                 <tr>
+                  <th>DATA/HORA</th>
                   <th>PRODUTO</th>
                   <th>Nº Lote</th>
                   <th>PACIENTE</th>
@@ -453,6 +455,7 @@ const Movimentacoes = () => {
               )}
               {activeTab === 'entradas' && (
                 <tr>
+                  <th>DATA/HORA</th>                    
                   <th>PRODUTO</th>
                   <th>Nº Lote</th>
                   <th>MOTIVO</th>
@@ -467,6 +470,7 @@ const Movimentacoes = () => {
                 <tr key={e.id}>
                   {activeTab === 'todos' && (
                     <>
+                      <td>{formatDateSafe(e.dataHora || e.data, 'dd/MM/yy HH:mm')}</td>
                       <td>{e.medicamento}</td>
                       <td>{e.lote || '-'}</td>
                       <td>{e.quantidade}</td>
@@ -486,6 +490,7 @@ const Movimentacoes = () => {
                   )}
                   {activeTab === 'saidas' && (
                     <>
+                      <td>{formatDateSafe(e.dataHora || e.data, 'dd/MM/yy HH:mm')}</td>
                       <td>{e.medicamento}</td>
                       <td>{e.lote || '-'}</td>
                       <td>{e.paciente || '-'}</td>
@@ -506,6 +511,7 @@ const Movimentacoes = () => {
                   )}
                   {activeTab === 'entradas' && (
                     <>
+                      <td>{formatDateSafe(e.dataHora || e.data, 'dd/MM/yy HH:mm')}</td>
                       <td>{e.medicamento}</td>
                       <td>{e.lote || '-'}</td>
                       <td>{e.motivo}</td>

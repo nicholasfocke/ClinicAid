@@ -8,7 +8,8 @@ export interface Lote {
   data_fabricacao: string;
   validade: string;
   quantidade_inicial: number;
-  custo_unitario: number;
+  valor_compra: number;
+  valor_venda: number;
   fabricante: string;
   localizacao_fisica: string;
   status: string;
