@@ -742,10 +742,8 @@ const Medicamentos = () => {
                       return (
                         <>
                           {formatDateSafe(first.validade, "dd/MM/yyyy")}
-                          <span
-                            className={tableStyles.statusCircle}
-                            style={{ background: getStatusColor(first.status) }}
-                          ></span>
+                          <span className={tableStyles.statusCircle} style={{ background: getStatusColor(first.status) }}
+                            title={first.status} ></span>
                         </>
                       );
                     })()}
@@ -807,7 +805,8 @@ const Medicamentos = () => {
                               <td>{l.numero_lote}</td>
                               <td>
                                 {formatDateSafe(l.validade, "dd/MM/yy")}
-                                <span className={tableStyles.statusCircle} style={{ background: getStatusColor(l.status) }}></span>
+                                <span className={tableStyles.statusCircle} style={{ background: getStatusColor(l.status) }}
+                                      title={l.status} ></span>
                               </td>
                               <td>{l.quantidade_inicial}</td>
                               <td>{l.localizacao_fisica}</td>

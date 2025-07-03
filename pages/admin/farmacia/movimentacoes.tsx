@@ -83,6 +83,7 @@ const Movimentacoes = () => {
         <span
           className={tableStyles.statusCircle}
           style={{ background: getStatusColor(l.status) }}
+          title={l.status}
         ></span>
       </>
     );
@@ -706,10 +707,7 @@ const Movimentacoes = () => {
                     <option value="">Selecione</option>
                     {(selectedProdutoSaida ? lotes[selectedProdutoSaida.id] || [] : []).map(l => (
                       <option key={l.numero_lote} value={l.numero_lote}>
-                        {`${l.numero_lote} - Val: ${formatDateSafe(
-                          l.validade,
-                          'dd/MM/yyyy',
-                        )} - Qtde: ${l.quantidade_inicial}`}
+                        {`${l.numero_lote} - Val: ${formatDateSafe(l.validade, 'dd/MM/yyyy',)} - Qtde: ${l.quantidade_inicial}`}
                       </option>
                     ))}
                   </select>
