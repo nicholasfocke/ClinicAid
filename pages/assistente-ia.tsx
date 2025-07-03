@@ -240,15 +240,33 @@ export default function AssistenteIA() {
     setChats(prev => prev.map(c => c.id === chatId ? { ...c, title: newTitle.trim() } : c));
   };
 
-  const moveChatPrompt = async (chat: Chat) => {
-    const destino = prompt('ID da pasta destino (vazio para fora de pastas)');
-    if (destino === null) return;
-    const targetId = destino.trim() === '' ? null : destino.trim();
-    await moverChat(chat.id, chat.folderId, targetId, user!.uid);
-    setChats(prev => prev.map(c => c.id === chat.id ? { ...c, folderId: targetId } : c));
-    if (activeChatId === chat.id) {
-      setActiveFolderId(targetId);
-    }
+  const handleDropOnFolder = async (e: React.DragEvent<HTMLDivElement>, folderId: string) => {
+    e.preventDefault();
+    const chatId = e.dataTransfer.getData('chatId');
+    const chat = chats.find(c => c.id === chatId);
+    if (!chat || chat.folderId === folderId) return;
+    await moverChat(chat.id, chat.folderId, folderId, user!.uid);
+    setChats(prev => prev.map(c => c.id === chat.id ? { ...c, folderId } : c));
+    if (activeChatId === chat.id) setActiveFolderId(folderId);
+  };
+
+  const handleDropOnRoot = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const chatId = e.dataTransfer.getData('chatId');
+    const chat = chats.find(c => c.id === chatId);
+    if (!chat || chat.folderId === null) return;
+    await moverChat(chat.id, chat.folderId, null, user!.uid);
+    setChats(prev => prev.map(c => c.id === chat.id ? { ...c, folderId: null } : c));
+    if (activeChatId === chat.id) setActiveFolderId(null);
+  };
+
+  const toggleRoot = () => {
+    setExpandedFolders(prev =>
+      prev.includes('root')
+        ? prev.filter(id => id !== 'root')
+        : [...prev, 'root']
+    );
+    setActiveFolderId(null);
   };
 
   const removeFromFolder = async (chat: Chat) => {
@@ -374,11 +392,6 @@ export default function AssistenteIA() {
       <path d="M6 7h12M10 11v4m4-4v4M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
-  const IconMove = (
-    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" style={{color: "#2563eb"}}>
-      <path d="M5 19l14-14M7 5h12v12" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
   const IconRemoveFromFolder = (
     <svg width="20" height="20" fill="none" viewBox="0 0 24 24" style={{color: "#2563eb"}}>
       <path d="M19 5L5 19M5 5h14v14" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -485,10 +498,84 @@ export default function AssistenteIA() {
                   </button>
                 </div>
                 <div className={styles.sidebarFolders}>
+                  <div
+                    className={styles.folder}
+                    onDragOver={e => e.preventDefault()}
+                    onDrop={handleDropOnRoot}
+                  >
+                    <div
+                      className={`${styles.folderHeader} ${activeFolderId === null ? styles.folderHeaderActive : ''}`}
+                      onClick={toggleRoot}
+                    >
+                      {ChatIcon}
+                      <span className={styles.folderName}>Chats</span>
+                    </div>
+                    {expandedFolders.includes('root') && (
+                      <ul className={styles.chatList}>
+                        {chats
+                          .filter(c => c.folderId === null)
+                          .map(chat => (
+                            <li
+                              key={chat.id}
+                              className={`${styles.chatItem} ${chat.id === activeChatId && activeFolderId === null ? styles.activeChat : ''}`}
+                              style={{ position: 'relative' }}
+                              draggable
+                              onDragStart={e => {
+                                e.dataTransfer.setData('chatId', chat.id);
+                              }}
+                            >
+                              <span
+                                className={styles.chatItemTitle}
+                                onClick={() => {
+                                  setActiveFolderId(null);
+                                  setActiveChatId(chat.id);
+                                }}
+                              >
+                                {ChatIcon}
+                                <span className={styles.chatItemText}>{chat.title}</span>
+                              </span>
+                              <button
+                                className={styles.folderMenuButton}
+                                style={{ marginLeft: 4 }}
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setOpenChatMenuId(openChatMenuId === chat.id ? null : chat.id);
+                                }}
+                                aria-label="Mais opções do chat"
+                              >
+                                &#8230;
+                              </button>
+                              {openChatMenuId === chat.id && (
+                                <div
+                                  ref={chatMenuRef}
+                                  className={styles.folderMenuDropdown}
+                                  style={{ left: 60, top: '100%' }}
+                                >
+                                  <button
+                                    className={styles.folderMenuItem}
+                                    onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); renameChat(chat.id); }}
+                                  >{IconRename}Renomear</button>
+                                  <button
+                                    className={styles.folderMenuItem}
+                                    onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); exportChat(chat); }}
+                                  >{IconDownload}Baixar</button>
+                                  <button
+                                    className={styles.folderMenuItem}
+                                    onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); deleteChat(chat.id, chat.folderId); }}
+                                  >{IconDelete}Excluir</button>
+                                </div>
+                              )}
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </div>
                   {folders.map(folder => (
                     <div
                       key={folder.id}
                       className={styles.folder}
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={e => handleDropOnFolder(e, folder.id)}
                     >
                       <div
                         className={`${styles.folderHeader} ${activeFolderId === folder.id ? styles.folderHeaderActive : ''}`}
@@ -542,6 +629,10 @@ export default function AssistenteIA() {
                                 key={chat.id}
                                 className={`${styles.chatItem} ${chat.id === activeChatId && activeFolderId === folder.id ? styles.activeChat : ''}`}
                                 style={{ position: 'relative' }}
+                                draggable
+                                onDragStart={e => {
+                                  e.dataTransfer.setData('chatId', chat.id);
+                                }}
                               >
                                 <span
                                   className={styles.chatItemTitle}
@@ -582,10 +673,6 @@ export default function AssistenteIA() {
                                       className={styles.folderMenuItem}
                                       onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); removeFromFolder(chat); }}
                                     >{IconRemoveFromFolder}Remover da pasta</button>
-                                    <button
-                                      className={styles.folderMenuItem}
-                                      onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); moveChatPrompt(chat); }}
-                                    >{IconMove}Mover</button>
                                     <button
                                       className={styles.folderMenuItem}
                                       onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); deleteChat(chat.id, chat.folderId); }}
