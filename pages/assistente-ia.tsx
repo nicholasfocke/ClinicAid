@@ -116,17 +116,11 @@ export default function AssistenteIA() {
     let folderId = activeFolderId;
     let chatId = activeChatId;
 
-    // Cria pasta se não existir nenhuma
-    if (!folders.length) {
-      const pasta = await criarPasta('Pasta sem nome', user!.uid); // <-- nome atualizado
-      setFolders([pasta]);
-      folderId = pasta.id;
-      setActiveFolderId(pasta.id);
-    }
-
-    // Cria chat se não existir nenhum na pasta ativa
     let chatAtual: Chat | undefined = undefined;
+
+    // Não cria pasta automaticamente!
     if (folderId) {
+      // Cria chat se não existir nenhum na pasta ativa
       const chatsDaPasta = chats.filter(c => c.folderId === folderId);
       if (!chatsDaPasta.length) {
         const novoChat = await criarChatDB(folderId, 'Novo Chat');
@@ -142,6 +136,7 @@ export default function AssistenteIA() {
         chatAtual = chats.find(c => c.id === chatId);
       }
     } else {
+      // Chat solto (sem pasta)
       const chatsSoltos = chats.filter(c => c.folderId === null);
       if (!chatsSoltos.length) {
         const novoChat = await criarChatSolto(user!.uid, 'Novo Chat');
@@ -159,7 +154,6 @@ export default function AssistenteIA() {
     }
 
     // Atualiza estados locais se necessário
-    if (!activeFolderId && folderId) setActiveFolderId(folderId);
     if (!activeChatId && chatId) setActiveChatId(chatId);
 
     // Só envia mensagem se já tem chat
@@ -201,6 +195,8 @@ export default function AssistenteIA() {
         setMessages(prev => [...prev, { sender: 'bot', text: data.reply, timestamp: Date.now() }]);
         if (chatAtual && chatAtual.folderId) {
           atualizarChat(chatAtual.folderId, chatId, { messages: [...(chatAtual.messages || []), userMsg, { sender: 'bot', text: data.reply, timestamp: Date.now() }] });
+        } else if (chatAtual) {
+          atualizarChatSolto(chatId, { messages: [...(chatAtual.messages || []), userMsg, { sender: 'bot', text: data.reply, timestamp: Date.now() }] });
         }
       }
     } catch (err) {
@@ -398,6 +394,13 @@ export default function AssistenteIA() {
     </svg>
   );
 
+  // Ícone Plus branco para ambos os botões
+  const PlusIconWhite = (
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" style={{marginRight: 6, verticalAlign: 'middle'}}>
+      <path fill="#fff" d="M12 5v14m7-7H5" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  );
+
   // Função para expandir/recolher pasta ao clicar
   const toggleFolder = (folderId: string) => {
     setExpandedFolders(prev =>
@@ -425,6 +428,17 @@ export default function AssistenteIA() {
     if (!title) return;
     const novoChat = await criarChatDB(activeFolderId, title);
     setChats(prev => [...prev, novoChat]);
+    setActiveChatId(novoChat.id);
+  };
+
+  // Função para criar novo chat solto (fora de pasta)
+  const createChatSolto = async () => {
+    if (!user) return;
+    const title = prompt('Título do novo chat', 'Novo Chat');
+    if (!title) return;
+    const novoChat = await criarChatSolto(user.uid, title);
+    setChats(prev => [...prev, novoChat]);
+    setActiveFolderId(null);
     setActiveChatId(novoChat.id);
   };
 
@@ -491,85 +505,21 @@ export default function AssistenteIA() {
                 <div className={styles.sidebarHeader}>
                   <button
                     className={styles.newFolderButton}
+                    onClick={createChatSolto}
+                  >
+                    {PlusIconWhite}
+                    Novo chat
+                  </button>
+                  <button
+                    className={styles.newFolderButton}
                     onClick={createFolder}
                   >
-                    {PlusIcon}
+                    {PlusIconWhite}
                     Nova pasta
                   </button>
                 </div>
                 <div className={styles.sidebarFolders}>
-                  <div
-                    className={styles.folder}
-                    onDragOver={e => e.preventDefault()}
-                    onDrop={handleDropOnRoot}
-                  >
-                    <div
-                      className={`${styles.folderHeader} ${activeFolderId === null ? styles.folderHeaderActive : ''}`}
-                      onClick={toggleRoot}
-                    >
-                      {ChatIcon}
-                      <span className={styles.folderName}>Chats</span>
-                    </div>
-                    {expandedFolders.includes('root') && (
-                      <ul className={styles.chatList}>
-                        {chats
-                          .filter(c => c.folderId === null)
-                          .map(chat => (
-                            <li
-                              key={chat.id}
-                              className={`${styles.chatItem} ${chat.id === activeChatId && activeFolderId === null ? styles.activeChat : ''}`}
-                              style={{ position: 'relative' }}
-                              draggable
-                              onDragStart={e => {
-                                e.dataTransfer.setData('chatId', chat.id);
-                              }}
-                            >
-                              <span
-                                className={styles.chatItemTitle}
-                                onClick={() => {
-                                  setActiveFolderId(null);
-                                  setActiveChatId(chat.id);
-                                }}
-                              >
-                                {ChatIcon}
-                                <span className={styles.chatItemText}>{chat.title}</span>
-                              </span>
-                              <button
-                                className={styles.folderMenuButton}
-                                style={{ marginLeft: 4 }}
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  setOpenChatMenuId(openChatMenuId === chat.id ? null : chat.id);
-                                }}
-                                aria-label="Mais opções do chat"
-                              >
-                                &#8230;
-                              </button>
-                              {openChatMenuId === chat.id && (
-                                <div
-                                  ref={chatMenuRef}
-                                  className={styles.folderMenuDropdown}
-                                  style={{ left: 60, top: '100%' }}
-                                >
-                                  <button
-                                    className={styles.folderMenuItem}
-                                    onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); renameChat(chat.id); }}
-                                  >{IconRename}Renomear</button>
-                                  <button
-                                    className={styles.folderMenuItem}
-                                    onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); exportChat(chat); }}
-                                  >{IconDownload}Baixar</button>
-                                  <button
-                                    className={styles.folderMenuItem}
-                                    onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); deleteChat(chat.id, chat.folderId); }}
-                                  >{IconDelete}Excluir</button>
-                                </div>
-                              )}
-                            </li>
-                          ))}
-                      </ul>
-                    )}
-                  </div>
+                  {/* Removido bloco de pasta "Chats" */}
                   {folders.map(folder => (
                     <div
                       key={folder.id}
@@ -686,6 +636,66 @@ export default function AssistenteIA() {
                       )}
                     </div>
                   ))}
+                  {/* Exibe chats soltos diretamente no sidebar */}
+                  <ul className={styles.chatList}>
+                    {chats
+                      .filter(c => c.folderId === null)
+                      .map(chat => (
+                        <li
+                          key={chat.id}
+                          className={`${styles.chatItem} ${chat.id === activeChatId && activeFolderId === null ? styles.activeChat : ''}`}
+                          style={{ position: 'relative' }}
+                          draggable
+                          onDragStart={e => {
+                            e.dataTransfer.setData('chatId', chat.id);
+                          }}
+                        >
+                          <span
+                            className={styles.chatItemTitle}
+                            onClick={() => {
+                              setActiveFolderId(null);
+                              setActiveChatId(chat.id);
+                            }}
+                          >
+                            {ChatIcon}
+                            <span className={styles.chatItemText}>{chat.title}</span>
+                          </span>
+                          <div className={styles.outsideChatActions}>
+                            <button
+                              className={styles.folderMenuButton}
+                              style={{ marginLeft: 4 }}
+                              onClick={e => {
+                                e.stopPropagation();
+                                setOpenChatMenuId(openChatMenuId === chat.id ? null : chat.id);
+                              }}
+                              aria-label="Mais opções do chat"
+                            >
+                              &#8230;
+                            </button>
+                            {openChatMenuId === chat.id && (
+                              <div
+                                ref={chatMenuRef}
+                                className={styles.folderMenuDropdown}
+                                style={{ left: 60, top: '100%' }}
+                              >
+                                <button
+                                  className={styles.folderMenuItem}
+                                  onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); renameChat(chat.id); }}
+                                >{IconRename}Renomear</button>
+                                <button
+                                  className={styles.folderMenuItem}
+                                  onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); exportChat(chat); }}
+                                >{IconDownload}Baixar</button>
+                                <button
+                                  className={styles.folderMenuItem}
+                                  onClick={e => { e.stopPropagation(); setOpenChatMenuId(null); deleteChat(chat.id, chat.folderId); }}
+                                >{IconDelete}Excluir</button>
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                  </ul>
                 </div>
               </aside>
               <div className={styles.chatBox}>

@@ -180,15 +180,15 @@
 
 .sidebar {
   width: 260px;
-  background: #f7f7f8;
+  background: #ffffff; /* cinza mais escuro para maior visibilidade */
   border: none;
   border-radius: 16px;
-  padding: 0;
+  padding-bottom: 30px;
   display: flex;
   flex-direction: column;
   height: 80vh;
   overflow-y: auto;
-  margin-top: 23px;
+  margin-top: 27px;
   box-shadow: 0 2px 12px rgba(37,99,235,0.05);
 }
 
@@ -315,6 +315,13 @@
   padding: 6px 0;
   display: flex;
   flex-direction: column;
+}
+
+/* Ajuste para o menu de ações do chat fora da pasta aparecer mais à direita */
+.outsideChatActions .folderMenuDropdown {
+  left: auto !important;
+  right: 0 !important;
+  min-width: 160px;
 }
 
 .newChatButton {
