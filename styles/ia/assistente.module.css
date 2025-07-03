@@ -179,40 +179,90 @@
 }
 
 .sidebar {
-  width: 220px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  width: 260px;
+  background: #f7f7f8;
+  border: none;
   border-radius: 16px;
-  padding: 15px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   height: 80vh;
   overflow-y: auto;
   margin-top: 23px;
+  box-shadow: 0 2px 12px rgba(37,99,235,0.05);
 }
 
-.newFolderButton,
-.newChatButton {
-  background: linear-gradient(120deg, #2563eb 60%, #60a5fa 100%);
+.sidebarHeader {
+  padding: 16px 0 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebarFolders {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 0 16px 0;
+}
+
+.newFolderButton {
+  background: #2563eb;
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 0.9rem;
+  border-radius: 10px;
+  padding: 13px 0;
+  font-size: 1.08rem;
+  font-weight: 700;
   cursor: pointer;
-  margin-bottom: 8px;
+  margin: 18px 0 10px 0;
+  width: 90%;
+  margin-left: 5%;
+  margin-right: 5%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+}
+
+.newFolderButton:hover {
+  background: #1d4ed8;
 }
 
 .folder {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  background: none;
+  border-radius: 8px;
+  transition: background 0.2s;
 }
 
 .folderHeader {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  padding: 10px 14px 8px 14px;
+  cursor: pointer;
   font-weight: 700;
+  color: #22223b;
+  border-radius: 8px 8px 0 0;
+  background: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.folderHeaderActive {
+  background: #e8eafc;
+  color: #2563eb;
+}
+
+.folderName {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .folderActions {
@@ -225,22 +275,89 @@
   background: none;
   border: none;
   cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.folderActions button:hover {
+  background: #e0e7ef;
+}
+
+.folderMenuButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #22223b;
+  padding: 0 6px;
+  border-radius: 4px;
+  margin-left: 2px;
+  transition: background 0.15s;
+}
+
+.folderMenuButton:hover {
+  background: #e0e7ef;
+}
+
+.folderMenuDropdown {
+  position: absolute;
+  top: 100%;
+  left: 118px;
+  right: auto;
+  transform: none;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.10);
+  z-index: 10;
+  min-width: 140px;
+  padding: 6px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.newChatButton {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 2px 10px;
+  margin-left: 4px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s;
+}
+
+.newChatButton:disabled {
+  background: #a5b4fc;
+  cursor: not-allowed;
+}
+
+.newChatButton:not(:disabled):hover {
+  background: #1d4ed8;
 }
 
 .chatList {
   list-style: none;
-  padding: 0;
+  padding: 0 0 0 0;
   margin: 0;
 }
 
 .chatItem {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 6px 8px;
+  padding: 7px 14px;
   border-radius: 6px;
   cursor: pointer;
-  margin-bottom: 4px;
+  margin: 2px 8px;
+  font-size: 1.01rem;
+  font-weight: 500;
+  color: #22223b;
+  background: none;
+  transition: background 0.18s, color 0.18s;
 }
 
 .chatItem:hover {
@@ -248,7 +365,15 @@
 }
 
 .activeChat {
-  background: #e0e7ef;
+  background: #dbeafe !important;
+  color: #2563eb !important;
+  font-weight: 700;
+}
+
+.chatActions {
+  display: flex;
+  gap: 2px;
+  align-items: center;
 }
 
 .chatActions button {
@@ -256,4 +381,50 @@
   border: none;
   cursor: pointer;
   margin-left: 4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.chatActions button:hover {
+  background: #e0e7ef;
+}
+
+.folderMenuItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: none;
+  border: none;
+  color: #22223b;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: left;
+  gap: 8px;
+}
+
+.folderMenuItem:hover:not(:disabled) {
+  background: #f3f4f6;
+  color: #2563eb;
+}
+
+.folderMenuItem:disabled {
+  color: #a5b4fc;
+  cursor: not-allowed;
+}
+
+.chatItemTitle {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 6px;
+}
+
+.chatItemText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

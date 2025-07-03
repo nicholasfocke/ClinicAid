@@ -57,3 +57,7 @@ export const obterChat = async (folderId: string, chatId: string): Promise<IACha
   const snap = await getDoc(doc(firestore, 'iaFolders', folderId, 'chats', chatId));
   return snap.exists() ? ({ id: snap.id, folderId, ...(snap.data() as Omit<IAChat, 'id' | 'folderId'>) }) : null;
 };
+
+export const atualizarPasta = async (folderId: string, data: Partial<Omit<IAFolder, 'id' | 'userId'>>) => {
+  await updateDoc(doc(firestore, 'iaFolders', folderId), data);
+};
