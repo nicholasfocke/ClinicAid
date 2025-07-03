@@ -84,3 +84,20 @@ export const atualizarLote = async (
   }
   await updateDoc(doc(firestore, 'medicamentos', medicamentoId, 'lotes', id), data);
 };
+
+export const getStatusColor = (status: string): string => {
+  switch (status) {
+    case statusLote.VALIDO:
+      return '#16a34a';
+    case statusLote.EM_OBSERVACAO:
+      return '#ffdb58';
+    case statusLote.PROXIMO_VENCIMENTO:
+      return '#f59e0b';
+    case statusLote.VENCIDO:
+      return '#dc2626';
+    case statusLote.ESGOTADO:
+      return '#9ca3af';
+    default:
+      return '#6b7280';
+  }
+};

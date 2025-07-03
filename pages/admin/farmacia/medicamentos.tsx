@@ -11,12 +11,12 @@ import detailsStyles from "@/styles/admin/farmacia/medicamentosDetails.module.cs
 import loteDetailsStyles from "@/styles/admin/farmacia/loteDetails.module.css";
 import { ExternalLink, LogIn, LogOut, PlusCircle, ChevronDown, ChevronRight, } from "lucide-react";
 import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData } from "@/functions/medicamentosFunctions";
-import { registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, } from "@/functions/movimentacoesMedicamentosFunctions";
-import { format, parseISO } from "date-fns";
+import { registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, buscarSaidasMedicamentos, MovimentacaoMedicamento } from "@/functions/movimentacoesMedicamentosFunctions";
+import { format, parseISO, subDays } from "date-fns";
 import { formatDateSafe } from "@/utils/dateUtils";
 import { buscarMedicos } from "@/functions/medicosFunctions";
 import { buscarPacientes, PacienteMin } from "@/functions/pacientesFunctions";
-import { buscarLotes, criarLote, atualizarLote, excluirLote } from "@/functions/lotesFunctions";
+import { buscarLotes, criarLote, atualizarLote, excluirLote, getStatusColor } from "@/functions/lotesFunctions";
 
 const formatValor = (valor: number) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -145,6 +145,7 @@ const Medicamentos = () => {
   const [pacientes, setPacientes] = useState<PacienteMin[]>([]);
   const [profissionais, setProfissionais] = useState <{ id: string; nome: string }[]>([]);
   const [lotes, setLotes] = useState<Record<string, Lote[]>>({});
+  const [saidas, setSaidas] = useState<MovimentacaoMedicamento[]>([]);
   const [showLoteModal, setShowLoteModal] = useState(false);
   const [newLote, setNewLote] = useState<Lote>({
     numero_lote: "",
@@ -227,6 +228,19 @@ const Medicamentos = () => {
     };
     fetchLotes();
   }, []);
+
+  useEffect(() => {
+    const fetchSaidas = async () => {
+      try {
+        const docs = await buscarSaidasMedicamentos();
+        setSaidas(docs as any);
+      } catch (err) {
+        console.error("Erro ao buscar saídas:", err);
+      }
+    };
+    fetchSaidas();
+  }, []);
+
   const filtered = medicamentos.filter((m) =>
     m.nome_comercial.toLowerCase().includes(searchTerm.toLowerCase()),
   );
@@ -547,6 +561,26 @@ const Medicamentos = () => {
     return diff > 0 && diff <= 30 * 24 * 60 * 60 * 1000;
   };
 
+    const calcularCobertura = (m: Medicamento, dias = 30): string => {
+    const inicio = subDays(new Date(), dias);
+    const total = saidas
+      .filter(
+        s =>
+          s.medicamento === m.nome_comercial &&
+          new Date(s.data) >= inicio,
+      )
+      .reduce((sum, s) => sum + s.quantidade, 0);
+    if (total === 0) return '-';
+    const consumoMedio = total / dias;
+    if (consumoMedio === 0) return '-';
+    const saldoAtual = (lotes[m.id] || [])
+      .filter(l => !isExpired(l.validade))
+      .reduce((sum, l) => sum + l.quantidade_inicial, 0);
+    if (saldoAtual === 0) return '0d';
+    return `${Math.round(saldoAtual / consumoMedio)}d`;
+  };
+
+
   const openLoteDetails = (medId: string, lote: Lote) => {
     setSelectedLote(lote);
     setSelectedLoteMedId(medId);
@@ -695,15 +729,25 @@ const Medicamentos = () => {
                     )}
                   </td>
                   <td>{m.estoque_minimo || 0}</td>
-                  <td>-</td>
+                  <td>{calcularCobertura(m)}</td>
                   <td>
                     {(() => {
                       const ls = lotes[m.id] || [];
                       if (ls.length === 0) return "";
-                      const sorted = [...ls].sort((a, b) =>
-                        a.validade.localeCompare(b.validade),
+                      const sorted = ls
+                        .filter(l => !isExpired(l.validade))
+                        .sort((a, b) => a.validade.localeCompare(b.validade));
+                      if (sorted.length === 0) return "";
+                      const first = sorted[0];
+                      return (
+                        <>
+                          {formatDateSafe(first.validade, "dd/MM/yyyy")}
+                          <span
+                            className={tableStyles.statusCircle}
+                            style={{ background: getStatusColor(first.status) }}
+                          ></span>
+                        </>
                       );
-                      return formatDateSafe(sorted[0].validade, "dd/MM/yyyy");
                     })()}
                   </td>
                   <td>
@@ -761,7 +805,10 @@ const Medicamentos = () => {
                             .map((l) => (
                             <tr key={l.numero_lote}>
                               <td>{l.numero_lote}</td>
-                              <td>{formatDateSafe(l.validade, "dd/MM/yy")}</td>
+                              <td>
+                                {formatDateSafe(l.validade, "dd/MM/yy")}
+                                <span className={tableStyles.statusCircle} style={{ background: getStatusColor(l.status) }}></span>
+                              </td>
                               <td>{l.quantidade_inicial}</td>
                               <td>{l.localizacao_fisica}</td>
                               <td>
@@ -1167,6 +1214,7 @@ const Medicamentos = () => {
                 <p>
                   <strong>Validade:</strong>{" "}
                   {formatDateSafe(selectedLote.validade, "dd/MM/yyyy")}
+                  <span className={tableStyles.statusCircle} style={{ background: getStatusColor(selectedLote.status) }} ></span>
                 </p>
                 <p>
                   <strong>Quantidade inicial:</strong>{" "}

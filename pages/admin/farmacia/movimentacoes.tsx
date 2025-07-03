@@ -10,7 +10,7 @@ import modalStyles from '@/styles/admin/farmacia/modalMedicamento.module.css';
 import { buscarEntradasMedicamentos, buscarSaidasMedicamentos, excluirEntradaMedicamento, excluirSaidaMedicamento, 
   MovimentacaoMedicamento, registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, } from '@/functions/movimentacoesMedicamentosFunctions';
 import { buscarMedicamentos, atualizarMedicamento } from '@/functions/medicamentosFunctions';
-import { buscarLotes, atualizarLote } from '@/functions/lotesFunctions';
+import { buscarLotes, atualizarLote, getStatusColor } from '@/functions/lotesFunctions';
 import { buscarPacientes, PacienteMin } from '@/functions/pacientesFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
 import { format } from 'date-fns';
@@ -75,8 +75,17 @@ const Movimentacoes = () => {
 
   const validadeLote = (num: string) => {
     const all = Object.values(lotes).flat();
-    const l = all.find((lt) => lt.numero_lote === num);
-    return l ? formatDateSafe(l.validade, 'dd/MM/yyyy') : '-';
+    const l = all.find(lt => lt.numero_lote === num);
+    if (!l) return '-';
+    return (
+      <>
+        {formatDateSafe(l.validade, 'dd/MM/yyyy')}
+        <span
+          className={tableStyles.statusCircle}
+          style={{ background: getStatusColor(l.status) }}
+        ></span>
+      </>
+    );
   };
 
   const isExpired = (date: string) => {
