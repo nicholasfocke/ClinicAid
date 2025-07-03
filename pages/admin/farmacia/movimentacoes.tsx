@@ -10,11 +10,11 @@ import modalStyles from '@/styles/admin/farmacia/modalMedicamento.module.css';
 import { buscarEntradasMedicamentos, buscarSaidasMedicamentos, excluirEntradaMedicamento, excluirSaidaMedicamento, 
   MovimentacaoMedicamento, registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, } from '@/functions/movimentacoesMedicamentosFunctions';
 import { buscarMedicamentos, atualizarMedicamento } from '@/functions/medicamentosFunctions';
-import { buscarLotes, atualizarLote } from '@/functions/lotesFunctions';
+import { buscarLotes, atualizarLote, getStatusColor } from '@/functions/lotesFunctions';
 import { buscarPacientes, PacienteMin } from '@/functions/pacientesFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
 import { format } from 'date-fns';
-import { formatDateSafe } from '@/utils/dateUtils';
+import { formatDateSafe, parseDate } from '@/utils/dateUtils';
 
 const formatValor = (valor: number) =>
   valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -75,8 +75,23 @@ const Movimentacoes = () => {
 
   const validadeLote = (num: string) => {
     const all = Object.values(lotes).flat();
-    const l = all.find((lt) => lt.numero_lote === num);
-    return l ? formatDateSafe(l.validade, 'dd/MM/yyyy') : '-';
+    const l = all.find(lt => lt.numero_lote === num);
+    if (!l) return '-';
+    return (
+      <>
+        {formatDateSafe(l.validade, 'dd/MM/yyyy')}
+        <span
+          className={tableStyles.statusCircle}
+          style={{ background: getStatusColor(l.status) }}
+        ></span>
+      </>
+    );
+  };
+
+  const isExpired = (date: string) => {
+    if (!date) return false;
+    const d = parseDate(date) ?? new Date(date);
+    return d < new Date();
   };
 
   useEffect(() => {
@@ -272,6 +287,10 @@ const Movimentacoes = () => {
     const lote = loteArr.find(l => l.numero_lote === selectedLoteSaida);
     if (lote && quantidadeSaida > lote.quantidade_inicial) {
       alert('Quantidade superior à disponível no lote.');
+      return;
+    }
+    if (lote && isExpired(lote.validade)) {
+      alert('O lote está vencido');
       return;
     }
     let docUrl = '';
