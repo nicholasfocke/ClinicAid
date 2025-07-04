@@ -823,20 +823,21 @@ const CreateAppointmentModal: React.FC<Props> = ({
           >
             Cancelar
           </button>
-          <button
-            type="submit"
-            className={styles.buttonStyled}
-            style={{ flex: 1, borderRadius: "0 10px 10px 0", margin: 0, minWidth: 0 }}
-            disabled={
-              isSubmitting ||
-              !appointmentData.date ||
-              !appointmentData.profissional ||
-              !appointmentData.time ||
-              !appointmentData.nomePaciente
-            }
-          >
-            {isSubmitting ? 'Aguarde...' : 'Confirmar'}
-          </button>
+              <button
+              type="submit"
+              className={styles.buttonStyled}
+              style={{ flex: 1, borderRadius: "0 10px 10px 0", margin: 0, minWidth: 0 }}
+              disabled={
+                isSubmitting ||
+                !appointmentData.date ||
+                !appointmentData.profissional ||
+                !appointmentData.time ||
+                !appointmentData.nomePaciente ||
+                (isNewPatient && (!appointmentData.cpf || !isValidCPF(appointmentData.cpf)))
+              }
+              >
+              {isSubmitting ? 'Aguarde...' : 'Confirmar'}
+              </button>
         </div>
       </form>
     </Modal>

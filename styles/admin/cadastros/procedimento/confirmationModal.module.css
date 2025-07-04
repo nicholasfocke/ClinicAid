@@ -1,0 +1,73 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(17, 24, 39, 0.5); /* tom mais escuro e opaco */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(16, 30, 54, 0.08); /* mesmo estilo dos cards/tables */
+  width: 100%;
+  max-width: 480px;
+  animation: slideDown 0.25s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message {
+  margin-bottom: 24px;
+  font-size: 1.05rem;
+  color: #374151; /* cinza escuro */
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background-color 0.2s ease;
+}
+
+.confirmButton {
+  background-color: #dc2626; /* Vermelho vibrante */
+  color: #ffffff;
+}
+
+.confirmButton:hover {
+  background-color: #b91c1c; /* Vermelho mais escuro */
+}
+
+.cancelButton {
+  background-color: #e5e7eb; /* Cinza claro */
+  color: #111827;
+}
+
+.cancelButton:hover {
+  background-color: #d1d5db;
+}

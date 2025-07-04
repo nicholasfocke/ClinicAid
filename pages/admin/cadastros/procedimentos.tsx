@@ -7,7 +7,8 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import layoutStyles from '@/styles/admin/medico/medicos.module.css';
 import tableStyles from '@/styles/admin/cadastros/procedimento/procedimentos.module.css';
 import modalStyles from '@/styles/admin/cadastros/modal.module.css';
-import { buscarProcedimentos, criarProcedimento, excluirProcedimento, atualizarProcedimento,ProcedimentoData, } from '@/functions/procedimentosFunctions';
+import { buscarProcedimentos, criarProcedimento, excluirProcedimento, atualizarProcedimento, ProcedimentoData } from '@/functions/procedimentosFunctions';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 const formatValor = (valor: number) =>
   valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -28,7 +29,7 @@ interface User {
 
 const Procedimentos = () => {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser ] = useState<User | null>(null);
   const [procedimentos, setProcedimentos] = useState<Procedimento[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -51,14 +52,15 @@ const Procedimentos = () => {
   const [activeTab, setActiveTab] = useState<'todos' | 'consultas' | 'exames'>('todos');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [modalState, setModalState] = useState({ isOpen: false, onConfirm: () => {} });
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser ) => {
       try {
-        if (currentUser) {
-          setUser({
-            uid: currentUser.uid,
-            email: currentUser.email || '',
+        if (currentUser ) {
+          setUser ({
+            uid: currentUser .uid,
+            email: currentUser .email || '',
           });
         } else {
           router.push('/auth/login');
@@ -75,16 +77,29 @@ const Procedimentos = () => {
   useEffect(() => {
     if (showModal) {
       setValorInput(formatValor(newProc.valor));
+    } else {
+      setValorInput('');
     }
   }, [showModal, newProc.valor]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const docs = await buscarProcedimentos();
-      setProcedimentos(docs as Procedimento[]);
+      try {
+        const docs = await buscarProcedimentos();
+        setProcedimentos(docs as Procedimento[]);
+      } catch (error) {
+        setError('Erro ao carregar procedimentos');
+      }
     };
     fetchData();
   }, []);
+
+  const validateFields = (data: ProcedimentoData) => {
+    if (!data.nome.trim()) return 'O nome é obrigatório';
+    if (data.valor <= 0) return 'O valor deve ser positivo';
+    if (data.duracao <= 0) return 'A duração deve ser positiva';
+    return null;
+  };
 
   const filteredProcedimentos = procedimentos.filter(p => {
     if (activeTab === 'consultas') return p.tipo === 'consulta';
@@ -95,17 +110,26 @@ const Procedimentos = () => {
   const searchFilteredProcedimentos = filteredProcedimentos.filter(p =>
     p.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
   const allSelected =
     filteredProcedimentos.length > 0 &&
     selectedIds.length === filteredProcedimentos.length;
 
   const startEdit = (p: Procedimento) => {
     setEditingId(p.id);
-    setFormData({ nome: p.nome, valor: p.valor, duracao: p.duracao, convenio: p.convenio, tipo: p.tipo });
+    setFormData({ 
+      nome: p.nome, 
+      valor: p.valor, 
+      duracao: p.duracao, 
+      convenio: p.convenio, 
+      tipo: p.tipo 
+    });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type, checked } = e.target as HTMLInputElement;
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : name === 'valor' || name === 'duracao' ? Number(value) : value,
@@ -113,22 +137,28 @@ const Procedimentos = () => {
   };
 
   const saveEdit = async (id: string) => {
-    const nomeTrim = formData.nome.trim();
-    if(!nomeTrim){
-      setError('O nome do procedimento não pode estar vazio.');
+    const validationError = validateFields(formData);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
-    await atualizarProcedimento(id, formData);
-    setProcedimentos(prev => prev.map(p => (p.id === id ? { id, ...formData } : p)));
-    setEditingId(null);
-    setError(null);
+    try {
+      await atualizarProcedimento(id, { ...formData, id }); // Inclua o id aqui
+      setProcedimentos(prev => prev.map(p => (p.id === id ? { id, ...formData } : p)));
+      setEditingId(null);
+      setError(null);
+    } catch (error) {
+      setError('Erro ao atualizar procedimento');
+    }
   };
 
   const cancelEdit = () => setEditingId(null);
 
   const handleNewChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type, checked } = e.target as HTMLInputElement;
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+
     if (name === 'valor') {
       const numeric = parseValor(value);
       setValorInput(formatValor(numeric));
@@ -142,26 +172,38 @@ const Procedimentos = () => {
   };
 
   const createProcedimento = async () => {
-    const nomeTrim = newProc.nome.trim();
-    if(!nomeTrim){
-      setError('O nome do procedimento não pode estar vazio.');
+    const validationError = validateFields(newProc);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
-
-    await criarProcedimento(newProc);
-    setProcedimentos(prev => [...prev, { id: Date.now().toString(), ...newProc }]);
-    setShowModal(false);
-    setNewProc({ nome: '', valor: 0, duracao: 0, convenio: false, tipo: 'consulta' });
-    setValorInput('');
-    setError(null);
+    try {
+      const id = await criarProcedimento(newProc);
+      setProcedimentos(prev => [...prev, { id, ...newProc }]);
+      setShowModal(false);
+      setNewProc({ nome: '', valor: 0, duracao: 0, convenio: false, tipo: 'consulta' });
+      setError(null);
+    } catch (error) {
+      setError('Erro ao criar procedimento');
+    }
   };
 
-  const handleDelete = async (id: string) => {
-    const confirm = window.confirm('Deseja excluir este procedimento?');
-    if (!confirm) return;
-    await excluirProcedimento(id);
-    setProcedimentos(prev => prev.filter(p => p.id !== id));
+  const handleDelete = (id: string) => {
+    const confirmAction = async () => {
+      try {
+        await excluirProcedimento(id);
+        setProcedimentos(prev => prev.filter(p => p.id !== id));
+      } catch (error) {
+        setError('Erro ao excluir procedimento');
+      }
+      setModalState({ isOpen: false, onConfirm: () => {} });
+    };
+
+    setModalState({
+      isOpen: true,
+      onConfirm: confirmAction,
+    });
   };
 
   const toggleSelect = (id: string) => {
@@ -179,34 +221,44 @@ const Procedimentos = () => {
   };
 
   const deleteSelected = async () => {
-    const confirm = window.confirm(
-      'Deseja excluir os procedimentos selecionados?'
-    );
-    if (!confirm) return;
-    for (const id of selectedIds) {
-      await excluirProcedimento(id);
-    }
-    setProcedimentos(prev => prev.filter(p => !selectedIds.includes(p.id)));
-    setSelectedIds([]);
+    if (selectedIds.length === 0) return;
+
+    const confirmAction = async () => {
+      try {
+        for (const id of selectedIds) {
+          await excluirProcedimento(id);
+        }
+        setProcedimentos(prev => prev.filter(p => !selectedIds.includes(p.id)));
+        setSelectedIds([]);
+      } catch (error) {
+        setError('Erro ao excluir procedimentos selecionados');
+      }
+      setModalState({ isOpen: false, onConfirm: () => {} });
+    };
+
+    setModalState({
+      isOpen: true,
+      onConfirm: confirmAction,
+    });
   };
 
   const gerarRelatorioProcedimentos = () => {
-  const colunas = ['Nome', 'Valor', 'Duração (min)', 'Convênio', 'Tipo'];
-  const dados = procedimentos.map(p => [
-    p.nome,
-    formatValor(p.valor),
-    `${p.duracao} min`,
-    p.convenio ? 'Sim' : 'Não',
-    p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1),
-  ]);
+    const colunas = ['Nome', 'Valor', 'Duração (min)', 'Convênio', 'Tipo'];
+    const dados = procedimentos.map(p => [
+      p.nome,
+      formatValor(p.valor),
+      `${p.duracao} min`,
+      p.convenio ? 'Sim' : 'Não',
+      p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1),
+    ]);
 
-  gerarRelatorioPDF({
-    titulo: 'Relatório de Procedimentos',
-    colunas,
-    dados,
-    nomeArquivo: 'procedimentos.pdf',
-  });
-};
+    gerarRelatorioPDF({
+      titulo: 'Relatório de Procedimentos',
+      colunas,
+      dados,
+      nomeArquivo: 'procedimentos.pdf',
+    });
+  };
 
   return (
     <div className={layoutStyles.container}>
@@ -404,6 +456,12 @@ const Procedimentos = () => {
           </div>
         </div>
       )}
+      <ConfirmationModal
+        isOpen={modalState.isOpen}
+        message="Você tem certeza que deseja excluir?"
+        onConfirm={modalState.onConfirm}
+        onCancel={() => setModalState({ isOpen: false, onConfirm: () => {} })}
+      />
     </div>
   );
 };
