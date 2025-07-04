@@ -4,7 +4,7 @@
   left: 0;
   width: 200px;
   height: 100vh;
-  background-color: #0a2d4a;
+  background-color: var(--color-sidebar-bg);
   color: white;
   display: flex;
   flex-direction: column;
@@ -55,11 +55,11 @@
 }
 
 .navItemFarmacia:hover {
-  background-color: #34495e;
+  background-color: var(--color-primary-hover);
 }
 
 .navItem:hover {
-  background-color: #34495e;
+  background-color: var(--color-primary-hover);
 }
 
 .icon {

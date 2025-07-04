@@ -383,9 +383,9 @@
 }
 
 .loginSplitPanelButton {
-  background: #1096ea;
+  background: var(--color-primary);
   color: #fff;
-  border: none;
+  border: 1px solid var(--color-primary);
   font-weight: 700;
   font-size: 1.25rem;
   border-radius: 20px;
@@ -393,14 +393,15 @@
   width: 100%;
   margin-top: 32px;
   margin-bottom: 0;
-  box-shadow: 0 1px 6px #1096ea22;
-  transition: background 0.2s, color 0.2s;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+  transition: background 0.2s, color 0.2s, border 0.2s;
   cursor: pointer;
 }
 
 .loginSplitPanelButton:hover {
-  background: #0078d4;
+  background: var(--color-primary-hover);
   color: #fff;
+  border-color: var(--color-primary-hover);
 }
 
 .loginSplitRight {
@@ -444,21 +445,25 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  padding: 8px 16px; /* Reduzido para diminuir a altura */
+  padding: 8px 16px;
   border-radius: 10px;
-  border: none;
+  border: 1px solid var(--color-input-border);
   font-size: 1.08rem;
-  background: #0e3a53;
-  color: #fff;
+  background: #fff;
+  color: #333;
   outline: none;
   margin-bottom: 0;
-  transition: box-shadow 0.2s, background 0.2s;
+  transition: box-shadow 0.2s, border 0.2s;
   box-sizing: border-box;
 }
 
 .loginSplitInput::placeholder {
-  color: #b3d2e6;
+  color: #999;
   opacity: 1;
+}
+.loginSplitInput:focus {
+  border-color: var(--color-input-focus-border);
+  box-shadow: 0 0 0 2px var(--color-input-focus-shadow);
 }
 
 .loginSplitEye {
@@ -469,7 +474,7 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  color: #b3d2e6;
+  color: var(--color-link);
   z-index: 2;
   transition: color 0.2s;
 }
@@ -481,26 +486,26 @@
 
 .loginSplitButton {
   width: 100%;
-  border: none;
+  border: 1px solid var(--color-primary);
   border-radius: 12px;
   padding: 15px 0;
   font-size: 1.13rem;
   font-weight: 700;
   cursor: pointer;
-  background: #1096ea;
+  background: var(--color-primary);
   color: #fff;
   margin-top: 10px;
   margin-bottom: 8px;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 12px #1096ea33;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, border 0.2s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
   letter-spacing: 0.5px;
 }
 
 .loginSplitPanelButton:hover,
 .loginSplitButton:hover {
-  background: #0078d4;
+  background: var(--color-primary-hover);
   color: #fff;
-  border-color: #0078d4;
+  border-color: var(--color-primary-hover);
 }
 
 .loginSplitButton:disabled {

@@ -25,10 +25,11 @@
 
 .link {
   font-size: 1rem;
-  color: #0070f3;
+  color: var(--color-link);
   text-decoration: none;
 }
 
 .link:hover {
   text-decoration: underline;
+  color: var(--color-link-hover);
 }

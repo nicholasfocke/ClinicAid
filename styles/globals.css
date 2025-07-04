@@ -3,15 +3,33 @@
 
 :root {
     --font-primary: 'Inter', sans-serif;
+    --color-primary: #309A9A;
+    --color-primary-hover: #267878;
+    --color-disabled: #A0CFCF;
+    --color-secondary-hover-bg: #E6F3F3;
+    --color-secondary-hover-text: #267878;
+    --color-link: #309A9A;
+    --color-link-hover: #205E5E;
+    --color-page-bg: #FFFFFF;
+    --color-box-bg: #FFFFFF;
+    --color-box-border: #E6F3F3;
+    --color-highlight-bg: #E6F3F3;
+    --color-sidebar-bg: #1F6D6D;
+    --color-sidebar-text: #FFFFFF;
+    --color-breadcrumb-bg: #F0FBFB;
+    --color-breadcrumb-text: #309A9A;
+    --color-input-border: #62BDBD;
+    --color-input-focus-border: #309A9A;
+    --color-input-focus-shadow: #E6F3F3;
   }
   
   body {
     margin: 0;
     padding: 0;
     font-family: var(--font-primary);
-    background-color: #f7fafc; /* opcional */
+    background-color: var(--color-page-bg);
     color: #333;
-    overflow-x: hidden; /* Evita scroll lateral em todo o site */
+    overflow-x: hidden;
 }
 
 .pageLoading {
@@ -29,7 +47,7 @@
 
 .spinner {
   border: 6px solid #e0e0e0;
-  border-top: 6px solid #0a2d4a;
+  border-top: 6px solid var(--color-primary);
   border-radius: 50%;
   width: 48px;
   height: 48px;
@@ -37,4 +55,14 @@
 }
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+a {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-link-hover);
+  text-decoration: underline;
 }
