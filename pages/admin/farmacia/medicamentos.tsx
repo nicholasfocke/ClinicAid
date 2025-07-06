@@ -16,7 +16,7 @@ import { format, parseISO, subDays } from "date-fns";
 import { formatDateSafe } from "@/utils/dateUtils";
 import { buscarMedicos } from "@/functions/medicosFunctions";
 import { buscarPacientes, PacienteMin } from "@/functions/pacientesFunctions";
-import { buscarLotes, criarLote, atualizarLote, excluirLote, getStatusColor } from "@/functions/lotesFunctions";
+import { buscarLotes, criarLote, atualizarLote, excluirLote, getStatusColor, statusLote } from "@/functions/lotesFunctions";
 
 const formatValor = (valor: number) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -325,6 +325,10 @@ const Medicamentos = () => {
       if (movLote) {
         const loteArr = lotes[movMedicamento.id] || [];
         const lote = loteArr.find((l) => l.numero_lote === movLote);
+        if (lote && lote.status === statusLote.VENCIDO) {
+          alert('O lote está vencido');
+          return;
+        }
         if (lote && movQuantidade > lote.quantidade_inicial) {
           alert('Quantidade superior à disponível no lote.');
           return;
