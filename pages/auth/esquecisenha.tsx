@@ -44,12 +44,12 @@ const EsqueciSenha = () => {
   return (
     <div className={styles.loginModernBg}>
       <div className={styles.loginModernCard}>
-        <div className={styles.logoModernBox}>
-          <Image
-            src="/images/ClinicAid logo ajustado.png"
-            alt="Logo clinicaid"
-            width={270}
-            height={70}
+       <div className={styles.logoModernBox} style={{ marginBottom: 0 }}>
+              <Image
+                src="/images/logo_clinicaid_azul.png"
+                alt="Logo clinicaid"
+                width={210}
+                height={180}
             priority
           />
         </div>

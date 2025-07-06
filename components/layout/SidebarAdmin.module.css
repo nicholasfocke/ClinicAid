@@ -14,8 +14,9 @@
 }
 
 .logo img {
-  width: 200px;
-  margin-bottom: 18px; /* reduzido para aproximar os textos */
+  width: 160px;
+  margin-bottom: 40px;
+  margin-top: 40px; /* reduzido para aproximar os textos */
 }
 
 .nav {

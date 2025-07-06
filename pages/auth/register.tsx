@@ -154,12 +154,12 @@ const Register = () => {
         <div className={styles.loginSplitLeft}>
           <div className={styles.loginSplitPanel}>
             <h2 className={styles.loginSplitPanelTitle}>
-              <div className={styles.logoModernBox} style={{ marginBottom: 18 }}>
+              <div className={styles.logoModernBox} style={{ marginBottom: 0 }}>
               <Image
-                src="/images/ClinicAid logo ajustado.png"
+                src="/images/logo_clinicaid_azul.png"
                 alt="Logo clinicaid"
-                width={270}
-                height={70}
+                width={210}
+                height={180}
                 priority
               />
             </div>

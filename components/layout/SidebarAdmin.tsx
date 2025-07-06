@@ -56,7 +56,7 @@ const SidebarAdmin = () => {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.logo}>
-        <img src="/images/ClinicAid branco.png" alt="ClinicAid Logo" />
+        <img src="/images/logo clinicaid branca.png" alt="ClinicAid Logo" />
       </div>
       <div
         style={{
