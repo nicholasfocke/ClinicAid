@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '@/styles/admin/cadastros/procedimento/confirmationModal.module.css';
+import styles from '@/styles/admin/cadastros/confirmationModal.module.css';
 
 
 interface ConfirmationModalProps {
