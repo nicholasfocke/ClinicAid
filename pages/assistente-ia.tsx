@@ -90,10 +90,6 @@ export default function AssistenteIA() {
     })();
   }, [user]);
 
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
   // Atualiza chats ao trocar de pasta
   useEffect(() => {
     setChats(prevChats => {
