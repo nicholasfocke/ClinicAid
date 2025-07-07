@@ -94,10 +94,6 @@ export default function AssistenteIA() {
     inputRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
-
   // Atualiza chats ao trocar de pasta
   useEffect(() => {
     setChats(prevChats => {
