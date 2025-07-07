@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { Send } from 'lucide-react';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import SidebarAdmin from '@/components/layout/SidebarAdmin';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
@@ -41,6 +42,9 @@ export default function AssistenteIA() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   // Controle do menu de opções da pasta
   const [openFolderMenuId, setOpenFolderMenuId] = useState<string | null>(null);
@@ -85,6 +89,10 @@ export default function AssistenteIA() {
       }
     })();
   }, [user]);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   // Atualiza chats ao trocar de pasta
   useEffect(() => {
@@ -711,11 +719,13 @@ export default function AssistenteIA() {
                       className={msg.sender === 'user' ? styles.userMessage : styles.botMessage}
                     >
                       {msg.text}
+                      <span className={styles.messageTime}>{new Date(msg.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   ))}
                   {loading && (
                     <div className={styles.botMessage}>Carregando resposta...</div>
                   )}
+                  <div ref={messagesEndRef} />
                 </div>
                 <div className={styles.inputContainer}>
                   <input
@@ -725,8 +735,10 @@ export default function AssistenteIA() {
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Digite sua pergunta"
+                    ref={inputRef}
                   />
                   <button className={styles.sendButton} onClick={sendMessage} disabled={loading}>
+                    <Send size={18} style={{ marginRight: 4 }} />
                     Enviar
                   </button>
                 </div>

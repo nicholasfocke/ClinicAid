@@ -39,7 +39,14 @@ function MyApp({ Component, pageProps }: AppProps) {
 
       {pageLoading && (
         <div className="pageLoading">
-          <div className="spinner"></div>
+        <div className="loadingContainer">
+            <img
+              src="/images/Logo clinicaid azul lado.png"
+              alt="ClinicAid logo"
+              className="loadingLogo"
+            />
+            <div className="loadingBar"></div>
+          </div>
         </div>
       )}
 

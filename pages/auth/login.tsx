@@ -232,12 +232,12 @@ const Login = () => {
         </div>
         <div className={styles.loginSplitRight}>
           <div className={styles.loginSplitPanel}>
-            <div className={styles.logoModernBox} style={{ marginBottom: 0 }}>
+            <div className={styles.logoModernBox} style={{ marginBottom: -30 }}>
               <Image
-                src="/images/logo_clinicaid_azul.png"
+                src="/images/logo clinicaid azul lado.png"
                 alt="Logo clinicaid"
-                width={210}
-                height={180}
+                width={440}
+                height={170}
                 priority
               />
             </div>
