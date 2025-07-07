@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styles from './SidebarAdmin.module.css';
-import { Home, Calendar, User, LogOut, Stethoscope, Bot, FilePlus, ChevronDown, ChevronRight, Pill, Users } from 'lucide-react';
+import { Home, Calendar, User, LogOut, Stethoscope, Bot, FilePlus, ChevronDown, ChevronRight, Pill, Users, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { auth, firestore } from '../../firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
@@ -155,6 +155,10 @@ const SidebarAdmin = () => {
                 </Link>
               </div>
             )}
+            <Link href="/admin/financeiro" className={styles.navItem} style={{ marginTop: 0 }}>
+              <DollarSign className={styles.icon} style={{ marginTop: 0 }} />
+              <span style={{ marginTop: 0 }}>Financeiro</span>
+            </Link>
             <Link href="/profile" className={styles.navItem} style={{ marginTop: 0 }}>
               <User className={styles.icon} style={{ marginTop: 0 }} />
               <span style={{ marginTop: 0 }}>Perfil</span>
