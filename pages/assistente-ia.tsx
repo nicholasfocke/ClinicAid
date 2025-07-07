@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Mic, Stethoscope } from 'lucide-react';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import SidebarAdmin from '@/components/layout/SidebarAdmin';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
@@ -733,6 +733,20 @@ export default function AssistenteIA() {
                     placeholder="Digite sua pergunta"
                     ref={inputRef}
                   />
+                  <button
+                    className={styles.modeButton}
+                    title="Modo ditar"
+                    disabled={loading}
+                  >
+                    <Mic size={18} />
+                  </button>
+                  <button
+                    className={styles.modeButton}
+                    title="Modo de escuta profissional"
+                    disabled={loading}
+                  >
+                    <Stethoscope size={18} />
+                  </button>
                   <button className={styles.sendButton} onClick={sendMessage} disabled={loading}>
                     <Send size={18} style={{ marginRight: 4 }} />
                     Enviar
