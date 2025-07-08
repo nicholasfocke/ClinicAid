@@ -3,7 +3,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/router';
 import { auth } from '@/firebase/firebaseConfig';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
-import styles from '@/styles/admin/financeiro.module.css';
+import styles from '@/styles/admin/financeiro/financeiro.module.css';
 
 const Financeiro = () => {
   const router = useRouter();

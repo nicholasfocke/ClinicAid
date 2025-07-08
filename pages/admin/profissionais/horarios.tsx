@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/firebase/firebaseConfig';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import tableStyles from '@/styles/admin/horario/horarios.module.css';
 import { buscarMedicos } from '@/functions/medicosFunctions';
@@ -53,6 +54,11 @@ const Horarios = () => {
     'Domingo',
   ];
 
+  const ordenarHorarios = (lista: ScheduleItem[]) =>
+    [...lista].sort(
+      (a, b) => diasSemana.indexOf(a.dia) - diasSemana.indexOf(b.dia)
+    );
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       try {
@@ -89,7 +95,7 @@ const Horarios = () => {
         return;
       }
       const list = await buscarHorariosPorMedico(selectedMedico);
-      setHorarios(list as ScheduleItem[]);
+      setHorarios(ordenarHorarios(list as ScheduleItem[]));
     };
     fetchHorarios();
   }, [selectedMedico]);
@@ -106,7 +112,7 @@ const Horarios = () => {
       intervaloConsultas: 30, // Defina o valor padrão ou obtenha de um input
     });
     const list = await buscarHorariosPorMedico(selectedMedico);
-    setHorarios(list as ScheduleItem[]);
+    setHorarios(ordenarHorarios(list as ScheduleItem[]));
     setDia('');
     setHoraInicio('');
     setHoraFim('');
@@ -122,6 +128,9 @@ const Horarios = () => {
           <span className={breadcrumbStyles.breadcrumbActive}>Dias/Horários</span>
         </span>
       </div>
+      <Link href="/admin/profissionais" className={tableStyles.backButton}>
+        &lt; Voltar
+      </Link>
       <h1 className={tableStyles.titleHorarios}>Dias/Horários</h1>
       <div className={tableStyles.subtitleHorarios}>
         Gerencie os dias e horários dos profissionais
@@ -256,7 +265,7 @@ const Horarios = () => {
                         onClick={async () => {
                           await atualizarHorario(selectedMedico, h.id, editData);
                           const list = await buscarHorariosPorMedico(selectedMedico);
-                          setHorarios(list as ScheduleItem[]);
+                          setHorarios(ordenarHorarios(list as ScheduleItem[]));
                           setEditingId(null);
                         }}
                       >
@@ -295,7 +304,7 @@ const Horarios = () => {
                         onClick={async () => {
                           if (!confirm('Excluir horário?')) return;
                           await excluirHorario(selectedMedico, h.id);
-                          setHorarios((prev) => prev.filter((x) => x.id !== h.id));
+                          setHorarios((prev) => ordenarHorarios(prev.filter((x) => x.id !== h.id)));
                         }}
                       >
                         Excluir
