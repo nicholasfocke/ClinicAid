@@ -98,3 +98,8 @@
   background: #1746a2;
 }
 
+.errorMessage {
+  color: red;
+  margin-top: 10px;
+  text-align: center;
+}
