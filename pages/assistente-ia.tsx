@@ -28,6 +28,13 @@ import { useAuth } from '@/context/AuthContext';
 
 (pdfMake as any).vfs = (pdfFonts as any).vfs;
 
+const downloadPdf = (docDefinition: any, filename: string) => {
+  if (!filename.toLowerCase().endsWith('.pdf')) {
+    filename += '.pdf';
+  }
+  pdfMake.createPdf(docDefinition).download(filename);
+};
+
 
 type Message = IAChatMessage;
 type Chat = IAChat;
@@ -297,7 +304,7 @@ export default function AssistenteIA() {
         subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 4] }
       }
     };
-    pdfMake.createPdf(docDefinition).download(`pasta-${folder.name}.pdf`);
+     downloadPdf(docDefinition, `pasta-${folder.name}`);
   };
 
   // Exportar chat como PDF
@@ -317,7 +324,7 @@ export default function AssistenteIA() {
         subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 4] }
       }
     };
-    pdfMake.createPdf(docDefinition).download(`chat-${chat.title}.pdf`);
+     downloadPdf(docDefinition, `chat-${chat.title}`);
   };
 
   // Excluir pasta
