@@ -441,8 +441,20 @@ const Medicamentos = () => {
   };
 
   const createMedicamento = async () => {
-    if (!newMedicamento.nome_comercial.trim()) {
-      setError("O nome do medicamento é obrigatório.");
+    if (
+      !newMedicamento.nome_comercial.trim() ||
+      !newMedicamento.dcb.trim() ||
+      !newMedicamento.concentracao.trim() ||
+      !newMedicamento.registro_anvisa.trim() ||
+      !newMedicamento.forma_farmaceutica ||
+      !newMedicamento.unidade ||
+      !newMedicamento.via_administracao ||
+      !newMedicamento.tipo_receita ||
+      !newMedicamento.classificacao ||
+      !newMedicamento.descricao.trim() ||
+      newMedicamento.estoque_minimo <= 0
+    ){
+      setError("Preencha todos os campos do medicamento.");
       return;
     }
     try {
@@ -523,6 +535,20 @@ const Medicamentos = () => {
   };
 
   const createLote = async () => {
+    if (
+      !newLote.numero_lote.trim() ||
+      !newLote.data_fabricacao ||
+      !newLote.validade ||
+      newLote.quantidade_inicial <= 0 ||
+      newLote.valor_compra <= 0 ||
+      newLote.valor_venda <= 0 ||
+      !newLote.fabricante.trim() ||
+      !newLote.localizacao_fisica.trim()
+    ) {
+      setError('Preencha todos os campos do lote.');
+      return;
+    }
+
     const { id, status } = await criarLote(currentMedId, { ...newLote });
 
     const med = medicamentos.find(m => m.id === currentMedId);
@@ -566,6 +592,7 @@ const Medicamentos = () => {
     setValorCompraInput("");
     setValorVendaInput("");
     setShowLoteModal(false);
+    setError("")
   };
 
   const isExpired = (date: string) => {
@@ -861,7 +888,7 @@ const Medicamentos = () => {
       {showModal && (
         <div
           className={modalStyles.overlay}
-          onClick={() => setShowModal(false)}
+          onClick={() => {setShowModal(false); setError("");}}
         >
           <div
             className={modalStyles.modal}
@@ -869,11 +896,14 @@ const Medicamentos = () => {
           >
             <button
               className={modalStyles.closeButton}
-              onClick={() => setShowModal(false)}
+              onClick={() => {setShowModal(false); setError("");}}
             >
               X
             </button>
             <h3>Novo Produto</h3>
+              {error && (
+                <p className={modalStyles.errorMessage}>{error}</p>
+              )}
               <div className={modalStyles.formGrid}>
               {[
                   { label: "Nome Comercial", name: "nome_comercial", type: "text" },
@@ -1090,7 +1120,7 @@ const Medicamentos = () => {
       {showLoteModal && (
         <div
           className={modalStyles.overlay}
-          onClick={() => setShowLoteModal(false)}
+          onClick={() => {setShowModal(false); setError("");}}
         >
           <div
             className={modalStyles.modal}
@@ -1098,12 +1128,15 @@ const Medicamentos = () => {
           >
             <button
               className={modalStyles.closeButton}
-              onClick={() => setShowLoteModal(false)}
+              onClick={() => {setShowModal(false); setError("");}}
             >
               X
             </button>
             <h3>Novo Lote</h3>
-            <div className={modalStyles.formGrid}>
+              {error && (
+                <p className={modalStyles.errorMessage}>{error}</p>
+              )}
+              <div className={modalStyles.formGrid}>
               {[
                 { label: "Número do lote", name: "numero_lote" },
                 { label: "Data de fabricação", name: "data_fabricacao", type: "date", },

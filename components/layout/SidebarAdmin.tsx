@@ -107,12 +107,6 @@ const SidebarAdmin = () => {
                 <Link href="/admin/cadastros/formas-pagamento" className={styles.subNavItem}>
                   Formas de Pagamento
                 </Link>
-                <Link href="/admin/cadastros/remedios" className={styles.subNavItem}>
-                  Remédios / Receitas
-                </Link>
-                <Link href="/admin/cadastros/cargos" className={styles.subNavItem}>
-                  Cargos
-                </Link>
                 <Link href="/admin/cadastros/salas" className={styles.subNavItem}>
                   Salas
                 </Link>
