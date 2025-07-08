@@ -152,6 +152,9 @@ const SidebarAdmin = () => {
                 <Link href="/admin/farmacia/movimentacoes" className={styles.subNavItem}>
                   Movimentações
                 </Link>
+                <Link href="/admin/farmacia/controle-lotes" className={styles.subNavItem}>
+                  Controle de Lotes
+                </Link>
               </div>
             )}
             <button type="button" onClick={toggleFinanceiro} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
