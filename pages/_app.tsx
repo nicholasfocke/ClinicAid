@@ -41,7 +41,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         <div className="pageLoading">
         <div className="loadingContainer">
             <img
-              src="/images/Logo clinicaid azul lado.png"
+              src="/images/logo nova clinicaid azul fonte.png"
               alt="ClinicAid logo"
               className="loadingLogo"
             />

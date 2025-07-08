@@ -234,7 +234,7 @@ const Login = () => {
           <div className={styles.loginSplitPanel}>
             <div className={styles.logoModernBox} style={{ marginBottom: -30 }}>
               <Image
-                src="/images/logo clinicaid azul lado.png"
+                src="/images/logo nova clinicaid azul fonte.png"
                 alt="Logo clinicaid"
                 width={440}
                 height={170}
