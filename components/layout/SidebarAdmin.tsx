@@ -13,6 +13,7 @@ const SidebarAdmin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [cadastroOpen, setCadastroOpen] = useState(false);
   const [farmaciaOpen, setFarmaciaOpen] = useState(false);
+  const [financeiroOpen, setFinanceiroOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -47,6 +48,10 @@ const SidebarAdmin = () => {
 
   const toggleFarmacia = () => {
     setFarmaciaOpen((prev) => !prev);
+  };
+
+  const toggleFinanceiro = () => {
+    setFinanceiroOpen((prev) => !prev);
   };
 
   if (!isAuthenticated || !isAdmin) {
@@ -149,10 +154,22 @@ const SidebarAdmin = () => {
                 </Link>
               </div>
             )}
-            <Link href="/admin/financeiro" className={styles.navItem} style={{ marginTop: 0 }}>
+            <button type="button" onClick={toggleFinanceiro} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
               <DollarSign className={styles.icon} style={{ marginTop: 0 }} />
               <span style={{ marginTop: 0 }}>Financeiro</span>
-            </Link>
+              {financeiroOpen ? (
+                <ChevronDown className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+              ) : (
+                <ChevronRight className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+              )}
+            </button>
+            {financeiroOpen && (
+              <div className={styles.subNav} style={{ marginTop: 0 }}>
+                <Link href="/admin/financeiro/" className={styles.subNavItem}>
+                  Financeiro
+                </Link>
+              </div>
+            )}
             <Link href="/profile" className={styles.navItem} style={{ marginTop: 0 }}>
               <User className={styles.icon} style={{ marginTop: 0 }} />
               <span style={{ marginTop: 0 }}>Perfil</span>
