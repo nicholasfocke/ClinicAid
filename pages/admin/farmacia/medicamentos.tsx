@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase/firebaseConfig";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
 import layoutStyles from "@/styles/admin/farmacia/farmacia.module.css";
@@ -701,6 +702,9 @@ const Medicamentos = () => {
             >
               + Adicionar medicamento
             </button>
+            <Link href="/admin/farmacia/controle-lotes" className={tableStyles.buttonAdicionar}>
+              Controle dos Lotes
+            </Link>
             {selectedIds.length > 0 && (
               <button
                 className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
