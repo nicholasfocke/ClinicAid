@@ -156,7 +156,7 @@ const Register = () => {
             <h2 className={styles.loginSplitPanelTitle}>
               <div className={styles.logoModernBox} style={{ marginBottom: -20 }}>
               <Image
-                src="/images/logo clinicaid azul lado.png"
+                src="/images/logo nova clinicaid azul fonte.png"
                 alt="Logo clinicaid"
                 width={440}
                 height={170}
