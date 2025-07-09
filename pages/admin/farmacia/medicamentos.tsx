@@ -662,7 +662,7 @@ const Medicamentos = () => {
     }
     const data: DescarteMedicamento = {
       medicamento:
-        medicamentos.find((m) => m.id === discardMedId)?.nome_comercial || '',
+      medicamentos.find((m) => m.id === discardMedId)?.nome_comercial || '',
       medicamentoId: discardMedId,
       loteId: discardLote.id,
       lote: discardLote.numero_lote,
@@ -1641,11 +1641,11 @@ const Medicamentos = () => {
               </div>
             </div>
             <div className={loteDetailsStyles.buttons}>
-              <button className={loteDetailsStyles.buttonCancelar} onClick={closeDiscardModal}>
-                Cancelar
-              </button>
               <button className={loteDetailsStyles.buttonEditar} onClick={registerDiscard}>
                 Registrar descarte
+              </button>
+              <button className={loteDetailsStyles.buttonCancelar} onClick={closeDiscardModal}>
+                Cancelar
               </button>
             </div>
           </div>

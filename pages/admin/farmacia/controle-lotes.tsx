@@ -403,8 +403,8 @@ const ControleLotes = () => {
                 </div>
               </div>
               <div className={loteDetailsStyles.buttons}>
-                <button className={loteDetailsStyles.buttonCancelar} onClick={closeDiscardModal}>Cancelar</button>
                 <button className={loteDetailsStyles.buttonEditar} onClick={registerDiscard}>Registrar descarte</button>
+                <button className={loteDetailsStyles.buttonCancelar} onClick={closeDiscardModal}>Cancelar</button>
               </div>
             </div>
           </div>
