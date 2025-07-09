@@ -662,7 +662,7 @@ const Medicamentos = () => {
     }
     const data: DescarteMedicamento = {
       medicamento:
-        medicamentos.find((m) => m.id === discardMedId)?.nome_comercial || '',
+      medicamentos.find((m) => m.id === discardMedId)?.nome_comercial || '',
       medicamentoId: discardMedId,
       loteId: discardLote.id,
       lote: discardLote.numero_lote,
