@@ -662,12 +662,25 @@ const Medicamentos = () => {
     }
     const data: DescarteMedicamento = {
       medicamento:
-        medicamentos.find((m) => m.id === discardMedId)?.nome_comercial || '',
+      medicamentos.find((m) => m.id === discardMedId)?.nome_comercial || '',
+      medicamentoId: discardMedId,
+      loteId: discardLote.id,
       lote: discardLote.numero_lote,
       quantidade: discardQuantidade,
       metodo: discardMetodo,
       usuario: user?.email || '',
       documentoUrl: docUrl,
+      loteData: {
+        numero_lote: discardLote.numero_lote,
+        data_fabricacao: discardLote.data_fabricacao,
+        validade: discardLote.validade,
+        quantidade_inicial: discardLote.quantidade_inicial,
+        valor_compra: discardLote.valor_compra,
+        valor_venda: discardLote.valor_venda,
+        fabricante: discardLote.fabricante,
+        localizacao_fisica: discardLote.localizacao_fisica,
+        status: discardLote.status,
+      },
     };
     await registrarDescarteMedicamento(data);
     if (discardLote.id) {
@@ -816,10 +829,9 @@ const Medicamentos = () => {
                   </td>
                   <td>{m.nome_comercial}</td>
                   <td>
-                    {(lotes[m.id] || []).reduce(
-                      (sum, l) => sum + l.quantidade_inicial,
-                      0,
-                    )}
+                    {(lotes[m.id] || [])
+                      .filter(l => !isExpired(l.validade))
+                      .reduce((sum, l) => sum + l.quantidade_inicial, 0)}
                   </td>
                   <td>{m.estoque_minimo || 0}</td>
                   <td>{calcularCobertura(m)}</td>
@@ -842,7 +854,7 @@ const Medicamentos = () => {
                     })()}
                   </td>
                   <td>
-                    {(lotes[m.id] || []).length}
+                    {(lotes[m.id] || []).filter(l => !isExpired(l.validade)).length}
                   </td>
                   <td>
                     <button
@@ -891,6 +903,7 @@ const Medicamentos = () => {
                         </thead>
                         <tbody>
                           {(lotes[m.id] || [])
+                            .filter(l => !isExpired(l.validade))
                             .slice()
                             .sort((a, b) => a.validade.localeCompare(b.validade))
                             .map((l) => (
@@ -1641,4 +1654,5 @@ const Medicamentos = () => {
     </ProtectedRoute>
   );
 };
+
 export default Medicamentos;

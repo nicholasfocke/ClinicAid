@@ -8,15 +8,10 @@ import layoutStyles from '@/styles/admin/farmacia/farmacia.module.css';
 import tableStyles from '@/styles/admin/farmacia/controleLotes.module.css';
 import loteDetailsStyles from '@/styles/admin/farmacia/loteDetails.module.css';
 import modalStyles from '@/styles/admin/farmacia/modalMedicamento.module.css';
-import { ExternalLink, Trash } from 'lucide-react';
-import { buscarLotes, excluirLote, Lote as LoteData } from '@/functions/lotesFunctions';
+import { ExternalLink, Trash, Undo } from 'lucide-react';
+import { buscarLotes, excluirLote, criarLote, Lote as LoteData } from '@/functions/lotesFunctions';
 import { buscarMedicamentos } from '@/functions/medicamentosFunctions';
-import {
-  buscarDescartesMedicamentos,
-  registrarDescarteMedicamento,
-  excluirDescarteMedicamento,
-  DescarteMedicamento,
-} from '@/functions/descartesMedicamentosFunctions';
+import { buscarDescartesMedicamentos, registrarDescarteMedicamento, excluirDescarteMedicamento, DescarteMedicamento, } from '@/functions/descartesMedicamentosFunctions';
 import { uploadDocumentoMovimentacao } from '@/functions/movimentacoesMedicamentosFunctions';
 import { differenceInCalendarDays } from 'date-fns';
 import { formatDateSafe, parseDate } from '@/utils/dateUtils';
@@ -120,11 +115,24 @@ const ControleLotes = () => {
     }
     const data: DescarteMedicamento = {
       medicamento: discardLote.medicamentoNome,
+      medicamentoId: discardLote.medicamentoId || '',
+      loteId: discardLote.id,
       lote: discardLote.numero_lote,
       quantidade: discardQuantidade,
       metodo: discardMetodo,
       usuario: user?.email || '',
       documentoUrl: docUrl,
+      loteData: {
+        numero_lote: discardLote.numero_lote,
+        data_fabricacao: discardLote.data_fabricacao,
+        validade: discardLote.validade,
+        quantidade_inicial: discardLote.quantidade_inicial,
+        valor_compra: discardLote.valor_compra,
+        valor_venda: discardLote.valor_venda,
+        fabricante: discardLote.fabricante,
+        localizacao_fisica: discardLote.localizacao_fisica,
+        status: discardLote.status,
+      },
     };
     await registrarDescarteMedicamento(data);
     if (discardLote.medicamentoId && discardLote.id) {
@@ -136,10 +144,25 @@ const ControleLotes = () => {
     setShowDiscardModal(false);
   };
 
-  const revertDiscard = async (id: string) => {
+  const revertDiscard = async (desc: DescarteMedicamento & { id: string }) => {
     if (!confirm('Deseja reverter este descarte?')) return;
-    await excluirDescarteMedicamento(id);
-    setDescartes(prev => prev.filter(d => d.id !== id));
+    if (desc.medicamentoId && desc.loteData) {
+      const { id: newId } = await criarLote(desc.medicamentoId, desc.loteData);
+      const valDate = parseDate(desc.loteData.validade) ?? new Date(desc.loteData.validade);
+      if (valDate < new Date()) {
+        const loteExp: LoteExpirado = {
+          ...desc.loteData,
+          id: newId,
+          medicamentoId: desc.medicamentoId,
+          medicamentoNome: desc.medicamento,
+          diasVencido: differenceInCalendarDays(new Date(), valDate),
+          custo: desc.loteData.quantidade_inicial * (desc.loteData.valor_compra || 0),
+        };
+        setVencidos(prev => [...prev, loteExp]);
+      }
+    }
+    await excluirDescarteMedicamento(desc.id);
+    setDescartes(prev => prev.filter(d => d.id !== desc.id));
   };
 
   return (
@@ -149,10 +172,10 @@ const ControleLotes = () => {
           <span className={breadcrumbStyles.breadcrumb}>
             Menu Principal &gt;{' '}
             <span className={breadcrumbStyles.breadcrumb}>Gestão de Farmácias &gt; </span>
-            <span className={breadcrumbStyles.breadcrumbActive}>Controle dos Lotes</span>
+            <span className={breadcrumbStyles.breadcrumbActive}>Controle de Lotes</span>
           </span>
         </div>
-        <h1 className={layoutStyles.titleFarmacia}>Controle dos Lotes</h1>
+        <h1 className={layoutStyles.titleFarmacia}>Controle de Lotes</h1>
         <div className={layoutStyles.subtitleFarmacia}>Acompanhe lotes vencidos e descartes</div>
         <div className={tableStyles.tabsWrapper}>
           <button
@@ -165,7 +188,7 @@ const ControleLotes = () => {
             className={`${tableStyles.tabButton} ${activeTab === 'descartes' ? tableStyles.activeTab : ''}`}
             onClick={() => setActiveTab('descartes')}
           >
-            Descartes
+            Descartados
           </button>
         </div>
         {activeTab === 'vencidos' && (
@@ -272,11 +295,8 @@ const ControleLotes = () => {
                         )}
                       </td>
                       <td>
-                        <button
-                          className={tableStyles.revertButton}
-                          onClick={() => revertDiscard(d.id)}
-                        >
-                          ↩️
+                        <button className={tableStyles.revertButton} onClick={() => revertDiscard(d)} >
+                          <Undo size = {20}/>
                         </button>
                       </td>
                     </tr>
@@ -345,7 +365,7 @@ const ControleLotes = () => {
                     value={discardMetodo}
                     onChange={(e) => setDiscardMetodo(e.target.value)}
                   >
-                    {['incineração', 'devolução', 'doação'].map(m => (
+                    {['Incineração', 'Devolução', 'Doação', 'Lixo'].map(m => (
                       <option key={m} value={m}>
                         {m}
                       </option>

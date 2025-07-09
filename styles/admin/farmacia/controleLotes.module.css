@@ -121,3 +121,8 @@
   cursor: pointer;
   font-size: 1rem;
 }
+
+.revertButton:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}

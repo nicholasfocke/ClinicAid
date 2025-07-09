@@ -1,5 +1,6 @@
 import { addDoc, collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
+import { Lote } from './lotesFunctions';
 
 export interface DescarteMedicamento {
   medicamento: string;
@@ -9,6 +10,7 @@ export interface DescarteMedicamento {
   usuario: string;
   documentoUrl?: string;
   dataHora?: string;
+  loteData?: Omit<Lote, 'medicamentoId'>;
 }
 
 export const registrarDescarteMedicamento = async (
