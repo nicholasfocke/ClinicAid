@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase/firebaseConfig";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
 import layoutStyles from "@/styles/admin/farmacia/farmacia.module.css";
@@ -9,9 +10,10 @@ import tableStyles from "@/styles/admin/farmacia/medicamentos.module.css";
 import modalStyles from "@/styles/admin/farmacia/modalMedicamento.module.css";
 import detailsStyles from "@/styles/admin/farmacia/medicamentosDetails.module.css";
 import loteDetailsStyles from "@/styles/admin/farmacia/loteDetails.module.css";
-import { ExternalLink, LogIn, LogOut, PlusCircle, ChevronDown, ChevronRight, } from "lucide-react";
+import { ExternalLink, LogIn, LogOut, PlusCircle, ChevronDown, ChevronRight, Trash } from "lucide-react";
 import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData } from "@/functions/medicamentosFunctions";
 import { registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, buscarSaidasMedicamentos, MovimentacaoMedicamento } from "@/functions/movimentacoesMedicamentosFunctions";
+import { registrarDescarteMedicamento, DescarteMedicamento } from "@/functions/descartesMedicamentosFunctions";
 import { format, parseISO, subDays } from "date-fns";
 import { formatDateSafe } from "@/utils/dateUtils";
 import { buscarMedicos } from "@/functions/medicosFunctions";
@@ -174,6 +176,12 @@ const Medicamentos = () => {
   const [loteEditing, setLoteEditing] = useState(false);
   const [confirmDeleteLote, setConfirmDeleteLote] = useState(false);
   const [loteDetailsData, setLoteDetailsData] = useState<Partial<Lote>>({});
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [discardLote, setDiscardLote] = useState<Lote | null>(null);
+  const [discardMedId, setDiscardMedId] = useState("");
+  const [discardMetodo, setDiscardMetodo] = useState("incineração");
+  const [discardQuantidade, setDiscardQuantidade] = useState(0);
+  const [discardDocumento, setDiscardDocumento] = useState<File | null>(null);
 
   const selectedIds = medicamentos.filter((m) => m.selected).map((m) => m.id);
   const allSelected =
@@ -635,6 +643,43 @@ const Medicamentos = () => {
     setConfirmDeleteLote(false);
   };
 
+  const openDiscardModal = (medId: string, lote: Lote) => {
+    setDiscardLote(lote);
+    setDiscardMedId(medId);
+    setDiscardMetodo('incineração');
+    setDiscardQuantidade(lote.quantidade_inicial);
+    setDiscardDocumento(null);
+    setShowDiscardModal(true);
+  };
+
+  const closeDiscardModal = () => setShowDiscardModal(false);
+
+  const registerDiscard = async () => {
+    if (!discardLote) return;
+    let docUrl = '';
+    if (discardDocumento) {
+      docUrl = await uploadDocumentoMovimentacao(discardDocumento);
+    }
+    const data: DescarteMedicamento = {
+      medicamento:
+        medicamentos.find((m) => m.id === discardMedId)?.nome_comercial || '',
+      lote: discardLote.numero_lote,
+      quantidade: discardQuantidade,
+      metodo: discardMetodo,
+      usuario: user?.email || '',
+      documentoUrl: docUrl,
+    };
+    await registrarDescarteMedicamento(data);
+    if (discardLote.id) {
+      await excluirLote(discardMedId, discardLote.id);
+    }
+    setLotes((prev) => ({
+      ...prev,
+      [discardMedId]: (prev[discardMedId] || []).filter((l) => l.id !== discardLote.id),
+    }));
+    setShowDiscardModal(false);
+  };
+
   const closeLoteDetails = () => setShowLoteDetails(false);
 
   const handleLoteDetailsChange = (
@@ -701,6 +746,9 @@ const Medicamentos = () => {
             >
               + Adicionar medicamento
             </button>
+            <Link href="/admin/farmacia/controle-lotes" className={tableStyles.buttonAdicionar}>
+              Controle dos Lotes
+            </Link>
             {selectedIds.length > 0 && (
               <button
                 className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
@@ -869,6 +917,13 @@ const Medicamentos = () => {
                                   onClick={() => openLoteDetails(m.id, l)}
                                 >
                                   <ExternalLink size={16} />
+                                </button>
+                                <button
+                                  className={tableStyles.trashButton}
+                                  title="Descartar lote"
+                                  onClick={() => openDiscardModal(m.id, l)}
+                                >
+                                  <Trash size={16} />
                                 </button>
                               </td>
                             </tr>
@@ -1522,8 +1577,68 @@ const Medicamentos = () => {
           </div>
         </div>
       )}
+
+      {showDiscardModal && discardLote && (
+        <div className={loteDetailsStyles.overlay} onClick={closeDiscardModal}>
+          <div
+            className={loteDetailsStyles.card}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Registrar descarte</h3>
+            <div className={modalStyles.formGrid}>
+              <div className={modalStyles.fieldWrapper}>
+                <label className={modalStyles.label}>Método de descarte</label>
+                <select
+                  className={loteDetailsStyles.inputEditar}
+                  value={discardMetodo}
+                  onChange={(e) => setDiscardMetodo(e.target.value)}
+                >
+                  {['incineração', 'devolução', 'doação'].map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={modalStyles.fieldWrapper}>
+                <label className={modalStyles.label}>Quant. a descartar</label>
+                <input
+                  type="number"
+                  className={loteDetailsStyles.inputEditar}
+                  value={discardQuantidade}
+                  onChange={(e) => setDiscardQuantidade(Number(e.target.value))}
+                />
+              </div>
+              <div className={modalStyles.fieldWrapper}>
+                <label className={modalStyles.label}>Laudo/Recibo</label>
+                <input
+                  type="file"
+                  className={loteDetailsStyles.inputEditar}
+                  onChange={(e) => setDiscardDocumento(e.target.files?.[0] || null)}
+                />
+              </div>
+              <div className={modalStyles.fieldWrapper}>
+                <label className={modalStyles.label}>Responsável</label>
+                <input
+                  type="text"
+                  className={loteDetailsStyles.inputEditar}
+                  value={user?.email || ''}
+                  readOnly
+                />
+              </div>
+            </div>
+            <div className={loteDetailsStyles.buttons}>
+              <button className={loteDetailsStyles.buttonCancelar} onClick={closeDiscardModal}>
+                Cancelar
+              </button>
+              <button className={loteDetailsStyles.buttonEditar} onClick={registerDiscard}>
+                Registrar descarte
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </ProtectedRoute>
   );
 };
-
 export default Medicamentos;
