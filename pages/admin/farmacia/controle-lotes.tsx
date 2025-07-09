@@ -295,10 +295,7 @@ const ControleLotes = () => {
                         )}
                       </td>
                       <td>
-                        <button
-                          className={tableStyles.revertButton}
-                          onClick={() => revertDiscard(d)}
-                        >
+                        <button className={tableStyles.revertButton} onClick={() => revertDiscard(d)} >
                           <Undo size = {20}/>
                         </button>
                       </td>
