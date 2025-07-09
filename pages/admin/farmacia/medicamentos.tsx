@@ -13,6 +13,7 @@ import loteDetailsStyles from "@/styles/admin/farmacia/loteDetails.module.css";
 import { ExternalLink, LogIn, LogOut, PlusCircle, ChevronDown, ChevronRight, Trash } from "lucide-react";
 import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData } from "@/functions/medicamentosFunctions";
 import { registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, buscarSaidasMedicamentos, MovimentacaoMedicamento } from "@/functions/movimentacoesMedicamentosFunctions";
+import { registrarDescarteMedicamento, DescarteMedicamento } from "@/functions/descartesMedicamentosFunctions";
 import { format, parseISO, subDays } from "date-fns";
 import { formatDateSafe } from "@/utils/dateUtils";
 import { buscarMedicos } from "@/functions/medicosFunctions";
@@ -653,14 +654,29 @@ const Medicamentos = () => {
 
   const closeDiscardModal = () => setShowDiscardModal(false);
 
-  const registerDiscard = () => {
-    console.log('Descarte', {
-      medicamentoId: discardMedId,
-      lote: discardLote?.numero_lote,
-      metodo: discardMetodo,
+  const registerDiscard = async () => {
+    if (!discardLote) return;
+    let docUrl = '';
+    if (discardDocumento) {
+      docUrl = await uploadDocumentoMovimentacao(discardDocumento);
+    }
+    const data: DescarteMedicamento = {
+      medicamento:
+        medicamentos.find((m) => m.id === discardMedId)?.nome_comercial || '',
+      lote: discardLote.numero_lote,
       quantidade: discardQuantidade,
-      responsavel: user?.email,
-    });
+      metodo: discardMetodo,
+      usuario: user?.email || '',
+      documentoUrl: docUrl,
+    };
+    await registrarDescarteMedicamento(data);
+    if (discardLote.id) {
+      await excluirLote(discardMedId, discardLote.id);
+    }
+    setLotes((prev) => ({
+      ...prev,
+      [discardMedId]: (prev[discardMedId] || []).filter((l) => l.id !== discardLote.id),
+    }));
     setShowDiscardModal(false);
   };
 

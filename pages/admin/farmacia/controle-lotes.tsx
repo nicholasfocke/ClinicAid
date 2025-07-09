@@ -9,27 +9,24 @@ import tableStyles from '@/styles/admin/farmacia/controleLotes.module.css';
 import loteDetailsStyles from '@/styles/admin/farmacia/loteDetails.module.css';
 import modalStyles from '@/styles/admin/farmacia/modalMedicamento.module.css';
 import { ExternalLink, Trash } from 'lucide-react';
-import { buscarLotes } from '@/functions/lotesFunctions';
+import { buscarLotes, excluirLote, Lote as LoteData } from '@/functions/lotesFunctions';
 import { buscarMedicamentos } from '@/functions/medicamentosFunctions';
+import {
+  buscarDescartesMedicamentos,
+  registrarDescarteMedicamento,
+  excluirDescarteMedicamento,
+  DescarteMedicamento,
+} from '@/functions/descartesMedicamentosFunctions';
+import { uploadDocumentoMovimentacao } from '@/functions/movimentacoesMedicamentosFunctions';
 import { differenceInCalendarDays } from 'date-fns';
 import { formatDateSafe, parseDate } from '@/utils/dateUtils';
-
-interface Lote {
-  id?: string;
-  numero_lote: string;
-  validade: string;
-  quantidade_inicial: number;
-  valor_compra: number;
-  localizacao_fisica: string;
-  medicamentoId?: string;
-}
 
 interface Medicamento {
   id: string;
   nome_comercial: string;
 }
 
-interface LoteExpirado extends Lote {
+interface LoteExpirado extends LoteData {
   medicamentoNome: string;
   diasVencido: number;
   custo: number;
@@ -46,6 +43,7 @@ const ControleLotes = () => {
   const [discardMetodo, setDiscardMetodo] = useState('incineração');
   const [discardQuantidade, setDiscardQuantidade] = useState(0);
   const [discardDocumento, setDiscardDocumento] = useState<File | null>(null);
+  const [descartes, setDescartes] = useState<(DescarteMedicamento & { id: string })[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -70,11 +68,11 @@ const ControleLotes = () => {
         map[m.id] = m.nome_comercial;
       });
       const exp = (lotes as any)
-        .filter((l: Lote) => {
+        .filter((l: LoteData) => {
           const d = parseDate(l.validade) ?? new Date(l.validade);
           return d < new Date();
         })
-        .map((l: Lote) => {
+        .map((l: LoteData) => {
           const dataVal = parseDate(l.validade) ?? new Date(l.validade);
           const dias = differenceInCalendarDays(new Date(), dataVal);
           return {
@@ -87,6 +85,14 @@ const ControleLotes = () => {
       setVencidos(exp);
     };
     loadData();
+  }, []);
+
+  useEffect(() => {
+    const loadDescartes = async () => {
+      const d = await buscarDescartesMedicamentos();
+      setDescartes(d as any);
+    };
+    loadDescartes();
   }, []);
 
   const openLoteDetails = (lote: LoteExpirado) => {
@@ -106,14 +112,34 @@ const ControleLotes = () => {
 
   const closeDiscardModal = () => setShowDiscardModal(false);
 
-  const registerDiscard = () => {
-    console.log('Descarte', {
-      lote: discardLote?.numero_lote,
-      metodo: discardMetodo,
+  const registerDiscard = async () => {
+    if (!discardLote) return;
+    let docUrl = '';
+    if (discardDocumento) {
+      docUrl = await uploadDocumentoMovimentacao(discardDocumento);
+    }
+    const data: DescarteMedicamento = {
+      medicamento: discardLote.medicamentoNome,
+      lote: discardLote.numero_lote,
       quantidade: discardQuantidade,
-      responsavel: user?.email,
-    });
+      metodo: discardMetodo,
+      usuario: user?.email || '',
+      documentoUrl: docUrl,
+    };
+    await registrarDescarteMedicamento(data);
+    if (discardLote.medicamentoId && discardLote.id) {
+      await excluirLote(discardLote.medicamentoId, discardLote.id);
+    }
+    setVencidos(prev => prev.filter(l => l.id !== discardLote.id));
+    const d = await buscarDescartesMedicamentos();
+    setDescartes(d as any);
     setShowDiscardModal(false);
+  };
+
+  const revertDiscard = async (id: string) => {
+    if (!confirm('Deseja reverter este descarte?')) return;
+    await excluirDescarteMedicamento(id);
+    setDescartes(prev => prev.filter(d => d.id !== id));
   };
 
   return (
@@ -143,8 +169,18 @@ const ControleLotes = () => {
           </button>
         </div>
         {activeTab === 'vencidos' && (
-          <div className={tableStyles.tableWrapper}>
-            <table className={tableStyles.table}>
+          <>
+            <div className={tableStyles.summaryCard}>
+              <span>
+                Lotes vencidos: <strong>{vencidos.length}</strong>
+              </span>
+              <span>
+                Pendentes de descartes:{' '}
+                <strong>{vencidos.filter(l => l.diasVencido > 60).length}</strong>
+              </span>
+            </div>
+            <div className={tableStyles.tableWrapper}>
+              <table className={tableStyles.table}>
               <thead>
                 <tr>
                   <th>Nome do medicamento</th>
@@ -188,11 +224,67 @@ const ControleLotes = () => {
               </tbody>
             </table>
           </div>
+          </>
         )}
         {activeTab === 'descartes' && (
-          <div className={tableStyles.tableWrapper}>
-            {/* Conteúdo futuro para descartes */}
-          </div>
+          <>
+            <div className={tableStyles.summaryCard}>
+              <span>
+                Lotes vencidos: <strong>{vencidos.length}</strong>
+              </span>
+              <span>
+                Pendentes de descartes:{' '}
+                <strong>
+                  {vencidos.filter(l => l.diasVencido > 60).length}
+                </strong>
+              </span>
+            </div>
+            <div className={tableStyles.tableWrapper}>
+              <table className={tableStyles.table}>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Produto</th>
+                    <th>Lote</th>
+                    <th>Qtde</th>
+                    <th>Método</th>
+                    <th>Responsável</th>
+                    <th>Documento</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {descartes.map(d => (
+                    <tr key={d.id}>
+                      <td>{formatDateSafe(d.dataHora || '', 'dd/MM/yy HH:mm')}</td>
+                      <td>{d.medicamento}</td>
+                      <td>{d.lote}</td>
+                      <td>{d.quantidade}</td>
+                      <td>{d.metodo}</td>
+                      <td>{d.usuario}</td>
+                      <td>
+                        {d.documentoUrl ? (
+                          <a href={d.documentoUrl} target="_blank" rel="noopener noreferrer">
+                            📎
+                          </a>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td>
+                        <button
+                          className={tableStyles.revertButton}
+                          onClick={() => revertDiscard(d.id)}
+                        >
+                          ↩️
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {showLoteDetails && selectedLote && (
@@ -203,13 +295,38 @@ const ControleLotes = () => {
                 <strong>Número do lote:</strong> {selectedLote.numero_lote}
               </p>
               <p>
-                <strong>Validade:</strong> {formatDateSafe(selectedLote.validade, 'dd/MM/yyyy')}
+                <strong>Data de fabricação:</strong>{' '}
+                {formatDateSafe(selectedLote.data_fabricacao, 'dd/MM/yyyy')}
+              </p>
+              <p>
+                <strong>Validade:</strong>{' '}
+                {formatDateSafe(selectedLote.validade, 'dd/MM/yyyy')}
               </p>
               <p>
                 <strong>Quantidade:</strong> {selectedLote.quantidade_inicial}
               </p>
               <p>
+                <strong>Valor compra:</strong>{' '}
+                {selectedLote.valor_compra.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                })}
+              </p>
+              <p>
+                <strong>Valor venda:</strong>{' '}
+                {selectedLote.valor_venda.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                })}
+              </p>
+              <p>
+                <strong>Fabricante:</strong> {selectedLote.fabricante}
+              </p>
+              <p>
                 <strong>Localização:</strong> {selectedLote.localizacao_fisica}
+              </p>
+              <p>
+                <strong>Status:</strong> {selectedLote.status}
               </p>
               <button className={loteDetailsStyles.buttonFechar} onClick={closeLoteDetails}>X</button>
             </div>
