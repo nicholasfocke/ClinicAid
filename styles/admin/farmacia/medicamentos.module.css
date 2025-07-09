@@ -282,3 +282,17 @@
   border-radius: 50%;
   margin-left: 6px;
 }
+
+.trashButton {
+  background: none;
+  border: none;
+  padding: 6px;
+  margin-right: 10px;
+  cursor: pointer;
+  color: #dc2626;
+  transition: transform 0.2s;
+}
+
+.trashButton:hover {
+  color: #b91c1c;
+  transform: scale(1.1);}
