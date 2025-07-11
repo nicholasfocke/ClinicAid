@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { signOut } from "firebase/auth";
-import { auth } from "../../firebase/firebaseConfig";
+import { auth } from "@/firebase/firebaseConfig";
 import { useRouter } from "next/router";
 
 export default function IndexCliente() {

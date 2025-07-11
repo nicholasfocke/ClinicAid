@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { auth, firestore } from '../firebase/firebaseConfig';
+import { auth, firestore } from '@/firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import styles from '@/styles/profile.module.css';
-import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
+import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 
 // Máscara para CPF (formato: 999.999.999-99)
 const formatCPF = (value: string) => {

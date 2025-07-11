@@ -2,7 +2,7 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { auth, firestore } from '../firebase/firebaseConfig';
+import { auth, firestore } from '@/firebase/firebaseConfig';
 import { buscarAgendamentosDeHoje, statusAgendamento } from '@/functions/agendamentosFunction';
 import { onAuthStateChanged } from 'firebase/auth';
 import styles from '@/styles/Home.module.css';

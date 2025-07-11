@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect, useRef } from 'react';
 import { FaWhatsapp, FaEnvelope } from "react-icons/fa";
 import { FaInstagram, FaBars, FaTimes, FaSignOutAlt } from 'react-icons/fa';
-import { auth, firestore } from '../firebase/firebaseConfig';
+import { auth, firestore } from '@/firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import Image from 'next/image';

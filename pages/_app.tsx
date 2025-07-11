@@ -1,6 +1,6 @@
-import { AuthProvider } from '../context/AuthContext';
-import '../styles/globals.css';
-import Layout from '../components/Layout';
+import { AuthProvider } from '@/context/AuthContext';
+import '@/styles/globals.css';
+import Layout from '@/components/Layout';
 import Head from 'next/head';
 import { Analytics } from '@vercel/analytics/react';
 import { useRouter } from 'next/router';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, deleteDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { auth, firestore } from '../../firebase/firebaseConfig';
+import { auth, firestore } from '@/firebase/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/router';
 import styles from "@/styles/admin/agendamentos/agendamentos.module.css";
