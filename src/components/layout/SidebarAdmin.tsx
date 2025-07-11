@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './SidebarAdmin.module.css';
 import { Home, Calendar, User, LogOut, Stethoscope, Bot, FilePlus, ChevronDown, ChevronRight, Pill, Users, DollarSign } from 'lucide-react';
 import Link from 'next/link';
-import { auth, firestore } from '../../firebase/firebaseConfig';
+import { auth, firestore } from '@/firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/router';
 import { doc, getDoc } from 'firebase/firestore';

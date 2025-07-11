@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './Sidebar.module.css';
 import { MessageSquare, CalendarDays, User2 } from 'lucide-react';
 import Link from 'next/link';
-import { firestore } from '../../firebase/firebaseConfig';
+import { firestore } from '@/firebase/firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
 
 const Sidebar = () => {

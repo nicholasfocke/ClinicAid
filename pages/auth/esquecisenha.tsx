@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../../firebase/firebaseConfig'; 
+import { auth } from '@/firebase/firebaseConfig'; 
 import styles from "@/styles/auth/login.module.css";
 import { useRouter } from 'next/router';
 import Image from 'next/image';
