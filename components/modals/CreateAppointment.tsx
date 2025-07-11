@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from 'react-modal';
 import styles from '@/styles/admin/agendamentos/CreateAppointment.module.css';
-import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, parse } from 'date-fns';
+import { format, addDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, parse, startOfToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { firestore } from '@/firebase/firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
@@ -177,7 +177,8 @@ const CreateAppointmentModal: React.FC<Props> = ({
   // Altere isDayEnabled para usar diasDisponiveis e padronize o label
   const isDayEnabled = (day: Date) => {
     const label = diasSemana[day.getDay()];
-    return diasDisponiveis.includes(label);
+    const today = startOfToday();
+    return diasDisponiveis.includes(label) && day >= today;
   };
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -485,8 +486,17 @@ const CreateAppointmentModal: React.FC<Props> = ({
 
   const horariosGerados = horarioDoDia ? gerarHorarios() : availableTimes;
   const normalize = (t: string) => t.trim().slice(0, 5);
-  const normalizedReserved = reservedTimes.map(normalize);
-  const isTimeDisabled = (time: string) => normalizedReserved.includes(normalize(time));
+const normalizedReserved = reservedTimes.map(normalize);
+const isTimeDisabled = (time: string) => {
+  if (normalizedReserved.includes(normalize(time))) return true;
+  if (isSameDay(selectedDate, startOfToday())) {
+    const [h, m] = time.split(':').map(Number);
+    const timeDate = new Date();
+    timeDate.setHours(h, m, 0, 0);
+    if (timeDate < new Date()) return true;
+  }
+  return false;
+};
   const filteredPacientes = pacientes.filter(p =>
     p.nome.toLowerCase().includes(pacienteQuery.toLowerCase())
   );
