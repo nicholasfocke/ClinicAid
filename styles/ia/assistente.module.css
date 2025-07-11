@@ -165,6 +165,11 @@
   box-shadow: 0 2px 8px rgba(37,99,235,0.08);
 }
 
+.modeButtonActive {
+  background: #e0e7ff;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.2);
+}
+
 .userMessage {
   align-self: flex-end;
   background: linear-gradient(120deg, #2563eb 60%, #60a5fa 100%);
