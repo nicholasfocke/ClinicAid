@@ -296,6 +296,13 @@ const Procedimentos = () => {
           <button className={layoutStyles.buttonAdicionar} onClick={() => setShowModal(true)}>
             + Adicionar procedimento
           </button>
+          {selectedIds.length > 0 && (
+            <button
+              className={`${tableStyles.buttonExcluirSelecionados} ${tableStyles.buttonExcluirSelecionados}`} 
+              onClick={deleteSelected} > 
+              Excluir selecionados
+            </button>
+          )}
           <button className={tableStyles.buttonPdf} onClick={gerarRelatorioProcedimentos}>
             📄 Gerar PDF
           </button>

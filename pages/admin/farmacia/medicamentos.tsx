@@ -1197,7 +1197,7 @@ const Medicamentos = () => {
       {showLoteModal && (
         <div
           className={modalStyles.overlay}
-          onClick={() => {setShowModal(false); setError("");}}
+          onClick={() => {setShowLoteModal(false); setError("");}}
         >
           <div
             className={modalStyles.modal}
@@ -1205,7 +1205,7 @@ const Medicamentos = () => {
           >
             <button
               className={modalStyles.closeButton}
-              onClick={() => {setShowModal(false); setError("");}}
+              onClick={() => {setShowLoteModal(false); setError("");}}
             >
               X
             </button>
