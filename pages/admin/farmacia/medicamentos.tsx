@@ -10,7 +10,7 @@ import tableStyles from "@/styles/admin/farmacia/medicamentos.module.css";
 import modalStyles from "@/styles/admin/farmacia/modalMedicamento.module.css";
 import detailsStyles from "@/styles/admin/farmacia/medicamentosDetails.module.css";
 import loteDetailsStyles from "@/styles/admin/farmacia/loteDetails.module.css";
-import { ExternalLink, LogIn, LogOut, PlusCircle, ChevronDown, ChevronRight, Trash } from "lucide-react";
+import { ExternalLink, LogIn, LogOut, PlusCircle, ChevronDown, ChevronRight, Trash, OctagonAlert } from "lucide-react";
 import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData } from "@/functions/medicamentosFunctions";
 import { registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, buscarSaidasMedicamentos, MovimentacaoMedicamento } from "@/functions/movimentacoesMedicamentosFunctions";
 import { registrarDescarteMedicamento, DescarteMedicamento } from "@/functions/descartesMedicamentosFunctions";
@@ -753,14 +753,11 @@ const Medicamentos = () => {
         )}
         <div className={tableStyles.topBar}>
           <div className={tableStyles.actionButtonsWrapper}>
-            <button
-              className={tableStyles.buttonAdicionar}
-              onClick={() => setShowModal(true)}
-            >
+            <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)} >
               + Adicionar medicamento
             </button>
             <Link href="/admin/farmacia/controle-lotes" className={tableStyles.buttonAdicionar}>
-              Controle dos Lotes
+              Controle de Lotes
             </Link>
             {selectedIds.length > 0 && (
               <button
@@ -829,9 +826,21 @@ const Medicamentos = () => {
                   </td>
                   <td>{m.nome_comercial}</td>
                   <td>
-                    {(lotes[m.id] || [])
-                      .filter(l => !isExpired(l.validade))
-                      .reduce((sum, l) => sum + l.quantidade_inicial, 0)}
+                    {(() => {
+                      const saldo = (lotes[m.id] || [])
+                        .filter(l => !isExpired(l.validade))
+                        .reduce((sum, l) => sum + l.quantidade_inicial, 0);
+                      return (
+                        <>
+                          {saldo}
+                          {saldo < (m.estoque_minimo || 0) && (
+                            <span title="Estoque abaixo do mínimo">
+                              <OctagonAlert size={16} className={tableStyles.alertIcon} />
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
                   </td>
                   <td>{m.estoque_minimo || 0}</td>
                   <td>{calcularCobertura(m)}</td>
@@ -1606,7 +1615,7 @@ const Medicamentos = () => {
                   value={discardMetodo}
                   onChange={(e) => setDiscardMetodo(e.target.value)}
                 >
-                  {['incineração', 'devolução', 'doação'].map((m) => (
+                  {['Incineração', 'Devolução', 'Doação', 'Lixo'].map((m) => (
                     <option key={m} value={m}>
                       {m}
                     </option>
