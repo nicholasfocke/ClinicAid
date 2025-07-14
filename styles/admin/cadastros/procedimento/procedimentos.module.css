@@ -121,7 +121,7 @@
 }
 
 .buttonPdf {
-  background: #22c55e; /* verde */
+  background: #22c55e; 
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -148,6 +148,23 @@
 
 .buttonExcluir:hover {
   background: #b91c1c;
+}
+
+.buttonExcluirSelecionados {
+  background: #dc2626; 
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 21px ;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 8px;
+}
+
+.buttonExcluirSelecionados:hover {
+  background: #991b1b; 
 }
 
 .tipoQuad {
