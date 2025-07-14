@@ -1,5 +1,5 @@
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { auth, firestore } from '../firebase/firebaseConfig';
@@ -165,9 +165,194 @@ const Index = () => {
     }
   };
 
+  // Notificações estáticas (mock)
+  const notificacoesMock = [
+    {
+      id: 1,
+      tipo: 'danger',
+      titulo: 'Pagamento pendente: João da...',
+      descricao: 'Hoje às 10:40',
+      icone: 'red'
+    },
+    {
+      id: 2,
+      tipo: 'warning',
+      titulo: 'Medicamento vencendo: Cod...',
+      descricao: 'Ontem às 09:15',
+      icone: 'yellow'
+    },
+    {
+      id: 3,
+      tipo: 'success',
+      titulo: 'Dipirona adicionada ao estoque',
+      descricao: 'Ontem às 15:22',
+      icone: 'green'
+    },
+    {
+      id: 4,
+      tipo: 'info',
+      titulo: 'Consulta ausente: Maria Alvv',
+      descricao: '18 de abril, 2024',
+      icone: 'gray'
+    }
+  ];
+
+  // Estado para abrir/fechar popup de notificações
+  const [notificacoesOpen, setNotificacoesOpen] = useState(false);
+  const notificacoesRef = useRef<HTMLDivElement>(null);
+
+  // Fecha popup ao clicar fora
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        notificacoesRef.current &&
+        !notificacoesRef.current.contains(event.target as Node)
+      ) {
+        setNotificacoesOpen(false);
+      }
+    }
+    if (notificacoesOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [notificacoesOpen]);
+
   return (
     <ProtectedRoute>
       <div className={styles.container}>
+        {/* Sininho de notificação no topo direito */}
+        <div style={{
+          position: 'fixed',
+          top: 24,
+          right: 40,
+          zIndex: 100
+        }}>
+          <button
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              position: 'relative'
+            }}
+            onClick={() => setNotificacoesOpen((v) => !v)}
+            aria-label="Abrir notificações"
+          >
+            {/* Ícone de sino */}
+            <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+              <path d="M18 16v-5a6 6 0 10-12 0v5a2 2 0 01-2 2h16a2 2 0 01-2-2z" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M13.73 21a2 2 0 01-3.46 0" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {/* Badge de quantidade de notificações */}
+            <span style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              background: '#ef4444',
+              color: '#fff',
+              borderRadius: '50%',
+              fontSize: 12,
+              width: 18,
+              height: 18,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 600,
+              border: '2px solid #fff'
+            }}>
+              8
+            </span>
+          </button>
+          {/* Popup de notificações */}
+          {notificacoesOpen && (
+            <div
+              ref={notificacoesRef}
+              style={{
+                position: 'absolute',
+                top: 40,
+                right: 0,
+                width: 340,
+                background: '#fff',
+                borderRadius: 18,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.10)',
+                padding: '18px 0 0 0',
+                zIndex: 200
+              }}
+            >
+              <div style={{
+                fontWeight: 700,
+                fontSize: 20,
+                padding: '0 24px 12px 24px',
+                borderBottom: '1px solid #f1f1f1',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                Notificações
+                <a href="#" style={{
+                  fontWeight: 400,
+                  fontSize: 15,
+                  color: '#2563eb',
+                  textDecoration: 'none'
+                }}>Ver todas</a>
+              </div>
+              <ul style={{
+                listStyle: 'none',
+                margin: 0,
+                padding: 0
+              }}>
+                {notificacoesMock.map((n) => (
+                  <li key={n.id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '16px 24px',
+                    borderBottom: '1px solid #f1f1f1',
+                    cursor: 'pointer'
+                  }}>
+                    {/* Círculo de status */}
+                    <span style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      marginRight: 16,
+                      background:
+                        n.icone === 'red' ? '#ef4444'
+                        : n.icone === 'yellow' ? '#fbbf24'
+                        : n.icone === 'green' ? '#22c55e'
+                        : '#8b98a9',
+                      display: 'inline-block'
+                    }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        fontWeight: 500,
+                        fontSize: 15,
+                        color: '#222',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: 200
+                      }}>{n.titulo}</div>
+                      <div style={{
+                        fontSize: 13,
+                        color: '#8b98a9',
+                        marginTop: 2
+                      }}>{n.descricao}</div>
+                    </div>
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" style={{ marginLeft: 12 }}>
+                      <path d="M9 18l6-6-6-6" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </li>
+                ))}
+              </ul>
+              <div style={{ height: 8 }} />
+            </div>
+          )}
+        </div>
+        {/* Fim do sininho */}
+
         <SidebarAdmin />
 
         <div className={styles.mainContent}>
