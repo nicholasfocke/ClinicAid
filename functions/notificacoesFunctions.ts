@@ -2,6 +2,7 @@ import { addDoc, collection, getDocs, orderBy, query } from 'firebase/firestore'
 import { firestore } from '@/firebase/firebaseConfig';
 
 export interface NotificacaoData {
+  [x: string]: any | null | undefined;
   titulo: string;
   descricao: string;
   icone: 'red' | 'yellow' | 'green' | 'gray';
