@@ -9,6 +9,7 @@ import styles from '@/styles/Home.module.css';
 import { format } from 'date-fns';
 import SidebarAdmin from '@/components/layout/SidebarAdmin';
 import Sidebar from '@/components/layout/Sidebar';
+import Link from 'next/link';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
@@ -225,19 +226,9 @@ const Index = () => {
     <ProtectedRoute>
       <div className={styles.container}>
         {/* Sininho de notificação no topo direito */}
-        <div style={{
-          position: 'fixed',
-          top: 24,
-          right: 40,
-          zIndex: 100
-        }}>
+        <div className={styles.notificationBellContainer}>
           <button
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              position: 'relative'
-            }}
+            className={styles.bellButton}
             onClick={() => setNotificacoesOpen((v) => !v)}
             aria-label="Abrir notificações"
           >
@@ -247,22 +238,7 @@ const Index = () => {
               <path d="M13.73 21a2 2 0 01-3.46 0" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             {/* Badge de quantidade de notificações */}
-            <span style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              background: '#ef4444',
-              color: '#fff',
-              borderRadius: '50%',
-              fontSize: 12,
-              width: 18,
-              height: 18,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 600,
-              border: '2px solid #fff'
-            }}>
+            <span className={styles.notificationBadge}>
               8
             </span>
           </button>
@@ -270,78 +246,34 @@ const Index = () => {
           {notificacoesOpen && (
             <div
               ref={notificacoesRef}
-              style={{
-                position: 'absolute',
-                top: 40,
-                right: 0,
-                width: 340,
-                background: '#fff',
-                borderRadius: 18,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.10)',
-                padding: '18px 0 0 0',
-                zIndex: 200
-              }}
+              className={styles.notificationPopup}
             >
-              <div style={{
-                fontWeight: 700,
-                fontSize: 20,
-                padding: '0 24px 12px 24px',
-                borderBottom: '1px solid #f1f1f1',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}>
+              <div className={styles.notificationHeader}>
                 Notificações
-                <a href="#" style={{
-                  fontWeight: 400,
-                  fontSize: 15,
-                  color: '#2563eb',
-                  textDecoration: 'none'
-                }}>Ver todas</a>
+                <Link href="/notificacoes" className={styles.notificationViewAll}>Ver todas</Link>
               </div>
-              <ul style={{
-                listStyle: 'none',
-                margin: 0,
-                padding: 0
-              }}>
+              <ul className={styles.notificationList}>
                 {notificacoesMock.map((n) => (
-                  <li key={n.id} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '16px 24px',
-                    borderBottom: '1px solid #f1f1f1',
-                    cursor: 'pointer'
-                  }}>
+                  <li key={n.id} className={styles.notificationItem}>
                     {/* Círculo de status */}
-                    <span style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: '50%',
-                      marginRight: 16,
-                      background:
-                        n.icone === 'red' ? '#ef4444'
-                        : n.icone === 'yellow' ? '#fbbf24'
-                        : n.icone === 'green' ? '#22c55e'
-                        : '#8b98a9',
-                      display: 'inline-block'
-                    }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{
-                        fontWeight: 500,
-                        fontSize: 15,
-                        color: '#222',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: 200
-                      }}>{n.titulo}</div>
-                      <div style={{
-                        fontSize: 13,
-                        color: '#8b98a9',
-                        marginTop: 2
-                      }}>{n.descricao}</div>
+                    <span
+                      className={styles.notificationIcon}
+                      style={{
+                        background:
+                          n.icone === 'red'
+                            ? '#ef4444'
+                            : n.icone === 'yellow'
+                            ? '#fbbf24'
+                            : n.icone === 'green'
+                            ? '#22c55e'
+                            : '#8b98a9',
+                      }}
+                    />
+                    <div className={styles.notificationContent}>
+                      <div className={styles.notificationTitle}>{n.titulo}</div>
+                      <div className={styles.notificationDescription}>{n.descricao}</div>
                     </div>
-                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" style={{ marginLeft: 12 }}>
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" className={styles.notificationArrow}>
                       <path d="M9 18l6-6-6-6" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </li>

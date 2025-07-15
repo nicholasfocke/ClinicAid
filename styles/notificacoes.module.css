@@ -1,0 +1,46 @@
+.container {
+  margin-left: 260px;
+  padding: 2rem 3rem;
+  max-width: calc(100% - 260px - 3rem);
+  min-height: 80vh;
+  background-color: #f3f4f6;
+}
+
+.titleNotificacoes {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 18px 0 0 0;
+  letter-spacing: -1px;
+  text-align: left;
+}
+
+.subtitleNotificacoes {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #6b7280;
+  margin: 0.1rem 0 2rem 0;
+}
+
+.notificationsSection {
+  background: #fff;
+  border-radius: 18px;
+  padding: 24px 32px;
+  box-shadow: 0 8px 32px rgba(16, 30, 54, 0.08);
+  margin-bottom: 24px;
+}
+
+.notificationsSection h2 {
+  margin: 0 0 12px 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.notificationsList {
+  list-style: disc;
+  margin: 0 0 0 20px;
+  padding: 0;
+  color: #333;
+  font-size: 1rem;
+}
