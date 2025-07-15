@@ -111,6 +111,13 @@
   cursor: default;
 }
 
+.noNotifications {
+  padding: 28px;
+  text-align: center;
+  color: #8b98a9;
+  font-size: 1.05rem;
+}
+
 @media (max-width: 600px) {
   .container {
     padding: 18px 2vw 0 2vw;

@@ -166,37 +166,14 @@ const Index = () => {
     }
   };
 
-  // Notificações estáticas (mock)
-  const notificacoesMock = [
-    {
-      id: 1,
-      tipo: 'danger',
-      titulo: 'Pagamento pendente: João da...',
-      descricao: 'Hoje às 10:40',
-      icone: 'red'
-    },
-    {
-      id: 2,
-      tipo: 'warning',
-      titulo: 'Medicamento vencendo: Cod...',
-      descricao: 'Ontem às 09:15',
-      icone: 'yellow'
-    },
-    {
-      id: 3,
-      tipo: 'success',
-      titulo: 'Dipirona adicionada ao estoque',
-      descricao: 'Ontem às 15:22',
-      icone: 'green'
-    },
-    {
-      id: 4,
-      tipo: 'info',
-      titulo: 'Consulta ausente: Maria Alvv',
-      descricao: '18 de abril, 2024',
-      icone: 'gray'
-    }
-  ];
+  // Lista de notificações (vazio por padrão)
+  const notificacoesMock: {
+    id: number;
+    tipo: string;
+    titulo: string;
+    descricao: string;
+    icone: string;
+  }[] = [];
 
   // Estado para abrir/fechar popup de notificações
   const [notificacoesOpen, setNotificacoesOpen] = useState(false);
@@ -239,7 +216,7 @@ const Index = () => {
             </svg>
             {/* Badge de quantidade de notificações */}
             <span className={styles.notificationBadge}>
-              8
+              {notificacoesMock.length}
             </span>
           </button>
           {/* Popup de notificações */}
@@ -253,31 +230,35 @@ const Index = () => {
                 <Link href="/notificacoes" className={styles.notificationViewAll}>Ver todas</Link>
               </div>
               <ul className={styles.notificationList}>
-                {notificacoesMock.map((n) => (
-                  <li key={n.id} className={styles.notificationItem}>
-                    {/* Círculo de status */}
-                    <span
-                      className={styles.notificationIcon}
-                      style={{
-                        background:
-                          n.icone === 'red'
-                            ? '#ef4444'
-                            : n.icone === 'yellow'
-                            ? '#fbbf24'
-                            : n.icone === 'green'
-                            ? '#22c55e'
-                            : '#8b98a9',
-                      }}
-                    />
-                    <div className={styles.notificationContent}>
-                      <div className={styles.notificationTitle}>{n.titulo}</div>
-                      <div className={styles.notificationDescription}>{n.descricao}</div>
-                    </div>
-                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" className={styles.notificationArrow}>
-                      <path d="M9 18l6-6-6-6" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </li>
-                ))}
+                {notificacoesMock.length === 0 ? (
+                  <li className={styles.notificationEmpty}>Não há notificações</li>
+                ) : (
+                  notificacoesMock.map((n) => (
+                    <li key={n.id} className={styles.notificationItem}>
+                      {/* Círculo de status */}
+                      <span
+                        className={styles.notificationIcon}
+                        style={{
+                          background:
+                            n.icone === 'red'
+                              ? '#ef4444'
+                              : n.icone === 'yellow'
+                              ? '#fbbf24'
+                              : n.icone === 'green'
+                              ? '#22c55e'
+                              : '#8b98a9',
+                        }}
+                      />
+                      <div className={styles.notificationContent}>
+                        <div className={styles.notificationTitle}>{n.titulo}</div>
+                        <div className={styles.notificationDescription}>{n.descricao}</div>
+                      </div>
+                      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" className={styles.notificationArrow}>
+                        <path d="M9 18l6-6-6-6" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </li>
+                  ))
+                )}
               </ul>
               <div style={{ height: 8 }} />
             </div>
