@@ -332,6 +332,12 @@
   cursor: pointer;
 }
 
+.notificationEmpty {
+  padding: 16px 24px;
+  text-align: center;
+  color: #8b98a9;
+}
+
 .notificationIcon {
   width: 16px;
   height: 16px;

@@ -2,33 +2,7 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/notificacoes.module.css';
 
-const notificacoes = [
-  {
-    tipo: 'danger',
-    texto: 'Pagamento pendente do convênio',
-    tempo: 'Há 2 horas',
-  },
-  {
-    tipo: 'danger',
-    texto: 'Pagamento pendente do convênio',
-    tempo: 'Há 2 horas',
-  },
-  {
-    tipo: 'warning',
-    texto: 'Medicamento Dipirona próximo da data de validade',
-    tempo: 'Há 3 horas',
-  },
-  {
-    tipo: 'success',
-    texto: 'Pagamento recebido de Nicholas de Góis Focke',
-    tempo: 'Há 4 hora',
-  },
-  {
-    tipo: 'success',
-    texto: 'Entrada registrada para o medicamento Dipirona',
-    tempo: 'Há 3 dias',
-  },
-];
+const notificacoes: { tipo: string; texto: string; tempo: string }[] = [];
 
 const iconByType = {
   danger: (
@@ -78,24 +52,30 @@ const Notificacoes = () => {
         </div>
         {/* Lista de notificações */}
         <div className={styles.notificationsCard}>
-          <ul className={styles.notificationsList}>
-            {notificacoes.map((n, idx) => (
-              <li className={styles.notificationItem} key={idx}>
-                <span className={styles.notificationIcon}>
-                  {iconByType[n.tipo as keyof typeof iconByType]}
-                </span>
-                <span className={styles.notificationText}>{n.texto}</span>
-                <span className={styles.notificationTime}>{n.tempo}</span>
-              </li>
-            ))}
-          </ul>
-          {/* Paginação */}
-          <div className={styles.pagination}>
-            <button className={styles.paginationBtn} disabled>
-              1
-            </button>
-            <button className={styles.paginationBtn}>&gt;</button>
-          </div>
+          {notificacoes.length === 0 ? (
+            <p className={styles.noNotifications}>Não há notificações</p>
+          ) : (
+            <>
+              <ul className={styles.notificationsList}>
+                {notificacoes.map((n, idx) => (
+                  <li className={styles.notificationItem} key={idx}>
+                    <span className={styles.notificationIcon}>
+                      {iconByType[n.tipo as keyof typeof iconByType]}
+                    </span>
+                    <span className={styles.notificationText}>{n.texto}</span>
+                    <span className={styles.notificationTime}>{n.tempo}</span>
+                  </li>
+                ))}
+              </ul>
+              {/* Paginação */}
+              <div className={styles.pagination}>
+                <button className={styles.paginationBtn} disabled>
+                  1
+                </button>
+                <button className={styles.paginationBtn}>&gt;</button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </ProtectedRoute>
