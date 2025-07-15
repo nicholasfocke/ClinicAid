@@ -228,15 +228,23 @@ const Index = () => {
               ref={notificacoesRef}
               className={styles.notificationPopup}
             >
-              <div className={styles.notificationHeader}>
-                Notificações
-                <Link href="/notificacoes" className={styles.notificationViewAll}>Ver todas</Link>
+              <div className={styles.notificationHeaderColumn}>
+                <span className={styles.notificationHeaderTitle}>Notificações</span>
+                <div className={styles.notificationHeaderActionsRow}>
+                  <Link href="/notificacoes" className={styles.notificationViewAll}>Ver todas</Link>
+                  <button
+                    className={styles.notificationClearButton}
+                    onClick={() => setNotificacoes([])}
+                  >
+                    Limpar notificações
+                  </button>
+                </div>
               </div>
               <ul className={styles.notificationList}>
                 {notificacoes.length === 0 ? (
                   <li className={styles.notificationEmpty}>Não há notificações</li>
                 ) : (
-                  notificacoes.map((n) => (
+                  notificacoes.slice(0, 5).map((n) => (
                     <li key={n.id} className={styles.notificationItem}>
                       {/* Círculo de status */}
                       <span
@@ -263,7 +271,6 @@ const Index = () => {
                   ))
                 )}
               </ul>
-              <div style={{ height: 8 }} />
             </div>
           )}
         </div>

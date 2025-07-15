@@ -3,36 +3,10 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/notificacoes.module.css';
 import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { buscarNotificacoes, NotificacaoData } from '@/functions/notificacoesFunctions';
 
-const iconByType = {
-  danger: (
-    <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10" stroke="#ef4444" strokeWidth="2" fill="#fff" />
-      <path d="M12 7v5" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="12" cy="16" r="1" fill="#ef4444" />
-    </svg>
-  ),
-  warning: (
-    <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10" stroke="#fbbf24" strokeWidth="2" fill="#fff" />
-      <path d="M12 7v5" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="12" cy="16" r="1" fill="#fbbf24" />
-    </svg>
-  ),
-  success: (
-    <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10" stroke="#22c55e" strokeWidth="2" fill="#fff" />
-      <path
-        d="M8 12l2.5 2.5L16 9"
-        stroke="#22c55e"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  ),
-};
+
 
 const Notificacoes = () => {
   const [notificacoes, setNotificacoes] = useState<NotificacaoData[]>([]);
@@ -72,12 +46,25 @@ const Notificacoes = () => {
               <ul className={styles.notificationsList}>
                 {notificacoes.map((n, idx) => (
                   <li className={styles.notificationItem} key={idx}>
-                    <span className={styles.notificationIcon}>
-                      {iconByType[n.icone as keyof typeof iconByType]}
-                    </span>
+                    <span
+                      className={styles.notificationIcon}
+                      style={{
+                        background:
+                          n.icone === 'red'
+                            ? '#ef4444'
+                            : n.icone === 'yellow'
+                            ? '#fbbf24'
+                            : n.icone === 'green'
+                            ? '#22c55e'
+                            : '#8b98a9',
+                      }}
+                    />
                     <span className={styles.notificationText}>{n.descricao}</span>
                     <span className={styles.notificationTime}>
-                      {formatDistanceToNow(new Date(n.criadoEm), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(n.criadoEm), {
+                        addSuffix: true,
+                        locale: ptBR,
+                      })}
                     </span>
                   </li>
                 ))}
