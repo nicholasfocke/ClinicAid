@@ -1,8 +1,9 @@
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/notificacoes.module.css';
-
-const notificacoes: { tipo: string; texto: string; tempo: string }[] = [];
+import { useEffect, useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { buscarNotificacoes, NotificacaoData } from '@/functions/notificacoesFunctions';
 
 const iconByType = {
   danger: (
@@ -34,6 +35,18 @@ const iconByType = {
 };
 
 const Notificacoes = () => {
+  const [notificacoes, setNotificacoes] = useState<NotificacaoData[]>([]);
+
+  useEffect(() => {
+    const fetchNotificacoes = async () => {
+      try {
+        const list = await buscarNotificacoes();
+        setNotificacoes(list);
+      } catch {}
+    };
+    fetchNotificacoes();
+  }, []);
+
   return (
     <ProtectedRoute>
       <div className={styles.container}>
@@ -60,10 +73,12 @@ const Notificacoes = () => {
                 {notificacoes.map((n, idx) => (
                   <li className={styles.notificationItem} key={idx}>
                     <span className={styles.notificationIcon}>
-                      {iconByType[n.tipo as keyof typeof iconByType]}
+                      {iconByType[n.icone as keyof typeof iconByType]}
                     </span>
-                    <span className={styles.notificationText}>{n.texto}</span>
-                    <span className={styles.notificationTime}>{n.tempo}</span>
+                    <span className={styles.notificationText}>{n.descricao}</span>
+                    <span className={styles.notificationTime}>
+                      {formatDistanceToNow(new Date(n.criadoEm), { addSuffix: true })}
+                    </span>
                   </li>
                 ))}
               </ul>

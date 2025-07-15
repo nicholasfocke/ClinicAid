@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { auth, firestore } from '../firebase/firebaseConfig';
 import { buscarAgendamentosDeHoje, statusAgendamento } from '@/functions/agendamentosFunction';
+import { buscarNotificacoes, NotificacaoData } from '@/functions/notificacoesFunctions';
 import { onAuthStateChanged } from 'firebase/auth';
 import styles from '@/styles/Home.module.css';
 import { format } from 'date-fns';
@@ -166,14 +167,18 @@ const Index = () => {
     }
   };
 
-  // Lista de notificações (vazio por padrão)
-  const notificacoesMock: {
-    id: number;
-    tipo: string;
-    titulo: string;
-    descricao: string;
-    icone: string;
-  }[] = [];
+  // Lista de notificações
+  const [notificacoes, setNotificacoes] = useState<NotificacaoData[]>([]);
+
+  useEffect(() => {
+    const fetchNotificacoes = async () => {
+      try {
+        const list = await buscarNotificacoes();
+        setNotificacoes(list);
+      } catch {}
+    };
+    fetchNotificacoes();
+  }, []);
 
   // Estado para abrir/fechar popup de notificações
   const [notificacoesOpen, setNotificacoesOpen] = useState(false);
@@ -215,9 +220,7 @@ const Index = () => {
               <path d="M13.73 21a2 2 0 01-3.46 0" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             {/* Badge de quantidade de notificações */}
-            <span className={styles.notificationBadge}>
-              {notificacoesMock.length}
-            </span>
+            <span className={styles.notificationBadge}>{notificacoes.length}</span>
           </button>
           {/* Popup de notificações */}
           {notificacoesOpen && (
@@ -230,10 +233,10 @@ const Index = () => {
                 <Link href="/notificacoes" className={styles.notificationViewAll}>Ver todas</Link>
               </div>
               <ul className={styles.notificationList}>
-                {notificacoesMock.length === 0 ? (
+                {notificacoes.length === 0 ? (
                   <li className={styles.notificationEmpty}>Não há notificações</li>
                 ) : (
-                  notificacoesMock.map((n) => (
+                  notificacoes.map((n) => (
                     <li key={n.id} className={styles.notificationItem}>
                       {/* Círculo de status */}
                       <span

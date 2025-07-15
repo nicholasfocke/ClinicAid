@@ -7,6 +7,7 @@ import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
 import { format as formatDateFns, parse as parseDateFns } from 'date-fns';
 import { statusAgendamento } from '@/functions/agendamentosFunction';
+import { criarNotificacao } from '@/functions/notificacoesFunctions';
 
 interface Appointment {
   id: string;
@@ -110,6 +111,23 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
           }
         }
       } catch {}
+
+      if (
+        newStatus === statusAgendamento.PENDENTE ||
+        newStatus === statusAgendamento.CANCELADO
+      ) {
+        const texto =
+          newStatus === statusAgendamento.PENDENTE
+            ? 'Paciente não compareceu'
+            : 'Consulta cancelada';
+        const icone = newStatus === statusAgendamento.PENDENTE ? 'yellow' : 'red';
+        await criarNotificacao({
+          titulo: 'Agendamento',
+          descricao: texto,
+          icone,
+          criadoEm: new Date().toISOString(),
+        });
+      }
 
       setStatusLoading(false);
       setStatusError(null);
