@@ -1,14 +1,16 @@
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { auth, firestore } from '../firebase/firebaseConfig';
 import { buscarAgendamentosDeHoje, statusAgendamento } from '@/functions/agendamentosFunction';
+import { buscarNotificacoes, NotificacaoData } from '@/functions/notificacoesFunctions';
 import { onAuthStateChanged } from 'firebase/auth';
 import styles from '@/styles/Home.module.css';
 import { format } from 'date-fns';
 import SidebarAdmin from '@/components/layout/SidebarAdmin';
 import Sidebar from '@/components/layout/Sidebar';
+import Link from 'next/link';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
@@ -165,9 +167,115 @@ const Index = () => {
     }
   };
 
+  // Lista de notificações
+  const [notificacoes, setNotificacoes] = useState<NotificacaoData[]>([]);
+
+  useEffect(() => {
+    const fetchNotificacoes = async () => {
+      try {
+        const list = await buscarNotificacoes();
+        setNotificacoes(list);
+      } catch {}
+    };
+    fetchNotificacoes();
+  }, []);
+
+  // Estado para abrir/fechar popup de notificações
+  const [notificacoesOpen, setNotificacoesOpen] = useState(false);
+  const notificacoesRef = useRef<HTMLDivElement>(null);
+
+  // Fecha popup ao clicar fora
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        notificacoesRef.current &&
+        !notificacoesRef.current.contains(event.target as Node)
+      ) {
+        setNotificacoesOpen(false);
+      }
+    }
+    if (notificacoesOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [notificacoesOpen]);
+
   return (
     <ProtectedRoute>
       <div className={styles.container}>
+        {/* Sininho de notificação no topo direito */}
+        <div className={styles.notificationBellContainer}>
+          <button
+            className={styles.bellButton}
+            onClick={() => setNotificacoesOpen((v) => !v)}
+            aria-label="Abrir notificações"
+          >
+            {/* Ícone de sino */}
+            <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+              <path d="M18 16v-5a6 6 0 10-12 0v5a2 2 0 01-2 2h16a2 2 0 01-2-2z" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M13.73 21a2 2 0 01-3.46 0" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {/* Badge de quantidade de notificações */}
+            <span className={styles.notificationBadge}>{notificacoes.length}</span>
+          </button>
+          {/* Popup de notificações */}
+          {notificacoesOpen && (
+            <div
+              ref={notificacoesRef}
+              className={styles.notificationPopup}
+            >
+              <div className={styles.notificationHeaderColumn}>
+                <span className={styles.notificationHeaderTitle}>Notificações</span>
+                <div className={styles.notificationHeaderActionsRow}>
+                  <Link href="/notificacoes" className={styles.notificationViewAll}>Ver todas</Link>
+                  <button
+                    className={styles.notificationClearButton}
+                    onClick={() => setNotificacoes([])}
+                  >
+                    Limpar notificações
+                  </button>
+                </div>
+              </div>
+              <ul className={styles.notificationList}>
+                {notificacoes.length === 0 ? (
+                  <li className={styles.notificationEmpty}>Não há notificações</li>
+                ) : (
+                  notificacoes.slice(0, 5).map((n) => (
+                    <li key={n.id} className={styles.notificationItem}>
+                      {/* Círculo de status */}
+                      <span
+                        className={styles.notificationIcon}
+                        style={{
+                          background:
+                            n.icone === 'red'
+                              ? '#ef4444'
+                              : n.icone === 'yellow'
+                              ? '#fbbf24'
+                              : n.icone === 'green'
+                              ? '#22c55e'
+                              : '#8b98a9',
+                        }}
+                      />
+                      <div className={styles.notificationContent}>
+                        <div className={styles.notificationTitle}>{n.titulo}</div>
+                        <div className={styles.notificationDescription}>{n.descricao}</div>
+                      </div>
+                      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" className={styles.notificationArrow}>
+                        <path d="M9 18l6-6-6-6" stroke="#8b98a9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          )}
+        </div>
+        {/* Fim do sininho */}
+
         <SidebarAdmin />
 
         <div className={styles.mainContent}>

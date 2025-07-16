@@ -64,6 +64,45 @@ export default function AssistenteIA() {
   const [openChatMenuId, setOpenChatMenuId] = useState<string | null>(null);
   const chatMenuRef = useRef<HTMLDivElement | null>(null);
 
+// Reconhecimento de voz para modo ditar
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [listening, setListening] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition: SpeechRecognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.interimResults = false; // evita transcrições duplicadas
+    recognition.continuous = true;
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          transcript += result[0].transcript + ' ';
+        }
+      }
+      if (transcript) setInput(prev => (prev + transcript).trimStart());
+    };
+    recognition.onend = () => setListening(false);
+    recognitionRef.current = recognition;
+  }, []);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) return;
+    if (listening) {
+      recognitionRef.current.stop();
+      setListening(false);
+    } else {
+      recognitionRef.current.start();
+      setListening(true);
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
 
@@ -123,7 +162,10 @@ export default function AssistenteIA() {
   // Criação automática de pasta/chat ao enviar mensagem se não existir
   const sendMessage = async () => {
     if (!input.trim()) return;
-
+    if (listening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setListening(false);
+    }
     let folderId = activeFolderId;
     let chatId = activeChatId;
 
@@ -741,9 +783,10 @@ export default function AssistenteIA() {
                     ref={inputRef}
                   />
                   <button
-                    className={styles.modeButton}
+                    className={`${styles.modeButton} ${listening ? styles.modeButtonActive : ''}`}
                     title="Modo ditar"
                     disabled={loading}
+                    onClick={toggleListening}
                   >
                     <Mic size={18} />
                   </button>

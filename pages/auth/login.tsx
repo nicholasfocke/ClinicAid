@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup} from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, linkWithPopup, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, firestore } from '../../firebase/firebaseConfig';
 import styles from "@/styles/auth/login.module.css";
@@ -37,28 +37,41 @@ const Login = () => {
   };
 
   const loginWithGoogle = async () => {
-  setError('');
-  setLoading(true);
+    setError('');
+    setLoading(true);
 
-  const provider = new GoogleAuthProvider();
+    const provider = new GoogleAuthProvider();
 
-  try {
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
+    try {
+      let result;
 
-    await setDoc(doc(firestore, 'users', user.uid), {
-      email: user.email,
-      name: user.displayName,
-      photoURL: user.photoURL,
-    }, { merge: true });
+      if (formData.email) {
+        const methods = await fetchSignInMethodsForEmail(auth, formData.email);
+        if (methods.includes('password') && !methods.includes('google.com') && formData.senha) {
+          const credential = await signInWithEmailAndPassword(auth, formData.email, formData.senha);
+          result = await linkWithPopup(credential.user, provider);
+        } else {
+          result = await signInWithPopup(auth, provider);
+        }
+      } else {
+        result = await signInWithPopup(auth, provider);
+      }
 
-    router.push('/');
-  } catch (err: any) {
-    setError('Erro ao fazer login com Google: ' + err.message);
-  }
+      const user = result.user;
 
-  setLoading(false);
-};
+      await setDoc(doc(firestore, 'users', user.uid), {
+        email: user.email,
+        name: user.displayName,
+        photoURL: user.photoURL,
+      }, { merge: true });
+
+      router.push('/');
+    } catch (err: any) {
+      setError('Erro ao fazer login com Google: ' + err.message);
+    }
+
+    setLoading(false);
+  };
 
 
   const incrementLoginAttempts = async (email: string) => {
