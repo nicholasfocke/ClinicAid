@@ -49,6 +49,8 @@ export default function AssistenteIA() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [dictationLoading, setDictationLoading] = useState(false);
+  const [dictationWave, setDictationWave] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -64,9 +66,71 @@ export default function AssistenteIA() {
   const [openChatMenuId, setOpenChatMenuId] = useState<string | null>(null);
   const chatMenuRef = useRef<HTMLDivElement | null>(null);
 
-// Reconhecimento de voz para modo ditar
+  // Reconhecimento de voz para modo ditar
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [listening, setListening] = useState(false);
+
+  // Função para pós-processar o texto ditado
+  function processDictationText(raw: string): string {
+    let text = raw.trim();
+
+    // Corrige espaços duplicados
+    text = text.replace(/\s+/g, ' ');
+
+    // Corrige palavras comuns (exemplo simples, pode expandir)
+    const correcoes: Record<string, string> = {
+      'por que': 'por que',
+      'porque': 'porque',
+      'pq': 'por que',
+      'ta': 'tá',
+      'voce': 'você',
+      'vc': 'você',
+      'q': 'que',
+      'nao': 'não',
+      'sim': 'sim',
+      'qual e': 'qual é',
+      'oque': 'o que',
+      'oque ': 'o que ',
+      ' ok ': ' ok ',
+      ' tudo bem ': ' tudo bem ',
+    };
+    Object.entries(correcoes).forEach(([errada, certa]) => {
+      text = text.replace(new RegExp(`\\b${errada}\\b`, 'gi'), certa);
+    });
+
+    // Capitaliza início de frase
+    text = text.charAt(0).toUpperCase() + text.slice(1);
+
+    // Pontuação automática básica: adiciona vírgulas e pontos finais em frases longas
+    // Adiciona vírgula após "por exemplo", "ou seja", "então", "assim", "além disso", etc.
+    text = text.replace(/\b(por exemplo|ou seja|então|assim|além disso|logo|portanto|contudo|todavia|porém|mas|ou|e)\b/gi, (m) => `${m},`);
+
+    // Adiciona ponto final se não terminar com pontuação
+    if (!/[.!?]$/.test(text)) {
+      text += '.';
+    }
+
+    // Adiciona interrogação se for pergunta (palavras interrogativas no início)
+    const interrogativas = [
+      'o que', 'como', 'quando', 'onde', 'por que', 'porquê', 'por quê', 'quem', 'qual', 'quais', 'quanto', 'quantos', 'pode', 'poderia', 'seria', 'existe', 'há', 'tem', 'posso', 'devo', 'preciso'
+    ];
+    const regexPergunta = new RegExp(`^(${interrogativas.join('|')})\\b`, 'i');
+    if (regexPergunta.test(text)) {
+      text = text.replace(/[\.!]+$/, ''); // removes ponto final se houver
+      text = text.trim() + '?';
+    }
+
+    // Corrige pontuação duplicada
+    text = text.replace(/\?{2,}/g, '?').replace(/\.{2,}/g, '.');
+
+    // Espaço após vírgula
+    text = text.replace(/,([^\s])/g, ', $1');
+
+    // Remove vírgula antes de ponto de interrogação
+    text = text.replace(/, \?/g, '?');
+
+    return text;
+  }
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -76,8 +140,12 @@ export default function AssistenteIA() {
 
     const recognition: SpeechRecognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';
-    recognition.interimResults = false; // evita transcrições duplicadas
+    recognition.interimResults = true; // permite mostrar texto parcial
     recognition.continuous = true;
+    recognition.onstart = () => {
+      setDictationWave(true);
+      setDictationLoading(false);
+    };
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let transcript = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -86,9 +154,19 @@ export default function AssistenteIA() {
           transcript += result[0].transcript + ' ';
         }
       }
-      if (transcript) setInput(prev => (prev + transcript).trimStart());
+      if (transcript) {
+        setInput(prev => {
+          // Só processa o texto final, mantendo a pontuação automática do navegador
+          return processDictationText(transcript);
+        });
+      }
     };
-    recognition.onend = () => setListening(false);
+    recognition.onend = () => {
+      setDictationWave(false);
+      setDictationLoading(true);
+      setTimeout(() => setDictationLoading(false), 1200); // loading por 1.2s
+      setListening(false);
+    };
     recognitionRef.current = recognition;
   }, []);
 
@@ -259,7 +337,7 @@ export default function AssistenteIA() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
       sendMessage();
     }
@@ -770,17 +848,56 @@ export default function AssistenteIA() {
                   {loading && (
                     <div className={styles.botMessage}>Carregando resposta...</div>
                   )}
+                  {/* Efeito de gravação durante ditação */}
+                  {dictationWave && (
+                    <div className={styles.dictationWaveContainer}>
+                      <DictationWave />
+                    </div>
+                  )}
+                  {/* Loading após ditação */}
+                  {dictationLoading && (
+                    <div className={styles.dictationLoading}>
+                      <span className={styles.loadingSpinner} />
+                    </div>
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
                 <div className={styles.inputContainer}>
-                  <input
-                    type="text"
+                  <textarea
                     className={styles.input}
                     value={input}
-                    onChange={e => setInput(e.target.value)}
+                    onChange={e => {
+                      setInput(e.target.value);
+                      // Ajusta altura ao digitar
+                      const el = e.currentTarget;
+                      el.style.height = 'auto';
+                      const max = 180;
+                      if (el.scrollHeight > max) {
+                        el.style.height = max + 'px';
+                        el.style.overflowY = 'auto';
+                      } else {
+                        el.style.height = el.scrollHeight + 'px';
+                        el.style.overflowY = 'hidden';
+                      }
+                    }}
                     onKeyDown={handleKeyDown}
                     placeholder="Digite sua pergunta"
-                    ref={inputRef}
+                    ref={inputRef as any}
+                    rows={1}
+                    style={{ resize: 'none', overflowY: 'auto', maxHeight: '180px' }}
+                    onInput={e => {
+                      // Ajusta altura ao receber texto (inclusive ditação)
+                      const el = e.currentTarget;
+                      el.style.height = 'auto';
+                      const max = 180;
+                      if (el.scrollHeight > max) {
+                        el.style.height = max + 'px';
+                        el.style.overflowY = 'auto';
+                      } else {
+                        el.style.height = el.scrollHeight + 'px';
+                        el.style.overflowY = 'hidden';
+                      }
+                    }}
                   />
                   <button
                     className={`${styles.modeButton} ${listening ? styles.modeButtonActive : ''}`}
@@ -801,6 +918,11 @@ export default function AssistenteIA() {
                     <Send size={18} style={{ marginRight: 4 }} />
                     Enviar
                   </button>
+                  {dictationLoading && (
+                    <span className={styles.inputLoadingSpinner}>
+                      <span className={styles.loadingSpinner} />
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -809,4 +931,15 @@ export default function AssistenteIA() {
       </div>
     </ProtectedRoute>
   );
+
+  // Componente de onda de áudio animada
+  function DictationWave() {
+    return (
+      <div className={styles.waveBar}>
+        {[...Array(20)].map((_, i) => (
+          <div key={i} className={styles.waveBarItem} style={{ animationDelay: `${i * 0.08}s` }} />
+        ))}
+      </div>
+    );
+  }
 }

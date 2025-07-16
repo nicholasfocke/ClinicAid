@@ -97,12 +97,13 @@
 .inputContainer {
   display: flex;
   gap: 16px;
-  align-items: center;
+  align-items: flex-end;
   background: #f3f4f6;
   border-radius: 14px;
   padding: 18px 22px;
   box-shadow: 0 1px 4px rgba(37,99,235,0.04);
   margin: 0 18px 0 18px;
+  position: relative;
 }
 
 .input {
@@ -115,6 +116,38 @@
   outline: none;
   transition: box-shadow 0.2s;
   box-shadow: 0 1px 2px rgba(37,99,235,0.03);
+  min-height: 44px;
+  max-height: 180px;
+  resize: none;
+  overflow-y: auto !important;
+  line-height: 1.5;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+  scrollbar-width: thin;
+  scrollbar-color: #c7d2fe #f3f4f6;
+  display: block;
+}
+
+.input::-webkit-scrollbar {
+  width: 7px;
+}
+.input::-webkit-scrollbar-thumb {
+  background: #c7d2fe;
+  border-radius: 8px;
+}
+.input::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
+/* Mantém o estilo do placeholder igual ao input antigo */
+.input::placeholder {
+  color: #8b98a9;
+  font-size: 1.08rem;
+  font-weight: 500;
+  opacity: 1;
+  font-family: 'Inter', sans-serif;
 }
 
 .input:focus {
@@ -472,6 +505,58 @@
   font-size: 0.75rem;
   margin-top: 4px;
   opacity: 0.65;
+}
+
+.dictationWaveContainer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 18px 0 8px 0;
+  min-height: 48px;
+}
+
+.waveBar {
+  display: flex;
+  align-items: flex-end;
+  height: 38px;
+  gap: 2px;
+}
+
+.waveBarItem {
+  width: 4px;
+  height: 18px;
+  background: #2563eb;
+  border-radius: 2px;
+  animation: waveBarAnim 1.2s infinite ease-in-out;
+}
+
+@keyframes waveBarAnim {
+  0%, 100% { height: 12px; background: #2563eb; }
+  50% { height: 38px; background: #60a5fa; }
+}
+
+.dictationLoading {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 48px;
+  margin: 18px 0 8px 0;
+}
+
+.loadingSpinner {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border: 4px solid #e0e7ef;
+  border-top: 4px solid #2563eb;
+  border-radius: 50%;
+  animation: spinLoading 1s linear infinite;
+}
+
+@keyframes spinLoading {
+  to { transform: rotate(360deg); }
 }
 
 @keyframes gradientMove {
