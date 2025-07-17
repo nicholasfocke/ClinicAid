@@ -28,6 +28,40 @@
   transition: border 0.2s;
 }
 
+.actionsRow {
+  margin: 20px 0;
+  display: flex;
+  gap: 10px;
+}
+
+.actionButton {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.buttonRemove {
+  background: #dc2626;
+}
+
+.buttonRemove:hover {
+  background: #b91c1c;
+}
+
+.buttonRead {
+  background: #22c55e;
+}
+
+.buttonRead:hover {
+  background: #16a34a;
+}
+
 .notificationsCard {
   background: #fff;
   border-radius: 16px;
@@ -57,6 +91,10 @@
 
 .notificationItem:last-child {
   border-bottom: none;
+}
+
+.notificationCheckbox {
+  margin-right: 12px;
 }
 
 .notificationIcon {

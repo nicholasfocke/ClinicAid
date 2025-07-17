@@ -126,6 +126,8 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
           descricao: texto,
           icone,
           criadoEm: new Date().toISOString(),
+          tipo: 'agendamento',
+          lida: false,
         });
       }
 
