@@ -37,7 +37,7 @@ interface BuscarOptions {
 }
 
 export const buscarNotificacoes = async (opcoes?: BuscarOptions) => {
-  const constraints: QueryConstraint[] = [orderBy('criadoEm', 'desc')];
+  const constraints: QueryConstraint[] = [];
 
   if (opcoes?.apenasNaoLidas) {
     constraints.push(where('lida', '==', false));
@@ -51,9 +51,16 @@ export const buscarNotificacoes = async (opcoes?: BuscarOptions) => {
     constraints.push(where('tipo', '==', opcoes.tipo));
   }
 
-  const q = query(collection(firestore, 'notificacoes'), ...constraints);
+  const q =
+    constraints.length > 0
+      ? query(collection(firestore, 'notificacoes'), ...constraints)
+      : query(collection(firestore, 'notificacoes'), orderBy('criadoEm', 'desc'));
+
   const snap = await getDocs(q);
-  return snap.docs.map(doc => ({ id: doc.id, ...(doc.data() as NotificacaoData) }));
+  const list = snap.docs.map(doc => ({ id: doc.id, ...(doc.data() as NotificacaoData) }));
+  return list.sort(
+    (a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime()
+  );
 };
 
 export const marcarNotificacaoLida = async (id: string) => {
