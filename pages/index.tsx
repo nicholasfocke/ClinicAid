@@ -4,7 +4,11 @@ import { useRouter } from 'next/router';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { auth, firestore } from '../firebase/firebaseConfig';
 import { buscarAgendamentosDeHoje, statusAgendamento } from '@/functions/agendamentosFunction';
-import { buscarNotificacoes, NotificacaoData } from '@/functions/notificacoesFunctions';
+import {
+  buscarNotificacoes,
+  NotificacaoData,
+  marcarNotificacoesLidas,
+} from '@/functions/notificacoesFunctions';
 import { onAuthStateChanged } from 'firebase/auth';
 import styles from '@/styles/Home.module.css';
 import { format } from 'date-fns';
@@ -173,7 +177,10 @@ const Index = () => {
   useEffect(() => {
     const fetchNotificacoes = async () => {
       try {
-        const list = await buscarNotificacoes();
+        const list = await buscarNotificacoes({
+          apenasNaoLidas: true,
+          apenasNaoRemovidas: true,
+        });
         setNotificacoes(list);
       } catch {}
     };
@@ -183,6 +190,14 @@ const Index = () => {
   // Estado para abrir/fechar popup de notificações
   const [notificacoesOpen, setNotificacoesOpen] = useState(false);
   const notificacoesRef = useRef<HTMLDivElement>(null);
+
+  const handleLimparNotificacoes = async () => {
+    const ids = notificacoes.map(n => n.id as string).filter(Boolean);
+    if (ids.length) {
+      await marcarNotificacoesLidas(ids);
+    }
+    setNotificacoes([]);
+  };
 
   // Fecha popup ao clicar fora
   useEffect(() => {
@@ -234,7 +249,7 @@ const Index = () => {
                   <Link href="/notificacoes" className={styles.notificationViewAll}>Ver todas</Link>
                   <button
                     className={styles.notificationClearButton}
-                    onClick={() => setNotificacoes([])}
+                    onClick={handleLimparNotificacoes}
                   >
                     Limpar notificações
                   </button>
