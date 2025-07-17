@@ -8,7 +8,7 @@ import {
   buscarNotificacoes,
   NotificacaoData,
   marcarNotificacoesLidas,
-  marcarNotificacoesRemovidas,
+  deletarNotificacoes,
 } from '@/functions/notificacoesFunctions';
 
 
@@ -20,7 +20,7 @@ const Notificacoes = () => {
   useEffect(() => {
     const fetchNotificacoes = async () => {
       try {
-        const list = await buscarNotificacoes({ apenasNaoRemovidas: true });
+        const list = await buscarNotificacoes();
         setNotificacoes(list);
       } catch {}
     };
@@ -46,7 +46,7 @@ const Notificacoes = () => {
   const removerSelecionadas = async () => {
     const confirm = window.confirm('Deseja remover as notificações selecionadas?');
     if (!confirm) return;
-    await marcarNotificacoesRemovidas(selectedIds);
+    await deletarNotificacoes(selectedIds);
     setNotificacoes(prev => prev.filter(n => !selectedIds.includes(n.id as string)));
     setSelectedIds([]);
   };

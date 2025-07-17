@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDocs,
   orderBy,
@@ -19,20 +20,16 @@ export interface NotificacaoData {
   criadoEm: string;
   lida: boolean;
   tipo: string;
-  removida: boolean;
 }
 
 export const criarNotificacao = async (data: NotificacaoData) => {
   await addDoc(collection(firestore, 'notificacoes'), {
-    lida: false,
-    removida: false,
     ...data,
   });
 };
 
 interface BuscarOptions {
   apenasNaoLidas?: boolean;
-  apenasNaoRemovidas?: boolean;
   tipo?: string;
 }
 
@@ -43,9 +40,6 @@ export const buscarNotificacoes = async (opcoes?: BuscarOptions) => {
     constraints.push(where('lida', '==', false));
   }
 
-  if (opcoes?.apenasNaoRemovidas) {
-    constraints.push(where('removida', '==', false));
-  }
 
   if (opcoes?.tipo) {
     constraints.push(where('tipo', '==', opcoes.tipo));
@@ -71,6 +65,8 @@ export const marcarNotificacoesLidas = async (ids: string[]) => {
   await Promise.all(ids.map(id => updateDoc(doc(firestore, 'notificacoes', id), { lida: true })));
 };
 
-export const marcarNotificacoesRemovidas = async (ids: string[]) => {
-  await Promise.all(ids.map(id => updateDoc(doc(firestore, 'notificacoes', id), { removida: true })));
+export const deletarNotificacoes = async (ids: string[]) => {
+  await Promise.all(
+    ids.map(id => deleteDoc(doc(firestore, 'notificacoes', id)))
+  );
 };
