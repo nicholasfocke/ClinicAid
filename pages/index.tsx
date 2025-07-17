@@ -179,7 +179,6 @@ const Index = () => {
       try {
         const list = await buscarNotificacoes({
           apenasNaoLidas: true,
-          apenasNaoRemovidas: true,
         });
         setNotificacoes(list);
       } catch {}
