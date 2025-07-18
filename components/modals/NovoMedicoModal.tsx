@@ -3,16 +3,18 @@ import { auth } from '@/firebase/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { criarMedico, medicoExiste } from '@/functions/medicosFunctions';
 import { criarHorario } from '@/functions/scheduleFunctions';
-import { buscarConsultas } from '@/functions/procedimentosFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
+import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
+import modalStyles from '@/styles/admin/medico/modalNovoMedico.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
-import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 
-
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreate?: () => void;
+}
 
 const formatCPF = (value: string) => {
   return value
@@ -30,7 +32,6 @@ const formatTelefone = (value: string) => {
     .replace(/(\d{5})(\d)/, '$1-$2')
     .slice(0, 15);
 };
-
 
 function isValidCPF(cpf: string): boolean {
   cpf = cpf.replace(/\D/g, '');
@@ -61,13 +62,13 @@ interface MedicoForm {
   cpf: string;
   email: string;
   convenio: string[];
-  procedimentos?: string[]; // Adicionado campo para procedimentos
+  procedimentos?: string[];
   foto?: string;
   fotoPath?: string;
 }
 
 interface Convenio {
-  id: string; 
+  id: string;
   nome: string;
 }
 
@@ -76,7 +77,7 @@ interface User {
   email: string;
 }
 
-const NovoMedico = () => {
+const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
   const [formData, setFormData] = useState<MedicoForm>({
     nome: '',
     especialidade: '',
@@ -90,20 +91,19 @@ const NovoMedico = () => {
     cpf: '',
     email: '',
     convenio: [],
-    procedimentos: [], // Inicializa procedimentos
+    procedimentos: [],
   });
-  const [convenios, setConvenios] = useState<Convenio[]>([])
+  const [convenios, setConvenios] = useState<Convenio[]>([]);
   const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
-  const [user, setUser] = useState<User | null>(null); 
+  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
   const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
-  
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       try {
@@ -120,11 +120,11 @@ const NovoMedico = () => {
         setError('Erro ao verificar autenticação.');
       }
     });
-
     return () => unsubscribe();
   }, [router]);
 
   useEffect(() => {
+    if (!isOpen) return;
     (async () => {
       try {
         const fetchedConvenios = await buscarConvenios();
@@ -135,35 +135,31 @@ const NovoMedico = () => {
         console.error('Erro ao buscar convênios ou procedimentos:', error);
       }
     })();
-  }, []);
+  }, [isOpen]);
 
   const toggleDia = (dia: string) => {
     setFormData(prev => {
       const exist = prev.diasAtendimento.includes(dia);
-      const dias = exist
-        ? prev.diasAtendimento.filter(d => d !== dia)
-        : [...prev.diasAtendimento, dia];
+      const dias = exist ? prev.diasAtendimento.filter(d => d !== dia) : [...prev.diasAtendimento, dia];
       return { ...prev, diasAtendimento: dias };
     });
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     let newValue: string | number = value;
     if (name === 'cpf') newValue = formatCPF(value);
     if (name === 'telefone') newValue = formatTelefone(value);
-    if (name === 'intervaloConsultas') { newValue = Number(value); }
-    setFormData((prev) => ({ ...prev, [name]: newValue as any }));
+    if (name === 'intervaloConsultas') newValue = Number(value);
+    setFormData(prev => ({ ...prev, [name]: newValue as any }));
   };
 
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if(e.target.files && e.target.files[0]) {
+    if (e.target.files && e.target.files[0]) {
       setFoto(URL.createObjectURL(e.target.files[0]));
       setFotoFile(e.target.files[0]);
     }
-  }
+  };
 
   const handleCheckConvenio = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
@@ -241,8 +237,8 @@ const NovoMedico = () => {
 
       let fotoUrl = '';
       let fotoPath = '';
-      
-      if(fotoFile) {
+
+      if (fotoFile) {
         const storage = getStorage();
         const uniqueName = `${formData.cpf.replace(/\D/g, '')}_${Date.now()}`;
         const storageRef = ref(storage, `medico_photos/${uniqueName}`);
@@ -262,7 +258,7 @@ const NovoMedico = () => {
         intervaloConsultas: formData.intervaloConsultas,
         foto: fotoUrl,
         fotoPath,
-        procedimentos: formData.procedimentos, // Envia procedimentos selecionados
+        procedimentos: formData.procedimentos,
       });
 
       if (medicoRef && formData.diasAtendimento.length > 0) {
@@ -278,7 +274,8 @@ const NovoMedico = () => {
         }
       }
 
-      router.push('/admin/profissionais');
+      if (onCreate) onCreate();
+      onClose();
     } catch (err) {
       console.error('Erro ao cadastrar médico:', err);
       setError('Erro ao cadastrar médico.');
@@ -287,148 +284,148 @@ const NovoMedico = () => {
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className={styles.container}>
-      <div className={breadcrumbStyles.breadcrumbWrapper}>
-        <span className={breadcrumbStyles.breadcrumb}>
-          Profissionais &gt; <span className={breadcrumbStyles.breadcrumbActive}>Novo</span>
-        </span>
+    <div className={modalStyles.overlay} onClick={onClose}>
+      <div className={modalStyles.modal} onClick={e => e.stopPropagation()}>
+        <button className={modalStyles.closeButton} onClick={onClose}>X</button>
+        <div className={styles.container}>
+          <h1 className={styles.title}>Novo Profissional</h1>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <input name="nome" value={formData.nome} onChange={handleChange} placeholder="Nome" className={styles.input} required />
+            <select name="especialidade" value={formData.especialidade} onChange={handleChange} className={styles.input} required>
+              <option value="">Selecione a especialidade</option>
+              {procedimentos.map((c) => (
+                <option key={c.id} value={c.nome}>
+                  {c.nome}
+                </option>
+              ))}
+            </select>
+            <div className={styles.convenioHeader}>Selecione os dias de atendimento:</div>
+            <div className={styles.diasBox}>
+              {diasSemana.map((dia) => (
+                <label key={dia} className={styles.diaItem}>
+                  <input
+                    type="checkbox"
+                    checked={formData.diasAtendimento.includes(dia)}
+                    onChange={() => toggleDia(dia)}
+                  />
+                  {dia}
+                </label>
+              ))}
+            </div>
+            <div className={styles.convenioHeader}>Horário de Ínicio/Fim</div>
+            <input
+              type="time"
+              name="horaInicio"
+              value={formData.horaInicio}
+              onChange={handleChange}
+              placeholder="Hora início"
+              className={styles.input}
+              required
+            />
+            <input
+              type="time"
+              name="horaFim"
+              value={formData.horaFim}
+              onChange={handleChange}
+              placeholder="Hora fim"
+              className={styles.input}
+              required
+            />
+            <div className={styles.convenioHeader}>Intervalo Almoço</div>
+            <input
+              type="time"
+              name="almocoInicio"
+              value={formData.almocoInicio}
+              onChange={handleChange}
+              placeholder="Intervalo almoço início"
+              className={styles.input}
+            />
+            <input
+              type="time"
+              name="almocoFim"
+              value={formData.almocoFim}
+              onChange={handleChange}
+              placeholder="Intervalo almoço fim"
+              className={styles.input}
+            />
+            <div className={styles.convenioHeader}>Intervalo entre consultas</div>
+            <input
+              type="number"
+              name="intervaloConsultas"
+              value={formData.intervaloConsultas}
+              onChange={handleChange}
+              placeholder="Intervalo das consultas (min)"
+              className={styles.input}
+            />
+            <input name="telefone" value={formData.telefone} onChange={handleChange} placeholder="Telefone" className={styles.input} />
+            <input name="cpf" value={formData.cpf} onChange={handleChange} placeholder="CPF" className={styles.input} />
+            <input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Email" className={styles.input} />
+            <div className={styles.convenioHeader}>Selecione os convênios (Se houver):</div>
+            <div className={styles.conveniosBox}>
+              {convenios.map((c) => (
+                <label key={c.id} className={styles.conveniosItem}>
+                  <input
+                    type="checkbox"
+                    value={c.nome}
+                    checked={formData.convenio.includes(c.nome)}
+                    onChange={handleCheckConvenio}
+                  />
+                  {c.nome}
+                </label>
+              ))}
+            </div>
+            <div className={styles.convenioHeader}>Selecione os procedimentos:</div>
+            <div className={styles.conveniosBox}>
+              {procedimentos.map((proc) => (
+                <label key={proc.id} className={styles.conveniosItem}>
+                  <input
+                    type="checkbox"
+                    value={proc.nome}
+                    checked={formData.procedimentos?.includes(proc.nome)}
+                    onChange={e => {
+                      const { value, checked } = e.target;
+                      setFormData(prev => {
+                        const atual = new Set(prev.procedimentos || []);
+                        if (checked) atual.add(value);
+                        else atual.delete(value);
+                        return { ...prev, procedimentos: Array.from(atual) };
+                      });
+                    }}
+                  />
+                  {proc.nome}
+                </label>
+              ))}
+            </div>
+            <div className={styles.fotoBox}>
+              {foto ? (
+                <img src={foto} alt="Foto do médico" className={styles.fotoPreview} />
+              ) : (
+                <svg className={styles.fotoPreview} width="120" height="120" viewBox="0 0 120 120" fill="none">
+                  <circle cx="60" cy="60" r="60" fill="#E5E7EB" />
+                  <circle cx="60" cy="54" r="28" fill="#D1D5DB" />
+                  <ellipse cx="60" cy="94" rx="36" ry="22" fill="#D1D5DB" />
+                </svg>
+              )}
+              <label className={styles.fotoBtn}>
+                Carregar foto
+                <input type="file" accept="image/*" onChange={handleFotoChange} style={{ display: 'none' }} />
+              </label>
+            </div>
+            {error && <p style={{ color: 'red' }}>{error}</p>}
+            <button type="submit" className={styles.buttonSalvar} disabled={loading}>
+              {loading ? 'Salvando...' : 'Salvar'}
+            </button>
+            <button type="button" className={styles.buttonCancelar} onClick={onClose}>
+              Cancelar
+            </button>
+          </form>
+        </div>
       </div>
-      <h1 className={styles.title}>Novo Profissional</h1>
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <input name="nome" value={formData.nome} onChange={handleChange} placeholder="Nome" className={styles.input} required />
-        <select name="especialidade" value={formData.especialidade} onChange={handleChange} className={styles.input} required>
-          <option value="">Selecione a especialidade</option>
-          {procedimentos.map((c) => (
-            <option key={c.id} value={c.nome}>
-              {c.nome}
-            </option>
-          ))}
-        </select>
-        <div className={styles.convenioHeader}>Selecione os dias de atendimento:</div>
-        <div className={styles.diasBox}>
-          {diasSemana.map((dia) => (
-            <label key={dia} className={styles.diaItem}>
-              <input
-                type="checkbox"
-                checked={formData.diasAtendimento.includes(dia)}
-                onChange={() => toggleDia(dia)}
-              />
-              {dia}
-            </label>
-          ))}
-        </div>
-        <div className={styles.convenioHeader}>Horário de Ínicio/Fim</div>
-        <input
-          type="time"
-          name="horaInicio"
-          value={formData.horaInicio}
-          onChange={handleChange}
-          placeholder="Hora início"
-          className={styles.input}
-          required
-        />
-        <input
-          type="time"
-          name="horaFim"
-          value={formData.horaFim}
-          onChange={handleChange}
-          placeholder="Hora fim"
-          className={styles.input}
-          required
-        />
-        <div className={styles.convenioHeader}>Intervalo Almoço</div>
-        <input
-          type="time"
-          name="almocoInicio"
-          value={formData.almocoInicio}
-          onChange={handleChange}
-          placeholder="Intervalo almoço início"
-          className={styles.input}
-        />
-        <input
-          type="time"
-          name="almocoFim"
-          value={formData.almocoFim}
-          onChange={handleChange}
-          placeholder="Intervalo almoço fim"
-          className={styles.input}
-        />
-        <div className={styles.convenioHeader}>Intervalo entre consultas</div>
-        <input
-          type="number"
-          name="intervaloConsultas"
-          value={formData.intervaloConsultas}
-          onChange={handleChange}
-          placeholder="Intervalo das consultas (min)"
-          className={styles.input}
-        />
-        <input name="telefone" value={formData.telefone} onChange={handleChange} placeholder="Telefone" className={styles.input} />
-        <input name="cpf" value={formData.cpf} onChange={handleChange} placeholder="CPF" className={styles.input} />
-        <input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Email" className={styles.input} />
-        <div className={styles.convenioHeader}>Selecione os convênios (Se houver):</div>
-        <div className = {styles.conveniosBox}>
-          {convenios.map((c) => (
-            <label key={c.id} className={styles.conveniosItem}>
-              <input
-                type="checkbox"
-                value={c.nome}
-                checked={formData.convenio.includes(c.nome)}
-                onChange={handleCheckConvenio}
-              />
-              {c.nome}
-            </label>
-          ))}
-        </div>
-        <div className={styles.convenioHeader}>Selecione os procedimentos:</div>
-        <div className={styles.conveniosBox}>
-          {procedimentos.map((proc) => (
-            <label key={proc.id} className={styles.conveniosItem}>
-              <input
-                type="checkbox"
-                value={proc.nome}
-                checked={formData.procedimentos?.includes(proc.nome)}
-                onChange={e => {
-                  const { value, checked } = e.target;
-                  setFormData(prev => {
-                    const atual = new Set(prev.procedimentos || []);
-                    if (checked) atual.add(value);
-                    else atual.delete(value);
-                    return { ...prev, procedimentos: Array.from(atual) };
-                  });
-                }}
-              />
-              {proc.nome}
-            </label>
-          ))}
-        </div>
-        <div className={styles.fotoBox}>
-          {foto ? (
-            <img src={foto} alt="Foto do médico" className={styles.fotoPreview} />
-          ) : (
-            <svg className={styles.fotoPreview} width="120" height="120" viewBox="0 0 120 120" fill="none">
-              <circle cx="60" cy="60" r="60" fill="#E5E7EB" />
-              <circle cx="60" cy="54" r="28" fill="#D1D5DB" />
-              <ellipse cx="60" cy="94" rx="36" ry="22" fill="#D1D5DB" />
-            </svg>
-          )}
-          <label className={styles.fotoBtn}>
-            Carregar foto
-            <input type="file" accept="image/*" onChange={handleFotoChange} style={{ display: 'none' }} />
-          </label>
-        </div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button type="submit" className={styles.buttonSalvar} disabled={loading}>
-          {loading ? 'Salvando...' : 'Salvar'}
-        </button>
-         <Link href="/admin/profissionais" passHref>
-          <button type="button" className={styles.buttonCancelar}>
-            Cancelar
-          </button>
-        </Link>
-      </form>
     </div>
   );
 };
 
-export default NovoMedico;
+export default NovoMedicoModal;
