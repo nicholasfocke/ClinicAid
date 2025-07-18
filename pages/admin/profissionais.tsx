@@ -7,6 +7,7 @@ import DoctorCard, { Medico } from '@/components/admin/DoctorCard';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/medico/medicos.module.css';
 import Link from 'next/link';
+import NovoMedicoModal from '@/components/modals/NovoMedicoModal';
 
 interface User {
   uid: string;
@@ -20,6 +21,18 @@ const Medicos = () => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState(''); // Novo estado para busca
+  const [showModal, setShowModal] = useState(false);
+
+  const fetchMedicos = async () => {
+    try {
+      const docs = await buscarMedicos();
+      setMedicos(docs as Medico[]);
+    } catch (err) {
+      console.error('Erro ao buscar médicos:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -42,16 +55,6 @@ const Medicos = () => {
   }, [router]);
 
   useEffect(() => {
-    const fetchMedicos = async () => {
-      try {
-        const docs = await buscarMedicos();
-        setMedicos(docs as Medico[]);
-      } catch (err) {
-        console.error('Erro ao buscar médicos:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchMedicos();
   }, []);
 
@@ -81,7 +84,7 @@ const Medicos = () => {
       {/* Botões e campo de busca alinhados */}
       <div className={styles.searchContainer}>
         <div className={styles.actionButtonsWrapper}>
-          <Link href="/admin/profissionais/novo" className={styles.buttonAdicionar}>+ Adicionar médico</Link>
+          <button className={styles.buttonAdicionar} onClick={() => setShowModal(true)}>+ Adicionar médico</button>
           <Link href="/admin/profissionais/horarios" className={styles.buttonAdicionar}>
             Dias/Horários
           </Link>
@@ -94,19 +97,24 @@ const Medicos = () => {
           className={styles.searchInput}
         />
       </div>
-      <div className={styles.medicosList}>
-        {filteredMedicos.map((med) => (
-          <DoctorCard
-            key={med.id}
-            medico={med}
-            onDelete={(id) =>
-              setMedicos((prev) => prev.filter((m) => m.id !== id))
-            }
-            onUpdate={handleUpdate}
-          />
-        ))}
+        <div className={styles.medicosList}>
+          {filteredMedicos.map((med) => (
+            <DoctorCard
+              key={med.id}
+              medico={med}
+              onDelete={(id) =>
+                setMedicos((prev) => prev.filter((m) => m.id !== id))
+              }
+              onUpdate={handleUpdate}
+            />
+          ))}
+        </div>
+        <NovoMedicoModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onCreate={fetchMedicos}
+        />
       </div>
-    </div>
   );
 };
 
