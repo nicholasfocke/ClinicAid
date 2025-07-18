@@ -11,7 +11,7 @@ import modalStyles from "@/styles/admin/farmacia/modalMedicamento.module.css";
 import detailsStyles from "@/styles/admin/farmacia/medicamentosDetails.module.css";
 import loteDetailsStyles from "@/styles/admin/farmacia/loteDetails.module.css";
 import { ExternalLink, LogIn, LogOut, PlusCircle, ChevronDown, ChevronRight, Trash, OctagonAlert } from "lucide-react";
-import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData } from "@/functions/medicamentosFunctions";
+import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData, verificarNotificacoesMedicamentos } from "@/functions/medicamentosFunctions";
 import { registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, buscarSaidasMedicamentos, MovimentacaoMedicamento } from "@/functions/movimentacoesMedicamentosFunctions";
 import { registrarDescarteMedicamento, DescarteMedicamento } from "@/functions/descartesMedicamentosFunctions";
 import { format, parseISO, subDays } from "date-fns";
@@ -256,6 +256,10 @@ const Medicamentos = () => {
       }
     };
     fetchSaidas();
+  }, []);
+
+  useEffect(() => {
+    verificarNotificacoesMedicamentos();
   }, []);
 
   const filtered = medicamentos.filter((m) =>
