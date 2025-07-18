@@ -15,6 +15,7 @@ import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
+import { Calendar, Pill } from 'lucide-react';
 
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip);
 
@@ -269,7 +270,10 @@ const Index = () => {
                               ? '#22c55e'
                               : '#8b98a9',
                         }}
-                      />
+                      >
+                        {n.tipo === 'agendamento' && <Calendar size={12} />}
+                        {n.tipo === 'farmacia' && <Pill size={12} />}
+                      </span>
                       <div className={styles.notificationContent}>
                         <div className={styles.notificationTitle}>{n.titulo}</div>
                         <div className={styles.notificationDescription}>{n.descricao}</div>

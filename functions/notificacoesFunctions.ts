@@ -1,15 +1,4 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  orderBy,
-  query,
-  updateDoc,
-  where,
-  QueryConstraint,
-} from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, updateDoc, where, QueryConstraint, } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 
 export interface NotificacaoData {
