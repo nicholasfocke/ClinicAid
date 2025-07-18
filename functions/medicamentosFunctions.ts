@@ -113,7 +113,7 @@ export const verificarNotificacoesMedicamentos = async () => {
         tipo: 'farmacia',
         lida: false,
       });
-    } else if (dias <= 0) {
+    } else if (dias === 0) {
       await criarNotificacao({
         titulo: 'Farmácia',
         descricao: `O lote ${l.numero_lote} do remédio "${nome}" venceu.`,
