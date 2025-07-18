@@ -4,7 +4,8 @@ import styles from '@/styles/notificacoes.module.css';
 import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { buscarNotificacoes, NotificacaoData, marcarNotificacoesLidas, deletarNotificacoes,} from '@/functions/notificacoesFunctions';
+import { Calendar, Pill } from 'lucide-react';
+import { buscarNotificacoes, NotificacaoData, marcarNotificacoesLidas, deletarNotificacoes, } from '@/functions/notificacoesFunctions';
 
 const Notificacoes = () => {
   const [notificacoes, setNotificacoes] = useState<NotificacaoData[]>([]);
@@ -97,7 +98,10 @@ const Notificacoes = () => {
                             ? '#22c55e'
                             : '#8b98a9',
                       }}
-                    />
+                    >
+                      {n.tipo === 'agendamento' && <Calendar size={12} />}
+                      {n.tipo === 'farmacia' && <Pill size={12} />}
+                    </span>
                     <span className={styles.notificationText}>{n.descricao}</span>
                     <span className={styles.notificationTime}>
                       {formatDistanceToNow(new Date(n.criadoEm), {

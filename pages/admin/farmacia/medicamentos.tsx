@@ -12,7 +12,7 @@ import detailsStyles from "@/styles/admin/farmacia/medicamentosDetails.module.cs
 import loteDetailsStyles from "@/styles/admin/farmacia/loteDetails.module.css";
 import { ExternalLink, LogIn, LogOut, PlusCircle, ChevronDown, ChevronRight, Trash, OctagonAlert } from "lucide-react";
 import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData } from "@/functions/medicamentosFunctions";
-import { registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, buscarSaidasMedicamentos, MovimentacaoMedicamento } from "@/functions/movimentacoesMedicamentosFunctions";
+import { registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, buscarSaidasMedicamentos, MovimentacaoMedicamento, verificarNotificacoesMedicamentos } from "@/functions/movimentacoesMedicamentosFunctions";
 import { registrarDescarteMedicamento, DescarteMedicamento } from "@/functions/descartesMedicamentosFunctions";
 import { format, parseISO, subDays } from "date-fns";
 import { formatDateSafe } from "@/utils/dateUtils";
@@ -256,6 +256,10 @@ const Medicamentos = () => {
       }
     };
     fetchSaidas();
+  }, []);
+
+  useEffect(() => {
+    verificarNotificacoesMedicamentos();
   }, []);
 
   const filtered = medicamentos.filter((m) =>
