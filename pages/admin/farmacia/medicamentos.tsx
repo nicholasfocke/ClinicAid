@@ -11,8 +11,8 @@ import modalStyles from "@/styles/admin/farmacia/modalMedicamento.module.css";
 import detailsStyles from "@/styles/admin/farmacia/medicamentosDetails.module.css";
 import loteDetailsStyles from "@/styles/admin/farmacia/loteDetails.module.css";
 import { ExternalLink, LogIn, LogOut, PlusCircle, ChevronDown, ChevronRight, Trash, OctagonAlert } from "lucide-react";
-import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData } from "@/functions/medicamentosFunctions";
-import { registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, buscarSaidasMedicamentos, MovimentacaoMedicamento, verificarNotificacoesMedicamentos } from "@/functions/movimentacoesMedicamentosFunctions";
+import { buscarMedicamentos, criarMedicamento, excluirMedicamento, atualizarMedicamento, MedicamentoData, verificarNotificacoesMedicamentos } from "@/functions/medicamentosFunctions";
+import { registrarEntradaMedicamento, registrarSaidaMedicamento, uploadDocumentoMovimentacao, buscarSaidasMedicamentos, MovimentacaoMedicamento } from "@/functions/movimentacoesMedicamentosFunctions";
 import { registrarDescarteMedicamento, DescarteMedicamento } from "@/functions/descartesMedicamentosFunctions";
 import { format, parseISO, subDays } from "date-fns";
 import { formatDateSafe } from "@/utils/dateUtils";
@@ -391,6 +391,7 @@ const Medicamentos = () => {
         }
       }
     }
+    await verificarNotificacoesMedicamentos();
     setShowMovModal(false);
   };
 
@@ -603,6 +604,7 @@ const Medicamentos = () => {
     });
     setValorCompraInput("");
     setValorVendaInput("");
+    await verificarNotificacoesMedicamentos();
     setShowLoteModal(false);
     setError("")
   };
@@ -694,6 +696,7 @@ const Medicamentos = () => {
       ...prev,
       [discardMedId]: (prev[discardMedId] || []).filter((l) => l.id !== discardLote.id),
     }));
+    await verificarNotificacoesMedicamentos();
     setShowDiscardModal(false);
   };
 
