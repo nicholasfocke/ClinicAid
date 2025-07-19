@@ -83,6 +83,23 @@ const Sidebar = () => {
 
       <div className={styles.card}>
         <div className={styles.iconContainer}>
+          {/* Ícone de sino (notificações) */}
+          <svg className={styles.icon} width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path d="M18 16v-5a6 6 0 10-12 0v5a2 2 0 01-2 2h16a2 2 0 01-2-2z" stroke="#0a2d4a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M13.73 21a2 2 0 01-3.46 0" stroke="#0a2d4a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <h3 className={styles.title}>Notificações</h3>
+        <p className={styles.description}>
+          Veja todas as notificações importantes do sistema, alertas e lembretes em um só lugar.
+        </p>
+        <Link href="/notificacoes" passHref legacyBehavior>
+          <button className={styles.button}>Ver notificações</button>
+        </Link>
+      </div>
+
+      <div className={styles.card}>
+        <div className={styles.iconContainer}>
           <CalendarDays className={styles.icon} />
         </div>
         <h3 className={styles.title}>Agendamentos</h3>
