@@ -75,11 +75,15 @@ export const verificarNotificacoesMedicamentos = async () => {
           if (!temNotificacao(desc)) {
             await criarNotificacao({
               titulo: 'Farmácia',
-            descricao: desc,
+              descricao: desc,
               icone: 'red',
               criadoEm: new Date().toISOString(),
               tipo: 'farmacia',
               lida: false,
+              detalhes: {
+                medicamento: m.nome_comercial,
+                quantidade: m.quantidade,
+              },
             });
           }
         } else if (cobertura < 5) {
@@ -92,6 +96,10 @@ export const verificarNotificacoesMedicamentos = async () => {
               criadoEm: new Date().toISOString(),
               tipo: 'farmacia',
               lida: false,
+              detalhes: {
+                medicamento: m.nome_comercial,
+                quantidade: m.quantidade,
+              },
             });
           }
         }
@@ -108,6 +116,7 @@ export const verificarNotificacoesMedicamentos = async () => {
           criadoEm: new Date().toISOString(),
           tipo: 'farmacia',
           lida: false,
+          detalhes: { medicamento: m.nome_comercial, quantidade: m.quantidade },
         });
       }
     }
@@ -127,6 +136,7 @@ export const verificarNotificacoesMedicamentos = async () => {
           criadoEm: new Date().toISOString(),
           tipo: 'farmacia',
           lida: false,
+          detalhes: { lote: l.numero_lote, medicamento: nome, validade: l.validade },
         });
       }
     } else if (dias === 0) {
@@ -139,6 +149,7 @@ export const verificarNotificacoesMedicamentos = async () => {
           criadoEm: new Date().toISOString(),
           tipo: 'farmacia',
           lida: false,
+          detalhes: { lote: l.numero_lote, medicamento: nome, validade: l.validade },
         });
       }
     }

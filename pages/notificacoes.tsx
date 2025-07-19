@@ -2,6 +2,7 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/notificacoes.module.css';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, Pill } from 'lucide-react';
@@ -10,6 +11,7 @@ import { buscarNotificacoes, NotificacaoData, marcarNotificacoesLidas, deletarNo
 const Notificacoes = () => {
   const [notificacoes, setNotificacoes] = useState<NotificacaoData[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchNotificacoes = async () => {
@@ -79,12 +81,19 @@ const Notificacoes = () => {
             <>
               <ul className={styles.notificationsList}>
                 {notificacoes.map((n, idx) => (
-                  <li className={styles.notificationItem} key={n.id ?? idx}>
+                  <li
+                    className={styles.notificationItem}
+                    key={n.id ?? idx}
+                    onClick={() => router.push(`/notificacoes/${n.id}`)}
+                  >
                     <input
                       type="checkbox"
                       className={styles.notificationCheckbox}
                       checked={selectedIds.includes(n.id as string)}
-                      onChange={() => toggleSelect(n.id as string)}
+                      onChange={e => {
+                        e.stopPropagation();
+                        toggleSelect(n.id as string);
+                      }}
                     />
                     <span
                       className={styles.notificationIcon}
