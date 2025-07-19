@@ -115,11 +115,19 @@
 
 .notificationText {
   flex: 1;
+  margin-left: 8px;
+  margin-right: 8px;
   color: #222;
+  font-size: 1rem;
   font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  transition: color 0.18s;
+  /* pointer só no texto */
+}
+
+.notificationText:hover {
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .notificationTime {

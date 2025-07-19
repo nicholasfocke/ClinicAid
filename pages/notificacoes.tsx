@@ -84,16 +84,16 @@ const Notificacoes = () => {
                   <li
                     className={styles.notificationItem}
                     key={n.id ?? idx}
-                    onClick={() => router.push(`/notificacoes/${n.id}`)}
                   >
                     <input
                       type="checkbox"
                       className={styles.notificationCheckbox}
                       checked={selectedIds.includes(n.id as string)}
                       onChange={e => {
-                        e.stopPropagation();
                         toggleSelect(n.id as string);
+                        e.stopPropagation();
                       }}
+                      onClick={e => e.stopPropagation()}
                     />
                     <span
                       className={styles.notificationIcon}
@@ -111,7 +111,13 @@ const Notificacoes = () => {
                       {n.tipo === 'agendamento' && <Calendar size={12} />}
                       {n.tipo === 'farmacia' && <Pill size={12} />}
                     </span>
-                    <span className={styles.notificationText}>{n.descricao}</span>
+                    <span
+                      className={styles.notificationText}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => router.push(`/notificacoes/${n.id}`)}
+                    >
+                      {n.descricao}
+                    </span>
                     <span className={styles.notificationTime}>
                       {formatDistanceToNow(new Date(n.criadoEm), {
                         addSuffix: true,

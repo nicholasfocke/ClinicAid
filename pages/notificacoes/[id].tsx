@@ -1,6 +1,6 @@
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
-import styles from '@/styles/notificacaoDetalhes.module.css';
+import styles from '@/pages/notificacoes/[id].module.css';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { buscarNotificacao, NotificacaoData } from '@/functions/notificacoesFunctions';
@@ -33,14 +33,23 @@ const NotificacaoDetalhes = () => {
   return (
     <ProtectedRoute>
       <div className={styles.container}>
-        <div className={breadcrumbStyles.breadcrumbWrapper}>
-          <span className={breadcrumbStyles.breadcrumb}>
-            Notificações &gt;{' '}
-            <span className={breadcrumbStyles.breadcrumbActive}>Detalhes</span>
-          </span>
+        <div className={styles.headerContainer}>
+          <div className={breadcrumbStyles.breadcrumbWrapper}>
+            <span className={breadcrumbStyles.breadcrumb}>
+              Notificações &gt;{' '}
+              <span className={breadcrumbStyles.breadcrumbActive}>Detalhes</span>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push('/notificacoes')}
+            className={styles.backButton}
+          >
+            Voltar para notificações
+          </button>
+          <h1 className={styles.title}>{notificacao.titulo}</h1>
+          <p className={styles.desc}>{notificacao.descricao}</p>
         </div>
-        <h1 className={styles.title}>{notificacao.titulo}</h1>
-        <p className={styles.desc}>{notificacao.descricao}</p>
         <div className={styles.section}>
           {Object.keys(detalhes).map(key => (
             <p key={key}>
