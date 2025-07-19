@@ -47,16 +47,18 @@ const NotificacaoDetalhes = () => {
           >
             Voltar para notificações
           </button>
+        </div>
+        <div className={styles.detailsContainer}>
           <h1 className={styles.title}>{notificacao.titulo}</h1>
           <p className={styles.desc}>{notificacao.descricao}</p>
-        </div>
-        <div className={styles.section}>
-          {Object.keys(detalhes).map(key => (
-            <p key={key}>
-              <span className={styles.label}>{key}:</span>{' '}
-              <span className={styles.value}>{String(detalhes[key])}</span>
-            </p>
-          ))}
+          <div className={styles.section}>
+            {Object.keys(detalhes).map(key => (
+              <p key={key}>
+                <span className={styles.label}>{key}:</span>{' '}
+                <span className={styles.value}>{String(detalhes[key])}</span>
+              </p>
+            ))}
+          </div>
         </div>
       </div>
     </ProtectedRoute>
