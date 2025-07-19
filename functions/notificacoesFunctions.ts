@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, updateDoc, where, QueryConstraint, } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, updateDoc, where, QueryConstraint, } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 
 export interface NotificacaoData {
@@ -9,6 +9,7 @@ export interface NotificacaoData {
   criadoEm: string;
   lida: boolean;
   tipo: string;
+  detalhes?: any;
 }
 
 export const criarNotificacao = async (data: NotificacaoData) => {
@@ -44,6 +45,13 @@ export const buscarNotificacoes = async (opcoes?: BuscarOptions) => {
   return list.sort(
     (a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime()
   );
+};
+
+export const buscarNotificacao = async (id: string): Promise<NotificacaoData | null> => {
+  const ref = doc(firestore, 'notificacoes', id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...(snap.data() as NotificacaoData) };
 };
 
 export const marcarNotificacaoLida = async (id: string) => {

@@ -256,7 +256,11 @@ const Index = () => {
                   <li className={styles.notificationEmpty}>Não há notificações</li>
                 ) : (
                   notificacoes.slice(0, 5).map((n) => (
-                    <li key={n.id} className={styles.notificationItem}>
+                    <li
+                      key={n.id}
+                      className={styles.notificationItem}
+                      onClick={() => router.push(`/notificacoes/${n.id}`)}
+                    >
                       {/* Círculo de status */}
                       <span
                         className={styles.notificationIcon}
