@@ -52,6 +52,9 @@ export default function AssistenteIA() {
   const [dictationLoading, setDictationLoading] = useState(false);
   const [dictationWave, setDictationWave] = useState(false);
 
+
+  const dictationActive = dictationWave || dictationLoading;
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -318,7 +321,7 @@ useEffect(() => {
         atualizarChatSolto(chatId, { messages: [...(chatAtual.messages || []), userMsg] });
       }
     }
-    //setInput('');
+    setInput('');
     setLoading(true);
     try {
       const res = await fetch('/api/ai-chat', {
@@ -350,7 +353,8 @@ useEffect(() => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter') {
+     if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       sendMessage();
     }
   };
@@ -860,23 +864,16 @@ useEffect(() => {
                   {loading && (
                     <div className={styles.botMessage}>Carregando resposta...</div>
                   )}
-                  {/* Efeito de gravação durante ditação */}
+                  <div ref={messagesEndRef} />
+                </div>
+                <div className={styles.inputContainer}>
                   {dictationWave && (
                     <div className={styles.dictationWaveContainer}>
                       <DictationWave />
                     </div>
                   )}
-                  {/* Loading após ditação */}
-                  {dictationLoading && (
-                    <div className={styles.dictationLoading}>
-                      <span className={styles.loadingSpinner} />
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-                <div className={styles.inputContainer}>
                   <textarea
-                    className={styles.input}
+                    className={`${styles.input} ${dictationActive ? styles.inputHidden : ''}`}
                     value={input}
                     onChange={e => {
                       setInput(e.target.value);
@@ -910,6 +907,7 @@ useEffect(() => {
                         el.style.overflowY = 'hidden';
                       }
                     }}
+                    disabled={dictationActive || loading}
                   />
                   <button
                     className={`${styles.modeButton} ${listening ? styles.modeButtonActive : ''}`}
@@ -922,11 +920,11 @@ useEffect(() => {
                   <button
                     className={styles.modeButton}
                     title="Modo de escuta profissional"
-                    disabled={loading}
+                    disabled={loading || dictationActive}
                   >
                     <Stethoscope size={18} />
                   </button>
-                  <button className={styles.sendButton} onClick={sendMessage} disabled={loading}>
+                  <button className={styles.sendButton} onClick={sendMessage} disabled={loading || dictationActive}>
                     <Send size={18} style={{ marginRight: 4 }} />
                     Enviar
                   </button>

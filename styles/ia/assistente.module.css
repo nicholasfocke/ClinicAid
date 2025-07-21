@@ -154,6 +154,15 @@
   box-shadow: 0 2px 8px #c7d2fe;
 }
 
+.inputHidden {
+  color: transparent;
+  caret-color: transparent;
+}
+
+.inputHidden::placeholder {
+  color: transparent;
+}
+
 .sendButton {
   background: linear-gradient(120deg, #2563eb 60%, #60a5fa 100%);
   color: #fff;
@@ -508,12 +517,13 @@
 }
 
 .dictationWaveContainer {
-  width: 100%;
+  position: absolute;
+  inset:0;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 18px 0 8px 0;
-  min-height: 48px;
+  right: 300px;
+  pointer-events: none;
 }
 
 .waveBar {
@@ -553,6 +563,12 @@
   border-top: 4px solid #2563eb;
   border-radius: 50%;
   animation: spinLoading 1s linear infinite;
+}
+
+.inputLoadingSpinner {
+  position: absolute;
+  left: 300px;
+  bottom: 22px;
 }
 
 @keyframes spinLoading {
