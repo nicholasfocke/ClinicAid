@@ -4,15 +4,19 @@
 :root {
     --font-primary: 'Inter', sans-serif;
   }
+
+  html {
+    background-color: #f3f4f6;
+  }
   
   body {
     margin: 0;
     padding: 0;
     font-family: var(--font-primary);
-    background-color: #f7fafc; /* opcional */
+    background-color: #f3f4f6; /* opcional */
     color: #333;
     overflow-x: hidden; /* Evita scroll lateral em todo o site */
-}
+  }
 
 .pageLoading {
   position: fixed;
