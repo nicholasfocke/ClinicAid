@@ -31,6 +31,18 @@ const NotificacaoDetalhes = () => {
 
   const detalhes = notificacao.detalhes || {};
 
+  // Ordem desejada para exibição dos detalhes de agendamento
+  const ordemPadrao = [
+    'nomePaciente',
+    'convenio',
+    'data',
+    'detalhes',
+    'profissional',
+    'procedimento',
+    'hora',
+    'status',
+  ];
+
   const formatarValor = (valor: unknown) => {
     if (typeof valor === 'string') {
       const data = parseISO(valor);
@@ -63,14 +75,18 @@ const NotificacaoDetalhes = () => {
           <h1 className={styles.title}>{notificacao.titulo}</h1>
           <p className={styles.desc}>{notificacao.descricao}</p>
           <div className={styles.section}>
-            {Object.keys(detalhes)
-              .filter(key => key !== 'id' && key !== 'usuarioId')
-              .map(key => (
-                <p key={key}>
-                  <span className={styles.label}>{key}:</span>{' '}
-                  <span className={styles.value}>{formatarValor(detalhes[key])}</span>
-                </p>
-              ))}
+           {(
+              ordemPadrao.filter(k => detalhes[k] !== undefined)
+                .concat(
+                  Object.keys(detalhes)
+                    .filter(k => k !== 'id' && k !== 'usuarioId' && !ordemPadrao.includes(k))
+                )
+            ).map(key => (
+              <p key={key}>
+                <span className={styles.label}>{key}:</span>{' '}
+                <span className={styles.value}>{formatarValor(detalhes[key])}</span>
+              </p>
+            ))}
           </div>
         </div>
       </div>
