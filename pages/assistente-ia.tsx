@@ -132,43 +132,55 @@ export default function AssistenteIA() {
     return text;
   }
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+useEffect(() => {
+  if (typeof window === 'undefined') return;
+  const SpeechRecognition =
+    (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  if (!SpeechRecognition) return;
 
-    const recognition: SpeechRecognition = new SpeechRecognition();
-    recognition.lang = 'pt-BR';
-    recognition.interimResults = true; // permite mostrar texto parcial
-    recognition.continuous = true;
-    recognition.onstart = () => {
-      setDictationWave(true);
-      setDictationLoading(false);
-    };
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let transcript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) {
-          transcript += result[0].transcript + ' ';
-        }
-      }
-      if (transcript) {
-        setInput(prev => {
-          // Só processa o texto final, mantendo a pontuação automática do navegador
-          return processDictationText(transcript);
-        });
-      }
-    };
-    recognition.onend = () => {
-      setDictationWave(false);
-      setDictationLoading(true);
-      setTimeout(() => setDictationLoading(false), 1200); // loading por 1.2s
-      setListening(false);
-    };
-    recognitionRef.current = recognition;
-  }, []);
+  const recognition: SpeechRecognition = new SpeechRecognition();
+  recognition.lang = 'pt-BR';
+  recognition.interimResults = true;
+  recognition.continuous = true;
+
+  recognition.onstart = () => {
+    setDictationWave(true);
+    setDictationLoading(false);
+  };
+
+  const sessionTranscriptRef = { current: '' };
+
+  recognition.onresult = (event: SpeechRecognitionEvent) => {
+    let transcript = '';
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const result = event.results[i];
+      transcript += result[0].transcript + ' ';
+    }
+
+    sessionTranscriptRef.current = transcript;
+  };
+
+  recognition.onend = () => {
+    const processed = processDictationText(sessionTranscriptRef.current);
+
+    setInput(prev => {
+      const prevTrimmed = prev.trim();
+      const space = prevTrimmed.length > 0 ? ' ' : '';
+      return `${prevTrimmed}${space}${processed}`.trim();
+    });
+
+    sessionTranscriptRef.current = '';
+
+    setDictationWave(false);
+    setDictationLoading(true);
+    setTimeout(() => setDictationLoading(false), 1200);
+    setListening(false);
+  };
+
+  recognitionRef.current = recognition;
+}, []);
+
 
   const toggleListening = () => {
     if (!recognitionRef.current) return;
@@ -306,7 +318,7 @@ export default function AssistenteIA() {
         atualizarChatSolto(chatId, { messages: [...(chatAtual.messages || []), userMsg] });
       }
     }
-    setInput('');
+    //setInput('');
     setLoading(true);
     try {
       const res = await fetch('/api/ai-chat', {
