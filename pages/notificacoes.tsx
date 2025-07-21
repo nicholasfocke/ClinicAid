@@ -82,7 +82,7 @@ const Notificacoes = () => {
               <ul className={styles.notificationsList}>
                 {notificacoes.map((n, idx) => (
                   <li
-                    className={styles.notificationItem}
+                    className={`${styles.notificationItem} ${!n.lida ? styles.notificationItemUnread : ''}`}
                     key={n.id ?? idx}
                   >
                     <input
