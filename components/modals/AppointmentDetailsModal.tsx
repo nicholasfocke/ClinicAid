@@ -128,6 +128,7 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
           criadoEm: new Date().toISOString(),
           tipo: 'agendamento',
           lida: false,
+          detalhes: { ...appointment },
         });
       }
 

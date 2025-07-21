@@ -2,6 +2,7 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/notificacoes.module.css';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, Pill } from 'lucide-react';
@@ -10,6 +11,7 @@ import { buscarNotificacoes, NotificacaoData, marcarNotificacoesLidas, deletarNo
 const Notificacoes = () => {
   const [notificacoes, setNotificacoes] = useState<NotificacaoData[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchNotificacoes = async () => {
@@ -79,12 +81,19 @@ const Notificacoes = () => {
             <>
               <ul className={styles.notificationsList}>
                 {notificacoes.map((n, idx) => (
-                  <li className={styles.notificationItem} key={n.id ?? idx}>
+                  <li
+                    className={`${styles.notificationItem} ${!n.lida ? styles.notificationItemUnread : ''}`}
+                    key={n.id ?? idx}
+                  >
                     <input
                       type="checkbox"
                       className={styles.notificationCheckbox}
                       checked={selectedIds.includes(n.id as string)}
-                      onChange={() => toggleSelect(n.id as string)}
+                      onChange={e => {
+                        toggleSelect(n.id as string);
+                        e.stopPropagation();
+                      }}
+                      onClick={e => e.stopPropagation()}
                     />
                     <span
                       className={styles.notificationIcon}
@@ -102,7 +111,13 @@ const Notificacoes = () => {
                       {n.tipo === 'agendamento' && <Calendar size={12} />}
                       {n.tipo === 'farmacia' && <Pill size={12} />}
                     </span>
-                    <span className={styles.notificationText}>{n.descricao}</span>
+                    <span
+                      className={styles.notificationText}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => router.push(`/notificacoes/${n.id}`)}
+                    >
+                      {n.descricao}
+                    </span>
                     <span className={styles.notificationTime}>
                       {formatDistanceToNow(new Date(n.criadoEm), {
                         addSuffix: true,

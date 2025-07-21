@@ -44,6 +44,11 @@
 .icon {
     font-size: 1.6rem;
     align-self: flex-start;
+    /* Para SVGs de notificações também ficarem alinhados */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #0a2d4a;
 }
   
 .button {
