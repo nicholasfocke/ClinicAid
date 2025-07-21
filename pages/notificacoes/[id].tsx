@@ -3,6 +3,7 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/pages/notificacoes/[id].module.css';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { parseISO, isValid, format } from 'date-fns';
 import { buscarNotificacao, NotificacaoData } from '@/functions/notificacoesFunctions';
 
 const NotificacaoDetalhes = () => {
@@ -30,6 +31,16 @@ const NotificacaoDetalhes = () => {
 
   const detalhes = notificacao.detalhes || {};
 
+  const formatarValor = (valor: unknown) => {
+    if (typeof valor === 'string') {
+      const data = parseISO(valor);
+      if (isValid(data)) {
+        return format(data, 'dd/MM/yyyy'); // aqui a mágica
+      }
+    }
+    return String(valor);
+  };
+
   return (
     <ProtectedRoute>
       <div className={styles.container}>
@@ -52,12 +63,14 @@ const NotificacaoDetalhes = () => {
           <h1 className={styles.title}>{notificacao.titulo}</h1>
           <p className={styles.desc}>{notificacao.descricao}</p>
           <div className={styles.section}>
-            {Object.keys(detalhes).map(key => (
-              <p key={key}>
-                <span className={styles.label}>{key}:</span>{' '}
-                <span className={styles.value}>{String(detalhes[key])}</span>
-              </p>
-            ))}
+            {Object.keys(detalhes)
+              .filter(key => key !== 'id' && key !== 'usuarioId')
+              .map(key => (
+                <p key={key}>
+                  <span className={styles.label}>{key}:</span>{' '}
+                  <span className={styles.value}>{formatarValor(detalhes[key])}</span>
+                </p>
+              ))}
           </div>
         </div>
       </div>
