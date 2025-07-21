@@ -76,16 +76,17 @@ const Layout = ({ children }: LayoutProps) => {
     checkUserRole();
   }, [auth.currentUser]);
 
-  const noHeaderRoutes = ['/auth/login', '/auth/register', '/auth/esquecisenha'];
+  const authRoutes = ['/auth/login', '/auth/register', '/auth/esquecisenha'];
 
   return (
     <div className={styles.layout} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Exibe o SidebarAdmin em todas as páginas, exceto nas rotas de login, registro ou esqueci senha */}
-      {!noHeaderRoutes.includes(router.pathname) && <SidebarAdmin />}
+      {!authRoutes.includes(router.pathname) && <SidebarAdmin />}
       <main className="mainContent" style={{ flex: 1 }}>{children}</main>
 
-      <footer className={styles.footer}>
-        <div className={styles.footerContent}>
+      {authRoutes.includes(router.pathname) && (
+        <footer className={styles.footer}>
+          <div className={styles.footerContent}>
           <p className={styles.impactPhrase}>
             A tecnologia que otimiza seu tempo e melhora seu atendimento.
           </p>
@@ -115,7 +116,8 @@ const Layout = ({ children }: LayoutProps) => {
           </nav>
         </div>
         <p>© 2025 ClinicAid - Todos os direitos reservados.</p>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 };
