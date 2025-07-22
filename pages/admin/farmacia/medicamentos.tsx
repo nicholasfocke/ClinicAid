@@ -19,6 +19,7 @@ import { formatDateSafe } from "@/utils/dateUtils";
 import { buscarMedicos } from "@/functions/medicosFunctions";
 import { buscarPacientes, PacienteMin } from "@/functions/pacientesFunctions";
 import { buscarLotes, criarLote, atualizarLote, excluirLote, getStatusColor, statusLote } from "@/functions/lotesFunctions";
+import StickyFooter from '@/components/StickyFooter';
 
 const formatValor = (valor: number) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -113,6 +114,8 @@ const Medicamentos = () => {
   const [medicamentos, setMedicamentos] = useState<Medicamento[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState("");
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
 
   const [showModal, setShowModal] = useState(false);
@@ -264,6 +267,11 @@ const Medicamentos = () => {
 
   const filtered = medicamentos.filter((m) =>
     m.nome_comercial.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+  const totalItems = filtered.length;
+  const paginatedMedicamentos = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   const openDetails = (m: Medicamento) => {
@@ -787,6 +795,13 @@ const Medicamentos = () => {
         </div>
 
         <div className={tableStyles.medicamentosTableWrapper}>
+          <StickyFooter   
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            setItemsPerPage={setItemsPerPage}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
           <table className={tableStyles.medicamentosTable}>
             <thead>
               <tr>
@@ -809,7 +824,7 @@ const Medicamentos = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((m) => (
+              {paginatedMedicamentos.map((m) => (
                 <React.Fragment key={m.id}>
                   <tr>
                   <td className={tableStyles.checkboxCell}>

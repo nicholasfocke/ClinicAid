@@ -7,6 +7,7 @@ import layoutStyles from '@/styles/admin/medico/medicos.module.css';
 import tableStyles from '@/styles/admin/cadastros/formapagamentos/formasPagamento.module.css';
 import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { buscarFormasPagamento, criarFormaPagamento, excluirFormaPagamento, atualizarFormaPagamento, } from '@/functions/formasPagamentosFunctions';
+import StickyFooter from '@/components/StickyFooter';
 
 interface FormaPagamento {
   id: string;
@@ -24,6 +25,8 @@ const FormasPagamento = () => {
   const [user, setUser] = useState<User | null>(null);
   const [formas, setFormas] = useState<FormaPagamento[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<{ nome: string; taxa: number }>({ nome: '', taxa: 0 });
   const [newForma, setNewForma] = useState<{ nome: string; taxa: number }>({ nome: '', taxa: 0 });
@@ -62,6 +65,12 @@ const FormasPagamento = () => {
 
   const filteredFormas = formas.filter(f =>
     f.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalItems = filteredFormas.length;
+  const paginatedFormas = filteredFormas.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   const startEdit = (f: FormaPagamento) => {
@@ -175,6 +184,13 @@ const FormasPagamento = () => {
           </div>
         </div>
         <div className={tableStyles.formasPagamentoTableWrapper}>
+        <StickyFooter
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          setItemsPerPage={setItemsPerPage}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+        />
           <table className={tableStyles.formasPagamentoTable}>
             <thead>
               <tr>
@@ -187,7 +203,7 @@ const FormasPagamento = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredFormas.map(f => (
+              {paginatedFormas.map(f => (
                 <tr key={f.id}>
                   <td className={tableStyles.checkboxCell}>
                     <input
