@@ -6,19 +6,12 @@ import { useRouter } from 'next/router';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/pacientes.module.css';
 import { ExternalLink } from 'lucide-react';
+import StickyFooter from '@/components/StickyFooter';
 import detailsStyles from '@/styles/admin/pacienteDetails.module.css';
 import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { statusAgendamento } from '@/functions/agendamentosFunction';
-import {
-  atualizarPaciente,
-  excluirPaciente,
-  uploadArquivoPaciente,
-  uploadArquivoPacienteSecao,
-  uploadArquivoTemp,
-  adicionarEvolucaoPaciente,
-  criarPaciente,
-  PacienteArquivo,
-} from '@/functions/pacientesFunctions';
+import { atualizarPaciente, excluirPaciente, uploadArquivoPaciente, uploadArquivoPacienteSecao, uploadArquivoTemp,
+    adicionarEvolucaoPaciente, criarPaciente, PacienteArquivo, } from '@/functions/pacientesFunctions';
 import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage';
 import { format as formatDateFns, parse as parseDateFns } from 'date-fns';
 
@@ -86,6 +79,8 @@ const Pacientes = () => {
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [selectedPaciente, setSelectedPaciente] = useState<Paciente | null>(null);
@@ -268,6 +263,11 @@ const Pacientes = () => {
 
   const filteredPacientes = pacientes.filter(p =>
     p.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const totalItems = filteredPacientes.length;
+  const paginatedPacientes = filteredPacientes.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   useEffect(() => {
@@ -551,12 +551,23 @@ const Pacientes = () => {
             type="text"
             placeholder="🔍 Pesquisar paciente"
             value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+            onChange={e => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className={styles.searchInput}
           />
         </div>
       </div>
       <div className={styles.pacientesTableWrapper}>
+        <StickyFooter
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          setItemsPerPage={setItemsPerPage}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+        >
+        </StickyFooter>
         <table className={styles.pacientesTable}>
           <thead>
             <tr>
@@ -570,7 +581,7 @@ const Pacientes = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredPacientes.map(p => (
+            {paginatedPacientes.map(p => (
               <tr key={p.id}>
                 <td>{p.nome}</td>
                 <td>{p.email}</td>
