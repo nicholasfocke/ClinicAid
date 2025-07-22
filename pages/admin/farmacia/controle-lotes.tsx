@@ -15,6 +15,7 @@ import { buscarDescartesMedicamentos, registrarDescarteMedicamento, excluirDesca
 import { uploadDocumentoMovimentacao } from '@/functions/movimentacoesMedicamentosFunctions';
 import { differenceInCalendarDays } from 'date-fns';
 import { formatDateSafe, parseDate } from '@/utils/dateUtils';
+import StickyFooter from '@/components/StickyFooter';
 
 interface Medicamento {
   id: string;
@@ -39,6 +40,8 @@ const ControleLotes = () => {
   const [discardQuantidade, setDiscardQuantidade] = useState(0);
   const [discardDocumento, setDiscardDocumento] = useState<File | null>(null);
   const [descartes, setDescartes] = useState<(DescarteMedicamento & { id: string })[]>([]);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
 
   useEffect(() => {
@@ -165,6 +168,16 @@ const ControleLotes = () => {
     setDescartes(prev => prev.filter(d => d.id !== desc.id));
   };
 
+  const totalItems = activeTab === 'vencidos' ? vencidos.length : descartes.length;
+  const paginatedVencidos = vencidos.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  const paginatedDescartes = descartes.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <ProtectedRoute>
       <div className={layoutStyles.container}>
@@ -203,6 +216,13 @@ const ControleLotes = () => {
               </span>
             </div>
             <div className={tableStyles.tableWrapper}>
+            <StickyFooter
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              setItemsPerPage={setItemsPerPage}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+            />
               <table className={tableStyles.table}>
               <thead>
                 <tr>
@@ -217,7 +237,7 @@ const ControleLotes = () => {
                 </tr>
               </thead>
               <tbody>
-                {vencidos.map(l => (
+                {paginatedVencidos.map(l => (
                   <tr key={`${l.medicamentoId}-${l.numero_lote}`}>
                     <td>{l.medicamentoNome}</td>
                     <td>{l.numero_lote}</td>
@@ -263,6 +283,13 @@ const ControleLotes = () => {
               </span>
             </div>
             <div className={tableStyles.tableWrapper}>
+            <StickyFooter
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              setItemsPerPage={setItemsPerPage}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+            />
               <table className={tableStyles.table}>
                 <thead>
                   <tr>
@@ -277,7 +304,7 @@ const ControleLotes = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {descartes.map(d => (
+                  {paginatedDescartes.map(d => (
                     <tr key={d.id}>
                       <td>{formatDateSafe(d.dataHora || '', 'dd/MM/yy HH:mm')}</td>
                       <td>{d.medicamento}</td>

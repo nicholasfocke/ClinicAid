@@ -7,6 +7,7 @@ import layoutStyles from '@/styles/admin/medico/medicos.module.css';
 import tableStyles from '@/styles/admin/cadastros/convenio/convenios.module.css';
 import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { buscarConvenios, excluirConvenio, atualizarConvenio, criarConvenio } from '@/functions/conveniosFunctions';
+import StickyFooter from '@/components/StickyFooter';
 
 interface Convenio {
   id: string;
@@ -33,6 +34,8 @@ const Convenios = () => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +85,12 @@ const Convenios = () => {
 
   const filteredConvenios = convenios.filter(c =>
     c.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalItems = filteredConvenios.length;
+  const paginatedConvenios = filteredConvenios.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   const handleDelete = async (id: string) => {
@@ -200,6 +209,13 @@ const Convenios = () => {
       </div>
 
       <div className={tableStyles.conveniosTableWrapper}>
+        <StickyFooter
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          setItemsPerPage={setItemsPerPage}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+        />
         <table className={tableStyles.conveniosTable}>
           <thead>
             <tr>
@@ -214,7 +230,7 @@ const Convenios = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredConvenios.map(c => (
+            {paginatedConvenios.map(c => (
               <tr key={c.id}>
                 <td className={tableStyles.checkboxCell}>
                   <input

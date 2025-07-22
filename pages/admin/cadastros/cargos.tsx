@@ -7,6 +7,7 @@ import layoutStyles from '@/styles/admin/medico/medicos.module.css';
 import tableStyles from '@/styles/admin/cadastros/salas/salas.module.css';
 import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { buscarCargos, criarCargo, excluirCargo, atualizarCargo } from '@/functions/cargosFunctions';
+import StickyFooter from '@/components/StickyFooter';
 
 interface Cargo {
   id: string;
@@ -26,6 +27,8 @@ const Cargos = () => {
   const [user, setUser] = useState<User | null>(null);
   const [cargos, setCargos] = useState<Cargo[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<{ nome: string; quantidadeUsuarios: number; profissionalSaude: boolean }>({
     nome: '',
@@ -59,6 +62,12 @@ const Cargos = () => {
 
   const filteredCargos = cargos.filter(c =>
     c.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalItems = filteredCargos.length;
+  const paginatedCargos = filteredCargos.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   const startEdit = (c: Cargo) => {
@@ -154,12 +163,22 @@ const Cargos = () => {
               type="text"
               placeholder="🔍 Pesquisar cargo"
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={e => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
               className={tableStyles.searchInput}
             />
           </div>
         </div>
         <div className={tableStyles.salasTableWrapper}>
+          <StickyFooter
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            setItemsPerPage={setItemsPerPage}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
           <table className={tableStyles.salasTable}>
             <thead>
               <tr>
@@ -173,7 +192,7 @@ const Cargos = () => {
               </tr>
             </thead>
             <tbody>
-            {filteredCargos.map(c => (
+            {paginatedCargos.map(c => (
                 <tr key={c.id}>
                   <td className={tableStyles.checkboxCell}>
                     <input
