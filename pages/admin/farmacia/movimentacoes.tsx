@@ -15,6 +15,7 @@ import { buscarPacientes, PacienteMin } from '@/functions/pacientesFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
 import { format } from 'date-fns';
 import { formatDateSafe, parseDate } from '@/utils/dateUtils';
+import StickyFooter from '@/components/StickyFooter';
 
 const formatValor = (valor: number) =>
   valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -49,6 +50,8 @@ const Movimentacoes = () => {
   const [user, setUser] = useState<User | null>(null);
   const [movs, setMovs] = useState<Movimentacao[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [produtos, setProdutos] = useState<Medicamento[]>([]);
   const [lotes, setLotes] = useState<Record<string, Lote[]>>({});
   const [showEntradaModal, setShowEntradaModal] = useState(false);
@@ -366,6 +369,11 @@ const Movimentacoes = () => {
   const saidas = searchFiltered.filter(e => e.tipo === 'saida');
   const filtered =
     activeTab === 'entradas' ? entradas : activeTab === 'saidas' ? saidas : searchFiltered;
+  const totalItems = filtered.length;
+  const paginatedMovs = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <ProtectedRoute>
@@ -425,6 +433,13 @@ const Movimentacoes = () => {
           </div>
         </div>
         <div className={tableStyles.medicamentosTableWrapper}>
+          <StickyFooter
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            setItemsPerPage={setItemsPerPage}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
           <table className={tableStyles.medicamentosTable}>
             <thead>
               {activeTab === 'todos' && (
@@ -466,7 +481,7 @@ const Movimentacoes = () => {
               )}
             </thead>
             <tbody>
-              {filtered.map(e => (
+              {paginatedMovs.map(e => (
                 <tr key={e.id}>
                   {activeTab === 'todos' && (
                     <>

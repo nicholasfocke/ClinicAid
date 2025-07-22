@@ -8,6 +8,7 @@ import tableStyles from '@/styles/admin/cadastros/salas/salas.module.css';
 import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { buscarSalas, criarSala, excluirSala, atualizarSala } from '@/functions/salasFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
+import StickyFooter from '@/components/StickyFooter';
 
 interface Sala {
   id: string;
@@ -38,6 +39,8 @@ const Salas = () => {
   const [newSala, setNewSala] = useState<{ nome: string; profissionalId: string | null }>({ nome: '', profissionalId: null });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const allSelected = salas.length > 0 && selectedIds.length === salas.length;
 
   useEffect(() => {
@@ -72,6 +75,12 @@ const Salas = () => {
 
   const filteredSalas = salas.filter(s =>
     s.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalItems = filteredSalas.length;
+  const paginatedSalas = filteredSalas.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   const startEdit = (s: Sala) => {
@@ -182,6 +191,13 @@ const Salas = () => {
           </div>
         </div>
         <div className={tableStyles.salasTableWrapper}>
+          <StickyFooter
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            setItemsPerPage={setItemsPerPage}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
           <table className={tableStyles.salasTable}>
             <thead>
               <tr>
@@ -195,7 +211,7 @@ const Salas = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredSalas.map(s => (
+              {paginatedSalas.map(s => (
                 <tr key={s.id}>
                   <td className={tableStyles.checkboxCell}>
                     <input
