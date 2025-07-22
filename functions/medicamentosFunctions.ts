@@ -5,6 +5,7 @@ import { buscarLotes } from './lotesFunctions';
 import { buscarSaidasMedicamentos } from './movimentacoesMedicamentosFunctions';
 import { buscarNotificacoes, criarNotificacao } from './notificacoesFunctions';
 import { parseDate } from '@/utils/dateUtils';
+import { parseISO, startOfDay } from 'date-fns';
 
 export interface MedicamentoData {
   nome_comercial: string;
@@ -125,7 +126,7 @@ export const verificarNotificacoesMedicamentos = async () => {
   for (const l of lotes) {
     const nome = medMap[l.medicamentoId ?? ''] || '-';
     const validadeDate = parseDate(l.validade) ?? new Date(l.validade);
-    const dias = differenceInCalendarDays(validadeDate, new Date());
+    const dias = differenceInCalendarDays(startOfDay(parseISO(l.validade)), startOfDay(new Date()));
     if ([30, 15, 5].includes(dias)) {
       const desc = `O lote "${l.numero_lote}" do remédio "${nome}" vence em ${dias} dias.`;
       if (!temNotificacao(desc)) {
@@ -139,7 +140,7 @@ export const verificarNotificacoesMedicamentos = async () => {
           detalhes: { lote: l.numero_lote, medicamento: nome, validade: l.validade },
         });
       }
-    } else if (dias === 0) {
+    } else if (dias < 0) {
       const desc = `O lote "${l.numero_lote}" do remédio "${nome}" venceu.`;
       if (!temNotificacao(desc)) {
         await criarNotificacao({

@@ -9,6 +9,7 @@ import tableStyles from '@/styles/admin/cadastros/procedimento/procedimentos.mod
 import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { buscarProcedimentos, criarProcedimento, excluirProcedimento, atualizarProcedimento, ProcedimentoData } from '@/functions/procedimentosFunctions';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
+import StickyFooter from '@/components/StickyFooter';
 
 const formatValor = (valor: number) =>
   valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -29,6 +30,8 @@ interface User {
 
 const Procedimentos = () => {
   const router = useRouter();
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [user, setUser ] = useState<User | null>(null);
   const [procedimentos, setProcedimentos] = useState<Procedimento[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -109,6 +112,12 @@ const Procedimentos = () => {
 
   const searchFilteredProcedimentos = filteredProcedimentos.filter(p =>
     p.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalItems = searchFilteredProcedimentos.length;
+  const paginatedProcedimentos = searchFilteredProcedimentos.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   const allSelected =
@@ -319,6 +328,13 @@ const Procedimentos = () => {
         </div>
       </div>
       <div className={tableStyles.procedimentosTableWrapper}>
+      <StickyFooter
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
+        setItemsPerPage={setItemsPerPage}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+      />
         <table className={tableStyles.procedimentosTable}>
           <thead>
             <tr>

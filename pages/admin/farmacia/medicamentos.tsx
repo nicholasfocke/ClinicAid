@@ -258,9 +258,9 @@ const Medicamentos = () => {
     fetchSaidas();
   }, []);
 
-  useEffect(() => {
-    verificarNotificacoesMedicamentos();
-  }, []);
+  // useEffect(() => {
+  //   verificarNotificacoesMedicamentos();
+  // }, []);
 
   const filtered = medicamentos.filter((m) =>
     m.nome_comercial.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -391,7 +391,7 @@ const Medicamentos = () => {
         }
       }
     }
-    await verificarNotificacoesMedicamentos();
+    // await verificarNotificacoesMedicamentos();
     setShowMovModal(false);
   };
 
@@ -604,7 +604,7 @@ const Medicamentos = () => {
     });
     setValorCompraInput("");
     setValorVendaInput("");
-    await verificarNotificacoesMedicamentos();
+    // await verificarNotificacoesMedicamentos();
     setShowLoteModal(false);
     setError("")
   };
@@ -696,7 +696,7 @@ const Medicamentos = () => {
       ...prev,
       [discardMedId]: (prev[discardMedId] || []).filter((l) => l.id !== discardLote.id),
     }));
-    await verificarNotificacoesMedicamentos();
+    // await verificarNotificacoesMedicamentos();
     setShowDiscardModal(false);
   };
 
