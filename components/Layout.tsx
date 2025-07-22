@@ -5,7 +5,7 @@ import { auth, firestore } from '../firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import Image from 'next/image';
-import styles from './Layout.module.css';
+import styles from './styles/Layout.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import SidebarAdmin from './layout/SidebarAdmin';

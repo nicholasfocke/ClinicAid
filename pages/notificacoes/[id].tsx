@@ -4,11 +4,7 @@ import styles from '@/pages/notificacoes/[id].module.css';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { parseISO, isValid, format } from 'date-fns';
-import {
-  buscarNotificacao,
-  marcarNotificacaoLida,
-  NotificacaoData,
-} from '@/functions/notificacoesFunctions';
+import { buscarNotificacao, marcarNotificacaoLida, NotificacaoData, } from '@/functions/notificacoesFunctions';
 
 const NotificacaoDetalhes = () => {
   const router = useRouter();

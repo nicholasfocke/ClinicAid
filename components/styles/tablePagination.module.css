@@ -1,0 +1,56 @@
+.container {
+  width: 100%;
+}
+
+.topControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.bottomControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.itemsSelect {
+  padding: 4px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #222;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.pageBtn {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #222;
+  font-size: 1rem;
+  padding: 4px 10px;
+  margin: 0 2px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pageBtn:disabled {
+  background: #f3f4f6;
+  color: #8b98a9;
+  cursor: default;
+}
+
+.legend {
+  font-size: 0.9rem;
+  color: #555;
+}

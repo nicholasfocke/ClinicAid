@@ -1,0 +1,55 @@
+.stickyFooter {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #F9F9F9;
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+  font-size: 0.82rem;
+}
+
+.leftControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.select {
+  border: 1px solid #D1D5DB;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 0.75rem;
+}
+
+.legend {
+  font-size: 0.75rem;
+  color: #6B7280;
+}
+
+.pagination {
+  display: flex;
+  gap: 4px;
+}
+
+.pageBtn {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.pageBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.active {
+  font-weight: 600;
+  text-decoration: underline;
+}
