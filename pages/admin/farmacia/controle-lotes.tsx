@@ -16,6 +16,7 @@ import { uploadDocumentoMovimentacao } from '@/functions/movimentacoesMedicament
 import { differenceInCalendarDays } from 'date-fns';
 import { formatDateSafe, parseDate } from '@/utils/dateUtils';
 import StickyFooter from '@/components/StickyFooter';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 interface Medicamento {
   id: string;
@@ -43,6 +44,7 @@ const ControleLotes = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
+  const [modalState, setModalState] = useState({isOpen: false, onConfirm: () => {} });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, current => {

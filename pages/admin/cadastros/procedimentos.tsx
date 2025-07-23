@@ -481,7 +481,7 @@ const Procedimentos = () => {
       )}
       <ConfirmationModal
         isOpen={modalState.isOpen}
-        message="Você tem certeza que deseja excluir?"
+        message="Você tem certeza que deseja excluir este procedimento?"
         onConfirm={modalState.onConfirm}
         onCancel={() => setModalState({ isOpen: false, onConfirm: () => {} })}
       />

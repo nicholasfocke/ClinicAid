@@ -1,6 +1,5 @@
 import React from 'react';
-import styles from '@/styles/admin/cadastros/confirmationModal.module.css';
-
+import styles from '@/styles/admin/confirmationModal.module.css';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -20,7 +19,7 @@ const ConfirmationModal = ({ isOpen, message, onConfirm, onCancel }: Confirmatio
         <p className={styles.message}>{message}</p>
         <div className={styles.buttonContainer}>
           <button className={`${styles.button} ${styles.confirmButton}`} onClick={onConfirm}>
-            Confirmar
+            Excluir
           </button>
           <button className={`${styles.button} ${styles.cancelButton}`} onClick={onCancel}>
             Cancelar
