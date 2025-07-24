@@ -171,7 +171,7 @@ const SidebarAdmin = () => {
             </button>
             {financeiroOpen && (
               <div className={styles.subNav} style={{ marginTop: 0 }}>
-                <Link href="/admin/financeiro/" className={styles.subNavItem}>
+                <Link href="/admin/Dashboardfinanceiro/" className={styles.subNavItem}>
                   Dashboard Financeiro
                 </Link>
               </div>
