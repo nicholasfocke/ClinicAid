@@ -20,6 +20,7 @@ import { buscarMedicos } from "@/functions/medicosFunctions";
 import { buscarPacientes, PacienteMin } from "@/functions/pacientesFunctions";
 import { buscarLotes, criarLote, atualizarLote, excluirLote, getStatusColor, statusLote } from "@/functions/lotesFunctions";
 import StickyFooter from '@/components/StickyFooter';
+import ConfirmationModal from "@/components/modals/ConfirmationModal";
 
 const formatValor = (valor: number) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -142,7 +143,6 @@ const Medicamentos = () => {
   const [selectedMedicamento, setSelectedMedicamento] = useState<Medicamento | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [detailsData, setDetailsData] = useState<Partial<MedicamentoData>>({});
   const [showMovModal, setShowMovModal] = useState(false);
   const [movType, setMovType] = useState<"entrada" | "saida">("entrada");
@@ -185,6 +185,7 @@ const Medicamentos = () => {
   const [discardMetodo, setDiscardMetodo] = useState("incineração");
   const [discardQuantidade, setDiscardQuantidade] = useState(0);
   const [discardDocumento, setDiscardDocumento] = useState<File | null>(null);
+  const [modalState, setModalState] = useState({ isOpen: false, onConfirm: () => {} });
 
   const selectedIds = medicamentos.filter((m) => m.selected).map((m) => m.id);
   const allSelected =
@@ -279,7 +280,6 @@ const Medicamentos = () => {
     setDetailsData(m);
     setShowDetails(true);
     setEditing(false);
-    setConfirmDelete(false);
   };
 
   const openMovimento = (m: Medicamento, tipo: "entrada" | "saida") => {
@@ -514,11 +514,14 @@ const Medicamentos = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    const confirm = window.confirm("Deseja excluir este medicamento?");
-    if (!confirm) return;
-    await excluirMedicamento(id);
-    setMedicamentos((prev) => prev.filter((m) => m.id !== id));
+  const handleDelete = (id: string) => {
+    const confirmAction = async () => {
+      await excluirMedicamento(id);
+      setMedicamentos((prev) => prev.filter((m) => m.id !== id));
+      setModalState({ isOpen: false, onConfirm: () => {} });
+    };
+
+    setModalState({ isOpen: true, onConfirm: confirmAction });
   };
 
   const toggleSelect = (id: string) => {
@@ -546,7 +549,7 @@ const Medicamentos = () => {
 
   const openLoteModal = (medId: string) => {
     setCurrentMedId(medId);
-      setValorCompraInput("");
+    setValorCompraInput("");
     setValorVendaInput("");
     setShowLoteModal(true);
   };
@@ -1424,25 +1427,7 @@ const Medicamentos = () => {
             className={detailsStyles.card}
             onClick={(e) => e.stopPropagation()}
           >
-            {confirmDelete ? (
-              <div>
-                <p>Confirmar exclusão?</p>
-                <div className={detailsStyles.buttons}>
-                  <button
-                    className={detailsStyles.buttonExcluir}
-                    onClick={confirmDeleteMedicamento}
-                  >
-                    Confirmar
-                  </button>
-                  <button
-                    className={detailsStyles.buttonEditar}
-                    onClick={() => setConfirmDelete(false)}
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            ) : editing ? (
+              {editing ? (
               <div>
                 <div className={modalStyles.formGrid}>
                   {[
@@ -1596,7 +1581,15 @@ const Medicamentos = () => {
                 <div className={detailsStyles.buttons}>
                   <button
                     className={detailsStyles.buttonExcluir}
-                    onClick={() => setConfirmDelete(true)}
+                      onClick={() => {
+                      setModalState({
+                        isOpen: true,
+                        onConfirm: async () => {
+                          await confirmDeleteMedicamento();
+                          setModalState({ isOpen: false, onConfirm: () => {} });
+                        },
+                      });
+                    }}
                   >
                     Excluir medicamento
                   </button>
@@ -1682,6 +1675,12 @@ const Medicamentos = () => {
           </div>
         </div>
       )}
+      <ConfirmationModal
+        isOpen={modalState.isOpen}
+        message="Você tem certeza que deseja excluir este medicamento?"
+        onConfirm={modalState.onConfirm}
+        onCancel={() => setModalState({ isOpen: false, onConfirm: () => {} })}
+      />
     </ProtectedRoute>
   );
 };

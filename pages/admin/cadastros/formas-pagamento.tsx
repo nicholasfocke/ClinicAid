@@ -8,6 +8,7 @@ import tableStyles from '@/styles/admin/cadastros/formapagamentos/formasPagament
 import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { buscarFormasPagamento, criarFormaPagamento, excluirFormaPagamento, atualizarFormaPagamento, } from '@/functions/formasPagamentosFunctions';
 import StickyFooter from '@/components/StickyFooter';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 interface FormaPagamento {
   id: string;
@@ -34,6 +35,7 @@ const FormasPagamento = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const allSelected = formas.length > 0 && selectedIds.length === formas.length;
+  const [modalState, setModalState] = useState({ isOpen: false, onConfirm: () => {} });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -115,11 +117,21 @@ const FormasPagamento = () => {
     setError(null);
   };
 
-  const handleDelete = async (id: string) => {
-    const confirmDelete = window.confirm('Deseja excluir esta forma de pagamento?');
-    if (!confirmDelete) return;
-    await excluirFormaPagamento(id);
-    setFormas(prev => prev.filter(f => f.id !== id));
+  const handleDelete = (id: string) => {
+    const confirmAction = async () => {
+      try {
+        await excluirFormaPagamento(id);
+        setFormas(prev => prev.filter(p => p.id !== id));
+      } catch (error) {
+        setError('Erro ao excluir forma de pagamento.');
+      }
+      setModalState({ isOpen: false, onConfirm: () => {} });
+    };
+
+    setModalState({
+      isOpen: true,
+      onConfirm: confirmAction,
+    });
   };
 
   const toggleSelect = (id: string) => {
@@ -275,6 +287,12 @@ const FormasPagamento = () => {
           </div>
         </div>
       )}
+    <ConfirmationModal
+      isOpen={modalState.isOpen}
+      message="Você tem certeza que deseja excluir esta forma de pagamento?"
+      onConfirm={modalState.onConfirm}
+      onCancel={() => setModalState({ isOpen: false, onConfirm: () => {} })}
+    />
     </>
   );
 };

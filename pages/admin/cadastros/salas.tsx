@@ -9,6 +9,7 @@ import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { buscarSalas, criarSala, excluirSala, atualizarSala } from '@/functions/salasFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
 import StickyFooter from '@/components/StickyFooter';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 interface Sala {
   id: string;
@@ -42,6 +43,7 @@ const Salas = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const allSelected = salas.length > 0 && selectedIds.length === salas.length;
+  const [modalState, setModalState] = useState({isOpen: false, onConfirm: () => {} });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -113,11 +115,21 @@ const Salas = () => {
     setNewSala({ nome: '', profissionalId: null });
   };
 
-  const handleDelete = async (id: string) => {
-    const confirm = window.confirm('Deseja excluir esta sala?');
-    if (!confirm) return;
-    await excluirSala(id);
-    setSalas(prev => prev.filter(s => s.id !== id));
+  const handleDelete = (id: string) => {
+    const confirmAction = async () => {
+      try {
+        await excluirSala(id);
+        setSalas(prev => prev.filter(p => p.id !== id));
+      } catch (error) {
+        setError('Erro ao excluir convenio.');
+      }
+      setModalState({ isOpen: false, onConfirm: () => {} });
+    };
+
+    setModalState({
+      isOpen: true,
+      onConfirm: confirmAction,
+    });
   };
 
   const toggleSelect = (id: string) => {
@@ -291,6 +303,12 @@ const Salas = () => {
           </div>
         </div>
       )}
+    <ConfirmationModal
+      isOpen={modalState.isOpen}
+      message="Você tem certeza que deseja excluir esta forma de pagamento?"
+      onConfirm={modalState.onConfirm}
+      onCancel={() => setModalState({ isOpen: false, onConfirm: () => {} })}
+    />
     </>
   );
 };

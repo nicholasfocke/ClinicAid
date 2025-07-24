@@ -8,6 +8,7 @@ import tableStyles from '@/styles/admin/cadastros/convenio/convenios.module.css'
 import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { buscarConvenios, excluirConvenio, atualizarConvenio, criarConvenio } from '@/functions/conveniosFunctions';
 import StickyFooter from '@/components/StickyFooter';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 interface Convenio {
   id: string;
@@ -54,6 +55,7 @@ const Convenios = () => {
   });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const allSelected = convenios.length > 0 && selectedIds.length === convenios.length;
+  const [modalState, setModalState] = useState({ isOpen: false, onConfirm: () => {} });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -93,11 +95,21 @@ const Convenios = () => {
     currentPage * itemsPerPage
   );
 
-  const handleDelete = async (id: string) => {
-    const confirm = window.confirm('Deseja excluir este convênio?');
-    if (!confirm) return;
-    await excluirConvenio(id);
-    setConvenios(prev => prev.filter(c => c.id !== id));
+  const handleDelete = (id: string) => {
+    const confirmAction = async () => {
+      try {
+        await excluirConvenio(id);
+        setConvenios(prev => prev.filter(p => p.id !== id));
+      } catch (error) {
+        setError('Erro ao excluir convenio.');
+      }
+      setModalState({ isOpen: false, onConfirm: () => {} });
+    };
+
+    setModalState({
+      isOpen: true,
+      onConfirm: confirmAction,
+    });
   };
 
   const toggleSelect = (id: string) => {
@@ -312,6 +324,12 @@ const Convenios = () => {
         </div>
       </div>
     )}
+    <ConfirmationModal
+      isOpen={modalState.isOpen}
+      message="Você tem certeza que deseja excluir este convênio?"
+      onConfirm={modalState.onConfirm}
+      onCancel={() => setModalState({ isOpen: false, onConfirm: () => {} })}
+    />
     </>
   );
 };
