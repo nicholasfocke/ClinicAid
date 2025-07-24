@@ -8,6 +8,7 @@ import tableStyles from '@/styles/admin/cadastros/salas/salas.module.css';
 import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { buscarCargos, criarCargo, excluirCargo, atualizarCargo } from '@/functions/cargosFunctions';
 import StickyFooter from '@/components/StickyFooter';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 interface Cargo {
   id: string;
@@ -38,8 +39,10 @@ const Cargos = () => {
   const [showModal, setShowModal] = useState(false);
   const [newCargo, setNewCargo] = useState<{ nome: string; profissionalSaude: boolean }>({ nome: '', profissionalSaude: false });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [modalState, setModalState] = useState({isOpen: false, onConfirm: () => {} });
 
   const allSelected = cargos.length > 0 && selectedIds.length === cargos.length;
+  
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -104,10 +107,21 @@ const Cargos = () => {
     setNewCargo({ nome: '', profissionalSaude: false });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Deseja excluir este cargo?')) return;
-    await excluirCargo(id);
-    setCargos(prev => prev.filter(c => c.id !== id));
+  const handleDelete = (id: string) => {
+    const confirmAction = async () => {
+      try {
+        await excluirCargo(id);
+        setCargos(prev => prev.filter(c => c.id !== id));
+      } catch (error) {
+        setError('Erro ao excluir Cargo.');
+      }
+      setModalState({ isOpen: false, onConfirm: () => {} });
+    };
+
+    setModalState({
+      isOpen: true,
+      onConfirm: confirmAction,
+    });
   };
 
   const toggleSelect = (id: string) => {
@@ -247,6 +261,12 @@ const Cargos = () => {
           </div>
         </div>
       )}
+    <ConfirmationModal
+      isOpen={modalState.isOpen}
+      message="Você tem certeza que deseja excluir este Cargo?"
+      onConfirm={modalState.onConfirm}
+      onCancel={() => setModalState({ isOpen: false, onConfirm: () => {} })}
+    />
     </>
   );
 };

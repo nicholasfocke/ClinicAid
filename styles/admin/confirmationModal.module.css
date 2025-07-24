@@ -63,6 +63,15 @@
   background-color: #b91c1c; /* Vermelho mais escuro */
 }
 
+.confirmButtonAzul {
+  background-color: #2563eb; /* Azul vibrante */
+  color: #ffffff;
+}
+
+.confirmButtonAzul:hover {
+  background-color: #1d4ed8; /* Azul mais escuro */
+}
+
 .cancelButton {
   background-color: #e5e7eb; /* Cinza claro */
   color: #111827;
