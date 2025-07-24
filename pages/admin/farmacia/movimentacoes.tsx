@@ -16,6 +16,7 @@ import { buscarMedicos } from '@/functions/medicosFunctions';
 import { format } from 'date-fns';
 import { formatDateSafe, parseDate } from '@/utils/dateUtils';
 import StickyFooter from '@/components/StickyFooter';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 const formatValor = (valor: number) =>
   valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -75,6 +76,8 @@ const Movimentacoes = () => {
   const [profissionalSaida, setProfissionalSaida] = useState('');
   const [activeTab, setActiveTab] = useState<'todos' | 'entradas' | 'saidas'>('todos');
   const router = useRouter();
+  const [modalState, setModalState] = useState({ isOpen: false, onConfirm: () => {} }); 
+  const [modalMessage, setModalMessage] = useState('');  
 
   const validadeLote = (num: string) => {
     const all = Object.values(lotes).flat();
@@ -155,10 +158,13 @@ const Movimentacoes = () => {
     fetchAuxiliares();
   }, []);
 
-  const handleDelete = async (id: string, tipo: 'entrada' | 'saida') => {
-    if (!confirm('Deseja excluir este registro?')) return;
-    const mov = movs.find(m => m.id === id);
-    if (!mov) return;
+  const handleDelete = (id: string, tipo: 'entrada' | 'saida') => {
+    const confirmAction = async () => {
+      const mov = movs.find(m => m.id === id);
+      if (!mov) {
+        setModalState({ isOpen: false, onConfirm: () => {} });
+        return;
+      }
     const med = produtos.find(p => p.nome_comercial === mov.medicamento);
     const medId = med?.id || '';
     let loteArr: Lote[] = [];
@@ -207,6 +213,15 @@ const Movimentacoes = () => {
       }
     }
     setMovs(prev => prev.filter(e => e.id !== id));
+      setModalState({ isOpen: false, onConfirm: () => {} });
+    };
+
+    setModalMessage(
+      `Você tem certeza que deseja excluir esta ${
+        tipo === 'entrada' ? 'entrada' : 'saída'
+      }?`,
+    );
+    setModalState({ isOpen: true, onConfirm: confirmAction });
   };
 
   const openEntrada = (prod?: Medicamento) => {
@@ -802,6 +817,12 @@ const Movimentacoes = () => {
           </div>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={modalState.isOpen}
+        message={modalMessage}
+        onConfirm={modalState.onConfirm}
+        onCancel={() => setModalState({ isOpen: false, onConfirm: () => {} })}
+      />
     </ProtectedRoute>
   );
 };

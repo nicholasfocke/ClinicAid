@@ -149,8 +149,8 @@ const ControleLotes = () => {
     setShowDiscardModal(false);
   };
 
-  const revertDiscard = async (desc: DescarteMedicamento & { id: string }) => {
-    if (!confirm('Deseja reverter este descarte?')) return;
+  const revertDiscard = (desc: DescarteMedicamento & { id: string }) => {
+  const confirmAction = async () => {
     if (desc.medicamentoId && desc.loteData) {
       const { id: newId } = await criarLote(desc.medicamentoId, desc.loteData);
       const valDate = parseDate(desc.loteData.validade) ?? new Date(desc.loteData.validade);
@@ -167,7 +167,11 @@ const ControleLotes = () => {
       }
     }
     await excluirDescarteMedicamento(desc.id);
-    setDescartes(prev => prev.filter(d => d.id !== desc.id));
+      setDescartes(prev => prev.filter(d => d.id !== desc.id));
+      setModalState({ isOpen: false, onConfirm: () => {} });
+    };
+
+    setModalState({ isOpen: true, onConfirm: confirmAction });
   };
 
   const totalItems = activeTab === 'vencidos' ? vencidos.length : descartes.length;
@@ -436,6 +440,14 @@ const ControleLotes = () => {
           </div>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={modalState.isOpen}
+        message="Você tem certeza que deseja reverter este descarte?"
+        confirmText="Reverter"
+        confirmVariant="azul"
+        onConfirm={modalState.onConfirm}
+        onCancel={() => setModalState({ isOpen: false, onConfirm: () => {} })}
+      />
     </ProtectedRoute>
   );
 };
