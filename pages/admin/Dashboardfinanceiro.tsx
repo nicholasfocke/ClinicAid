@@ -116,11 +116,11 @@ const [dataType, setDataType] = useState<'both' | 'Receita' | 'Despesas'>('both'
     <div className={styles.container}>
       <div className={breadcrumbStyles.breadcrumbWrapper}>
         <span className={breadcrumbStyles.breadcrumb}>
-          Menu Principal &gt; <span className={breadcrumbStyles.breadcrumbActive}>Financeiro</span>
+          Menu Principal &gt; <span className={breadcrumbStyles.breadcrumbActive}> Dashboard Financeiro</span>
         </span>
       </div>
 
-      <h1 className={styles.titleFinanceiro}>Financeiro</h1>
+      <h1 className={styles.titleFinanceiro}>Dashboard Financeiro</h1>
       <p className={styles.subtitleFinanceiro}>
         Gerencie e acompanhe as receitas, despesas e o fluxo de caixa da sua clínica
       </p>
