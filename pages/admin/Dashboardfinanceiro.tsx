@@ -43,13 +43,35 @@ const DashboardFinanceiro = () => {
   const despesasMensal = [4000, 6000, 3500, 6500, 7000, 18500];
   const lucroMensal = receitaMensal.map((v, i) => v - despesasMensal[i]);
 
-const [meta, setMeta] = useState(20000);
+const [meta, setMeta] = useState<number | null>(null);
+
+useEffect(() => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('metaMes');
+    if (saved !== null) {
+      const value = Number(saved);
+      if (!Number.isNaN(value)) {
+        setMeta(value);
+      }
+    }
+  }
+}, []);
+
+useEffect(() => {
+  if (typeof window !== 'undefined') {
+    if (meta !== null) {
+      localStorage.setItem('metaMes', String(meta));
+    } else {
+      localStorage.removeItem('metaMes');
+    }
+  }
+}, [meta]);
 
 const totalReceita = receitaMensal.reduce((a, b) => a + b, 0);
 const totalDespesas = despesasMensal.reduce((a, b) => a + b, 0);
 const totalSaido = totalReceita - totalDespesas;
 
-const porcentagem = (totalReceita / meta) * 100;
+const porcentagem = meta ? (totalReceita / meta) * 100 : 0;
 
 const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar');
 const [dataType, setDataType] = useState<'both' | 'Receita' | 'Despesas'>('both');
@@ -259,18 +281,26 @@ const [dataType, setDataType] = useState<'both' | 'Receita' | 'Despesas'>('both'
         <input
           type="number"
           className={styles.metaInput}
-          value={meta}
-          onChange={(e) => setMeta(Number(e.target.value))}
+          placeholder="Defina a meta"
+          min={0}
+          value={meta ?? ''}
+          onChange={(e) =>
+            setMeta(e.target.value === '' ? null : Number(e.target.value))
+          }
         />
-        <span>R$ {meta.toLocaleString('pt-BR')}</span>
+        <span>
+          {meta !== null ? `R$ ${meta.toLocaleString('pt-BR')}` : 'Sem meta'}
+        </span>
       </div>
       <div className={styles.progressoTexto}>
-        Realizado: R$ {totalReceita.toLocaleString('pt-BR')} ({porcentagem.toFixed(0)}%)
+          {meta !== null && (
+          <>Realizado: R$ {totalReceita.toLocaleString('pt-BR')} ({porcentagem.toFixed(0)}%)</>
+        )}
       </div>
       <div className={styles.progressBar}>
         <div
           className={styles.progressBarInner}
-          style={{ width: `${Math.min(porcentagem, 100)}%` }}
+          style={{ width: meta !== null ? `${Math.min(porcentagem, 100)}%` : '0%' }}
         />
       </div>
     </div>
