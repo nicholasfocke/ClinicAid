@@ -164,3 +164,23 @@
   background-color: #3b82f6;
   transition: width 0.4s ease;
 }
+
+.chartTypeButtons {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+
+.chartTypeButton {
+  background: #e5e7eb;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.activeChartType {
+  background: #2563eb;
+  color: #fff;
+}

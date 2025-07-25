@@ -4,10 +4,13 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/firebase/firebaseConfig';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/financeiro/Dashboardfinanceiro.module.css';
-import { Bar } from 'react-chartjs-2';
+import { Bar, Line, Pie } from 'react-chartjs-2';
 import {
   Chart,
   BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
   CategoryScale,
   LinearScale,
   Tooltip,
@@ -15,7 +18,16 @@ import {
 } from 'chart.js';
 import { DollarSign, TrendingDown, TrendingUp } from 'lucide-react';
 
-Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+Chart.register(
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend
+);
 
 const DashboardFinanceiro = () => {
   const router = useRouter();
@@ -39,6 +51,8 @@ const totalSaido = totalReceita - totalDespesas;
 
 const porcentagem = (totalReceita / meta) * 100;
 
+const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar');
+
   const chartData = {
     labels: ['15/04', '23/04', '25/04', '05/04', '15/04', '31/04'],
     datasets: [
@@ -51,6 +65,17 @@ const porcentagem = (totalReceita / meta) * 100;
         label: 'Despesas',
         data: despesasMensal,
         backgroundColor: '#f97316',
+      },
+    ],
+  };
+
+  const pieChartData = {
+    labels: ['Receita', 'Despesas'],
+    datasets: [
+      {
+        label: 'Receita x Despesas',
+        data: [totalReceita, totalDespesas],
+        backgroundColor: ['#3b82f6', '#f97316'],
       },
     ],
   };
@@ -111,7 +136,35 @@ const porcentagem = (totalReceita / meta) * 100;
 
       <div className={styles.chartSection}>
         <h3>Receita e Despesas - Últimos 30 Dias</h3>
-        <Bar data={chartData} options={chartOptions} />
+        <div className={styles.chartTypeButtons}>
+          <button
+            className={`${styles.chartTypeButton} ${
+              chartType === 'bar' ? styles.activeChartType : ''
+            }`}
+            onClick={() => setChartType('bar')}
+          >
+            Barras
+          </button>
+          <button
+            className={`${styles.chartTypeButton} ${
+              chartType === 'line' ? styles.activeChartType : ''
+            }`}
+            onClick={() => setChartType('line')}
+          >
+            Linhas
+          </button>
+          <button
+            className={`${styles.chartTypeButton} ${
+              chartType === 'pie' ? styles.activeChartType : ''
+            }`}
+            onClick={() => setChartType('pie')}
+          >
+            Pizza
+          </button>
+        </div>
+        {chartType === 'bar' && <Bar data={chartData} options={chartOptions} />}
+        {chartType === 'line' && <Line data={chartData} options={chartOptions} />}
+        {chartType === 'pie' && <Pie data={pieChartData} />}
         <div className={styles.chartLegend}>
           <span className={styles.legendBlue}>■ Receita</span>
           <span className={styles.legendOrange}>■ Despesas</span>
