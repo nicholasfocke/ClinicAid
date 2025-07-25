@@ -205,12 +205,54 @@ const [dataType, setDataType] = useState<'both' | 'Receita' | 'Despesas'>('both'
         </div>
         {chartType === 'bar' && <Bar data={chartData} options={chartOptions} />}
         {chartType === 'line' && <Line data={chartData} options={chartOptions} />}
-        {chartType === 'pie' && <Pie data={pieChartData} />}
-        <div className={styles.chartLegend}>
-          <span className={styles.legendBlue}>■ Receita</span>
-          <span className={styles.legendOrange}>■ Despesas</span>
+       {chartType === 'pie' && (
+        <div className={styles.chartWrapper}>
+          <Pie data={pieChartData} />
         </div>
+      )}
       </div>
+      <div className={styles.chartSection}>
+      <h3>Evolução financeira</h3>
+      <Line
+        data={{
+          labels: ['15/04', '23/04', '25/04', '05/04', '15/04', '31/04'],
+          datasets: [
+            {
+              label: 'Receita Bruta',
+              data: receitaMensal,
+              borderColor: '#3b82f6',
+              backgroundColor: '#3b82f6',
+              fill: false,
+              tension: 0.4,
+            },
+            {
+              label: 'Despesas',
+              data: despesasMensal,
+              borderColor: '#f97316',
+              backgroundColor: '#f97316',
+              fill: false,
+              tension: 0.4,
+            },
+            {
+              label: 'Lucro Líquido',
+              data: lucroMensal,
+              borderColor: '#22c55e',
+              backgroundColor: '#22c55e',
+              fill: false,
+              tension: 0.4,
+            },
+          ],
+        }}
+        options={{
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+            },
+          },
+        }}
+      />
+    </div>
       <div className={styles.metaMes}>
       <h3>Meta do mês:</h3>
       <div className={styles.metaWrapper}>
