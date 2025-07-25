@@ -52,8 +52,9 @@ const totalSaido = totalReceita - totalDespesas;
 const porcentagem = (totalReceita / meta) * 100;
 
 const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar');
+const [dataType, setDataType] = useState<'both' | 'Receita' | 'Despesas'>('both');
 
-  const chartData = {
+  const baseChartData = {
     labels: ['15/04', '23/04', '25/04', '05/04', '15/04', '31/04'],
     datasets: [
       {
@@ -69,13 +70,27 @@ const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar');
     ],
   };
 
+  const chartData = {
+    ...baseChartData,
+    datasets: baseChartData.datasets.filter((d) =>
+      dataType === 'both' ? true : d.label === dataType
+    ),
+  };
+
   const pieChartData = {
-    labels: ['Receita', 'Despesas'],
+    labels:
+      dataType === 'both'
+        ? ['Receita', 'Despesas']
+        : [dataType],
     datasets: [
       {
         label: 'Receita x Despesas',
-        data: [totalReceita, totalDespesas],
-        backgroundColor: ['#3b82f6', '#f97316'],
+        data:
+          dataType === 'both'
+            ? [totalReceita, totalDespesas]
+            : [dataType === 'Receita' ? totalReceita : totalDespesas],
+        backgroundColor:
+          dataType === 'both' ? ['#3b82f6', '#f97316'] : [dataType === 'Receita' ? '#3b82f6' : '#f97316'],
       },
     ],
   };
@@ -160,6 +175,32 @@ const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar');
             onClick={() => setChartType('pie')}
           >
             Pizza
+          </button>
+        </div>
+        <div className={styles.dataTypeButtons}>
+          <button
+            className={`${styles.dataTypeButton} ${
+              dataType === 'both' ? styles.activeDataType : ''
+            }`}
+            onClick={() => setDataType('both')}
+          >
+            Ambos
+          </button>
+          <button
+            className={`${styles.dataTypeButton} ${
+              dataType === 'Receita' ? styles.activeDataType : ''
+            }`}
+            onClick={() => setDataType('Receita')}
+          >
+            Receita
+          </button>
+          <button
+            className={`${styles.dataTypeButton} ${
+              dataType === 'Despesas' ? styles.activeDataType : ''
+            }`}
+            onClick={() => setDataType('Despesas')}
+          >
+            Despesa
           </button>
         </div>
         {chartType === 'bar' && <Bar data={chartData} options={chartOptions} />}
