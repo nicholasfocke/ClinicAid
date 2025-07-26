@@ -10,6 +10,7 @@
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  padding-top: 0px; /* Adicione este padding-top para subir os itens do menu */
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
