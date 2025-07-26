@@ -174,6 +174,18 @@ const SidebarAdmin = () => {
                 <Link href="/admin/Dashboardfinanceiro/" className={styles.subNavItem}>
                   Dashboard Financeiro
                 </Link>
+                <Link href="/admin/financeiro/contas-a-pagar" className={styles.subNavItem}>
+                  Contas a Pagar
+                </Link>
+                <Link href="/admin/financeiro/contas-a-receber" className={styles.subNavItem}>
+                  Contas a Receber
+                </Link>
+                <Link href="/admin/financeiro/movimentacoes" className={styles.subNavItem}>
+                  Movimentações
+                </Link>
+                <Link href="/admin/financeiro/despesas" className={styles.subNavItem}>
+                  Despesas
+                </Link>
               </div>
             )}
             <Link href="/profile" className={styles.navItem} style={{ marginTop: 0 }}>
