@@ -5,9 +5,9 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/router';
 import styles from "@/styles/admin/agendamentos/agendamentos.module.css";
 import breadcrumbStyles from "@/styles/Breadcrumb.module.css";
-import { format, isAfter } from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek, isSameDay, isAfter } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ExternalLink, CheckCircle2 } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
 import Modal from 'react-modal';
 import { statusAgendamento, buscarAgendamentosPorData, criarAgendamento } from '@/functions/agendamentosFunction';
@@ -49,20 +49,31 @@ const Agendamentos = () => {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  const [todayAppointments, setTodayAppointments] = useState<Agendamento[]>([]);
-  const [upcomingAppointments, setUpcomingAppointments] = useState<Agendamento[]>([]);
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
-
   const [selectedAppointment, setSelectedAppointment] = useState<Agendamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const [selectedDateFilter, setSelectedDateFilter] = useState('');
-  const [showDateSelector, setShowDateSelector] = useState(false);
-
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [appointmentData, setAppointmentData] = useState({
+  interface AppointmentData {
+    date: string;
+    time: string;
+    fim: string;
+    pacienteId: string;
+    nomePaciente: string;
+    email: string;
+    cpf: string;
+    telefone: string;
+    dataNascimento: string;
+    profissional: string;
+    detalhes: string;
+    convenio: string;
+    procedimento: string;
+  }
+
+  const [appointmentData, setAppointmentData] = useState<AppointmentData>({
     date: '',
     time: '',
+    fim: '',
     pacienteId: '',
     nomePaciente: '',
     email: '',
@@ -82,33 +93,19 @@ const Agendamentos = () => {
   const [diasDisponiveis, setDiasDisponiveis] = useState<string[]>([]);
   const [procedimentos, setProcedimentos] = useState<ProcedimentoData[]>([]);
 
-  const statusClassMap: Record<string, string> = {
-    [statusAgendamento.AGENDADO]: styles.statusAgendado,
-    [statusAgendamento.CONFIRMADO]: styles.statusConfirmado,
-    [statusAgendamento.CANCELADO]: styles.statusCancelado,
-    [statusAgendamento.CONCLUIDO]: styles.statusConcluido,
-    [statusAgendamento.PENDENTE]: styles.statusPendente,
-  };
+  // Novo: controle de semana exibida no calendário
+  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => startOfWeek(new Date(), { weekStartsOn: 0 }));
+  const daysOfWeek = Array.from({ length: 7 }).map((_, i) => addDays(currentWeekStart, i));
 
-
-
-  // Novos estados para calendário/modal
-  // const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  // const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Novo estado para armazenar todos os agendamentos
-  const [allAgendamentos, setAllAgendamentos] = useState<Agendamento[]>([]);
-
-const fetchAgendamentos = async () => {
+  // Busca agendamentos da semana
+  const fetchAgendamentosSemana = async () => {
     try {
       const q = query(collection(firestore, 'agendamentos'));
       const querySnapshot = await getDocs(q);
-
       const fetchedAgendamentos: Agendamento[] = [];
       querySnapshot.forEach((doc) => {
         const agendamentoData = doc.data();
         if (!agendamentoData.data || !agendamentoData.hora) return;
-
         fetchedAgendamentos.push({
           id: doc.id,
           data: agendamentoData.data,
@@ -122,60 +119,12 @@ const fetchAgendamentos = async () => {
           procedimento: agendamentoData.procedimento || '',
         });
       });
-
-      // Organiza por data
-      fetchedAgendamentos.sort((a, b) => {
-        const dateA = new Date(`${a.data}T${a.hora}`);
-        const dateB = new Date(`${b.data}T${b.hora}`);
-        return dateA.getTime() - dateB.getTime();
-      });
-
       setAgendamentos(fetchedAgendamentos);
-
-      const today = new Date();
-      const todayList: Agendamento[] = [];
-      const futureByDay: { [date: string]: Agendamento[] } = {};
-
-      fetchedAgendamentos.forEach((ag) => {
-        const agDate = new Date(`${ag.data}T${ag.hora}`);
-        if (
-          agDate.getDate() === today.getDate() &&
-          agDate.getMonth() === today.getMonth() &&
-          agDate.getFullYear() === today.getFullYear()
-        ) {
-          todayList.push(ag);
-        } else if (isAfter(agDate, today)) {
-          const dateKey = ag.data;
-          if (!futureByDay[dateKey]) futureByDay[dateKey] = [];
-          futureByDay[dateKey].push(ag);
-        }
-      });
-
-      const futureDates = Object.keys(futureByDay).sort();
-
-      let finalList: Agendamento[] = [];
-
-      if (todayList.length > 0) {
-        finalList = todayList;
-      } else if (futureDates.length > 0) {
-        finalList = futureByDay[futureDates[0]];
-      }
-
-      setTodayAppointments(finalList.slice(0, 5));
-      setUpcomingAppointments([]);
-      if (finalList.length > 0) {
-        setSelectedDateFilter(finalList[0].data);
-      } else {
-        setSelectedDateFilter(format(today, 'yyyy-MM-dd'));
-      }
       setLoading(false);
     } catch (error) {
-      console.error('Erro ao buscar agendamentos:', error);
       setError('Erro ao buscar agendamentos.');
     }
   };
-
-
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -189,76 +138,33 @@ const fetchAgendamentos = async () => {
           router.push('/auth/login');
         }
       } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
         setError('Erro ao verificar autenticação.');
       }
     });
-
     return () => unsubscribe();
   }, [router]);
 
   useEffect(() => {
-    // Busca todos os agendamentos do banco de dados
-    const fetchAllAgendamentos = async () => {
-      try {
-       const q = query(
-        collection(firestore, 'agendamentos'),
-        where('status', '==', statusAgendamento.CONFIRMADO)
-      );
-
-        const querySnapshot = await getDocs(q);
-        const fetched: Agendamento[] = [];
-        querySnapshot.forEach((doc) => {
-          const agendamentoData = doc.data();
-          fetched.push({
-            id: doc.id,
-            data: agendamentoData.data,
-            hora: agendamentoData.hora,
-            profissional: agendamentoData.profissional,
-            nomePaciente: agendamentoData.nomePaciente,
-            status: agendamentoData.status,
-            detalhes: agendamentoData.detalhes || '',
-            usuarioId: agendamentoData.usuarioId || '',
-            convenio: agendamentoData.convenio || '',
-            procedimento: agendamentoData.procedimento || ''
-            // especialidade e valor removidos
-          });
-        });
-        // Ordena por data/hora
-        fetched.sort((a, b) => {
-          const dateA = new Date(`${a.data}T${a.hora}`);
-          const dateB = new Date(`${b.data}T${b.hora}`);
-          return dateA.getTime() - dateB.getTime();
-        });
-        setAllAgendamentos(fetched);
-      } catch (error) {
-        setError('Erro ao buscar agendamentos.');
-      }
-    };
-    fetchAllAgendamentos();
-  }, []);
+    fetchAgendamentosSemana();
+  }, [user, currentWeekStart]);
 
   useEffect(() => {
     const fetchProfissionais = async () => {
       if (!user) return;
       let empresaId = null;
-      // Busca empresa do usuário (ajuste conforme sua estrutura)
       const empresaDoc = await getDocs(collection(firestore, 'empresas'));
       if (!empresaDoc.empty) {
         empresaId = empresaDoc.docs[0].id;
       }
       if (!empresaId) return;
-
       const profissionaisSnap = await getDocs(query(collection(firestore, 'profissionais'), where('empresaId', '==', empresaId)));
       const profs: Profissional[] = profissionaisSnap.docs.map(doc => ({
         id: doc.id,
         nome: doc.data().nome,
         empresaId: doc.data().empresaId,
       }));
-
       setProfissionais(profs);
     };
-
     fetchProfissionais();
   }, [user]);
 
@@ -288,10 +194,9 @@ const fetchAgendamentos = async () => {
         setHorariosProfissional(horarios as ScheduleData[]);
         setDiasDisponiveis(horarios.map(h => h.dia));
         if (appointmentData.date) {
-          fetchAvailableTimes(appointmentData.date, appointmentData.profissional);
+          // fetchAvailableTimes(appointmentData.date, appointmentData.profissional);
         }
       } catch (err) {
-        console.error('Erro ao buscar horários do profissional:', err);
         setHorariosProfissional([]);
         setDiasDisponiveis([]);
       }
@@ -299,60 +204,51 @@ const fetchAgendamentos = async () => {
     loadSchedule();
   }, [appointmentData.profissional]);
 
-  useEffect(() => {
-    fetchAgendamentos();
-  }, [user]);
+  // Funções para navegação de semana
+  const handlePrevWeek = () => setCurrentWeekStart(prev => addDays(prev, -7));
+  const handleNextWeek = () => setCurrentWeekStart(prev => addDays(prev, 7));
+  const handleToday = () => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 0 }));
+
+  // Gera os horários do calendário (exemplo: 08:00 até 18:00, de 15 em 15 min)
+  const horarios: string[] = [];
+  for (let h = 8; h <= 18; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      const hora = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      horarios.push(hora);
+    }
+  }
+
+  // Mapeia agendamentos por dia/hora
+  const agendamentosSemana: { [key: string]: { [hora: string]: Agendamento[] } } = {};
+  daysOfWeek.forEach(day => {
+    const dateStr = format(day, 'yyyy-MM-dd');
+    agendamentosSemana[dateStr] = {};
+    horarios.forEach(hora => {
+      agendamentosSemana[dateStr][hora] = [];
+    });
+  });
+  agendamentos.forEach(ag => {
+    if (agendamentosSemana[ag.data] && agendamentosSemana[ag.data][ag.hora]) {
+      agendamentosSemana[ag.data][ag.hora].push(ag);
+    }
+  });
+
+  const statusClassMap: Record<string, string> = {
+    [statusAgendamento.AGENDADO]: styles.statusAgendado,
+    [statusAgendamento.CONFIRMADO]: styles.statusConfirmado,
+    [statusAgendamento.CANCELADO]: styles.statusCancelado,
+    [statusAgendamento.CONCLUIDO]: styles.statusConcluido,
+    [statusAgendamento.PENDENTE]: styles.statusPendente,
+  };
 
   const handleRemove = async (id: string) => {
     const confirmDelete = window.confirm('Deseja excluir o agendamento?');
     if (!confirmDelete) return;
-
     try {
-      const agendamentoDoc = await getDoc(doc(firestore, 'agendamentos', id));
-      const agendamentoData = agendamentoDoc.exists() ? agendamentoDoc.data() : null;
-
-      //  Excluir do Firestore
       await deleteDoc(doc(firestore, 'agendamentos', id));
-
-      //  Atualiza todos os estados locais de forma sincronizada
-      setAllAgendamentos(prev => prev.filter(ag => ag.id !== id));
-      setAgendamentos(prev => prev.filter(ag => ag.id !== id));
-      setTodayAppointments(prev => prev.filter(ag => ag.id !== id));
-      setUpcomingAppointments(prev => prev.filter(ag => ag.id !== id));
-
-      // Envia email, se aplicável
-      if (agendamentoData && user?.email) {
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: user.email,
-            userId: user.uid,
-            date: agendamentoData.data,
-            times: [agendamentoData.hora],
-            profissional: agendamentoData.profissional,
-            nomesPacientes: [agendamentoData.nomePaciente],
-            detalhes: agendamentoData.detalhes,
-            isEdit: false,
-            isDelete: true,
-          }),
-        });
-      }
-
+      fetchAgendamentosSemana();
     } catch (error) {
-      console.error('Erro ao remover agendamento: ', error);
       setError('Erro ao remover o agendamento.');
-    }
-  };
-
-  const handleComplete = async (id: string) => {
-    try {
-      await updateDoc(doc(firestore, 'agendamentos', id), { status: statusAgendamento.CONCLUIDO });
-      await fetchAgendamentos();
-      closeDetails();
-    } catch (error) {
-      console.error('Erro ao concluir agendamento: ', error);
-      setError('Erro ao concluir o agendamento.');
     }
   };
 
@@ -365,134 +261,6 @@ const fetchAgendamentos = async () => {
     setSelectedAppointment(null);
     setDetailsOpen(false);
   };
-
-  const getDayName = (dateStr: string) => {
-    const dateObj = new Date(dateStr + 'T00:00');
-    const name = format(dateObj, 'eeee', { locale: ptBR }).toLowerCase();
-    const map: Record<string, string> = {
-      'segunda-feira': 'Segunda',
-      'terça-feira': 'Terça',
-      'quarta-feira': 'Quarta',
-      'quinta-feira': 'Quinta',
-      'sexta-feira': 'Sexta',
-      'sábado': 'Sábado',
-      'domingo': 'Domingo',
-    };
-    return map[name];
-  };
-
-  const generateTimes = (
-    inicio: string,
-    fim: string,
-    almocoInicio?: string,
-    almocoFim?: string,
-    step = 30
-  ) => {
-    const times: string[] = [];
-    const [sh, sm] = inicio.split(':').map(Number);
-    const [eh, em] = fim.split(':').map(Number);
-    const start = new Date();
-    start.setHours(sh, sm, 0, 0);
-    const end = new Date();
-    end.setHours(eh, em, 0, 0);
-    let breakStart: Date | null = null;
-    let breakEnd: Date | null = null;
-    if (almocoInicio && almocoFim) {
-      breakStart = new Date();
-      breakEnd = new Date();
-      const [bsh, bsm] = almocoInicio.split(':').map(Number);
-      const [beh, bem] = almocoFim.split(':').map(Number);
-      breakStart.setHours(bsh, bsm, 0, 0);
-      breakEnd.setHours(beh, bem, 0, 0);
-    }
-    for (let d = new Date(start); d <= end; d.setMinutes(d.getMinutes() + step)) {
-      if (breakStart && breakEnd && d >= breakStart && d < breakEnd) {
-        continue;
-      }
-      const hh = String(d.getHours()).padStart(2, '0');
-      const mm = String(d.getMinutes()).padStart(2, '0');
-      times.push(`${hh}:${mm}`);
-    }
-    return times;
-  };
-
-  const addMinutesToTime = (time: string, minutes: number) => {
-    const [h, m] = time.split(':').map(Number);
-    const d = new Date();
-    d.setHours(h, m + minutes, 0, 0);
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    return `${hh}:${mm}`;
-  };
-
-  const getScheduleForDate = (dateStr: string) => {
-    const dayName = getDayName(dateStr);
-    return (
-      horariosProfissional.find(h => h.dia === dateStr) ||
-      horariosProfissional.find(h => h.dia === dayName)
-    );
-  };
-
-  const fetchAvailableTimes = async (date: string, profissional: string) => {
-    if (!date || !profissional) {
-      setAvailableTimes([]);
-      setReservedTimes([]);
-      return;
-    }
-    try {
-      const schedule = getScheduleForDate(date);
-      if (!schedule) {
-        setAvailableTimes([]);
-        setReservedTimes([]);
-        return;
-      }
-      const ags = await buscarAgendamentosPorData(date);
-      const normalize = (t: string) => t.trim().slice(0, 5);
-      const reserved: string[] = [];
-
-      ags
-        .filter(ag => ag.profissional === profissional)
-        .forEach(ag => {
-          const start = normalize(ag.hora);
-          const proc = procedimentos.find(
-            p => p.nome === ag.procedimento
-          );
-          const dur = proc?.duracao || schedule.intervaloConsultas;
-          const step = schedule.intervaloConsultas;
-
-          let minutes = 0;
-          let t = start;
-          while (minutes < dur) {
-            if (!reserved.includes(t)) reserved.push(t);
-            t = addMinutesToTime(t, step);
-            minutes += step;
-          }
-        });
-
-      const generated = generateTimes(
-        schedule.horaInicio,
-        schedule.horaFim,
-        schedule.almocoInicio,
-        schedule.almocoFim,
-        schedule.intervaloConsultas
-      );
-      const normalizedGenerated = generated.map(normalize);
-      setAvailableTimes(normalizedGenerated.filter(t => !reserved.includes(t)));
-      setReservedTimes(reserved);
-    } catch (e) {
-      console.error('Erro ao buscar horários:', e);
-      setAvailableTimes([]);
-      setReservedTimes([]);
-    }
-  };
-
-  const handleDateFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSelectedDateFilter(value);
-    const filtered = allAgendamentos.filter(ag => ag.data === value);
-    setTodayAppointments(filtered);
-  };
-
   const handleCreateAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -516,14 +284,11 @@ const fetchAgendamentos = async () => {
         },
         { uid: pacienteId, email: appointmentData.email }
       );
-      await fetchAvailableTimes(
-        appointmentData.date,
-        appointmentData.profissional
-      );
       setCreateModalOpen(false);
       setAppointmentData({
         date: '',
         time: '',
+        fim: '',
         pacienteId: '',
         nomePaciente: '',
         email: '',
@@ -535,15 +300,52 @@ const fetchAgendamentos = async () => {
         convenio: '',
         procedimento: '',
       });
-      await fetchAgendamentos();
+      fetchAgendamentosSemana();
     } catch (err) {
-      console.error('Erro ao criar agendamento:', err);
       setError('Erro ao criar agendamento');
     } finally {
       setIsSubmitting(false);
     }
   };
+  const handleCalendarCellClick = (dateStr: string, hora: string) => {
+    // calcula fim padrão (15min após o início)
+    const [h, m] = hora.split(':').map(Number);
+    const d = new Date();
+    d.setHours(h, m + 15, 0, 0);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    const fimPadrao = `${hh}:${mm}`;
+    setAppointmentData(prev => ({
+      ...prev,
+      date: dateStr,
+      time: hora,
+      fim: fimPadrao,
+      profissional: '',
+      detalhes: '',
+      pacienteId: '',
+      nomePaciente: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      dataNascimento: '',
+      convenio: '',
+      procedimento: '',
+    }));
+    setCreateModalOpen(true);
+  };
 
+  // Função para obter o horário de término do agendamento (considerando duração do procedimento)
+  function getAgendamentoFim(ag: Agendamento) {
+    // Procura duração do procedimento
+    const proc = procedimentos.find(p => p.nome === ag.procedimento);
+    const duracao = proc?.duracao || 15; // padrão 15min se não achar
+    const [h, m] = ag.hora.split(':').map(Number);
+    const d = new Date();
+    d.setHours(h, m + duracao, 0, 0);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
 
   if (loading) {
     return <p>Carregando agendamentos...</p>;
@@ -563,7 +365,7 @@ const fetchAgendamentos = async () => {
       </div>
       <h1 className={styles.titleAgendamentos}>Agendamentos</h1>
       <div className={styles.subtitleAgendamentos}>
-        Acesse uma visão geral detalhada dos agendamentos e resultados dos pacientes
+        Visualize e gerencie os agendamentos da semana.
       </div>
 
       {/* Botões de ação alinhados à direita */}
@@ -571,67 +373,103 @@ const fetchAgendamentos = async () => {
         <button className={styles.buttonAgendar} onClick={() => setCreateModalOpen(true)}>
           + Agendar consulta
         </button>
-        <button className={styles.buttonAgendar} onClick={() => setShowDateSelector(!showDateSelector)}>
-          Visualizar agendamentos
+        <button className={styles.buttonAgendar} onClick={handleToday}>
+          Hoje
         </button>
-        {showDateSelector && (
-          <input
-            type="date"
-            value={selectedDateFilter}
-            onChange={handleDateFilterChange}
-            className={styles.datePicker}
-          />
-        )}
+        <button className={styles.buttonAgendar} onClick={handlePrevWeek}>
+          &lt; Semana anterior
+        </button>
+        <button className={styles.buttonAgendar} onClick={handleNextWeek}>
+          Próxima semana &gt;
+        </button>
       </div>
 
-      {/* Tabela de agendamentos */}
-      <div className={styles.agendamentosTableWrapper}>
-        <table className={styles.agendamentosTable}>
+      {/* Calendário semanal */}
+      <div className={styles.calendarWrapper}>
+        <table className={styles.calendarTable}>
           <thead>
             <tr>
-              <th>PACIENTE</th>
-              <th>DATA</th>
-              <th>DOUTOR</th>
-              <th>STATUS</th>
-              <th></th>
+              <th>Horário</th>
+              {daysOfWeek.map(day => (
+                <th key={day.toISOString()}>
+                  <div>
+                    <span className={styles.calendarDayName}>
+                      {format(day, 'EEEE', { locale: ptBR })}
+                    </span>
+                  </div>
+                  <div>
+                    <span className={styles.calendarDayDate}>
+                      {format(day, 'dd/MM')}
+                    </span>
+                  </div>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {todayAppointments.map((ag) => (
-              <tr key={ag.id}>
-                <td>{ag.nomePaciente}</td>
-                <td>
-                  {ag.data && ag.hora
-                    ? `${format(new Date(ag.data + 'T' + ag.hora), 'dd/MM/yy, HH:mm')}`
-                    : ''}
-                </td>
-                <td>{ag.profissional}</td>
-                <td style={{ display: 'flex', alignItems: 'center' }}>
-                  <span
-                    className={`${styles.statusBadge} ${
-                      statusClassMap[ag.status] || styles.statusAgendado
-                    }`}
-                  >
-                    {ag.status.charAt(0).toUpperCase() + ag.status.slice(1)}
-                  </span>
-                  <button
-                    onClick={() => handleRemove(ag.id)}
-                    className={styles.statusExcluido}
-                    title="Excluir agendamento"
-                  >
-                    Excluir
-                  </button>
-                </td>
-                <td>
-                  <button onClick={() => openDetails(ag)} className={styles.externalLink} title="Ver detalhes">
-                    <ExternalLink size={16} />
-                  </button>
-                </td>
+            {horarios.map(hora => (
+              <tr key={hora}>
+                <td className={styles.calendarHourCell}>{hora}</td>
+                {daysOfWeek.map(day => {
+                  const dateStr = format(day, 'yyyy-MM-dd');
+                  const ags = agendamentosSemana[dateStr]?.[hora] || [];
+                  // Só mostra o card no início do agendamento
+                  const ag = ags.length > 0 ? ags[0] : null;
+                  // Se este horário é o início do agendamento
+                  const isInicio = ag && ag.hora === hora;
+                  let rowSpan = 1;
+                  if (isInicio && ag.procedimento) {
+                    // calcula duração em minutos
+                    const proc = procedimentos.find(p => p.nome === ag.procedimento);
+                    const duracao = proc?.duracao || 15;
+                    rowSpan = Math.max(1, Math.ceil(duracao / 15));
+                  }
+                  return (
+                    <td
+                      key={dateStr + hora}
+                      className={styles.calendarCell}
+                      onClick={e => {
+                        if (!ag) handleCalendarCellClick(dateStr, hora);
+                      }}
+                      style={{ cursor: !ag ? 'pointer' : 'default', position: 'relative', verticalAlign: 'top' }}
+                    >
+                      {isInicio && (
+                        <div
+                          className={`${styles.calendarAppointment} ${statusClassMap[ag.status] || styles.statusAgendado}`}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: `calc(${rowSpan * 48}px - 4px)`, // 48px por linha, ajuste se necessário
+                            zIndex: 2,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                          }}
+                          onClick={ev => {
+                            ev.stopPropagation();
+                            openDetails(ag);
+                          }}
+                          title={`${ag.nomePaciente} - ${ag.profissional}`}
+                        >
+                          <span className={styles.calendarAppointmentTime}>
+                            {ag.hora} - {getAgendamentoFim(ag)}
+                          </span>
+                          <span className={styles.calendarAppointmentName}>
+                            {ag.nomePaciente}
+                          </span>
+                        </div>
+                      )}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
       <CreateAppointment
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
@@ -642,16 +480,15 @@ const fetchAgendamentos = async () => {
         availableTimes={availableTimes}
         reservedTimes={reservedTimes}
         profissionais={profissionais}
-        fetchAvailableTimes={fetchAvailableTimes}
+        fetchAvailableTimes={() => {}}
         availableDays={diasDisponiveis}
       />
 
-      {/* Calendário removido */}
       <AppointmentDetailsModal
         appointment={selectedAppointment}
         isOpen={detailsOpen}
         onClose={closeDetails}
-        onComplete={handleComplete}
+        onComplete={() => {}}
       />
     </div>
   );
