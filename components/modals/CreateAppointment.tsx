@@ -116,7 +116,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setAppointmentData(prev => ({ ...prev, profissional: selectedProfessional }));
+      setAppointmentData((prev: typeof appointmentData) => ({ ...prev, profissional: selectedProfessional }));
     }
   }, [isOpen, selectedProfessional, setAppointmentData]);
 
@@ -516,6 +516,27 @@ const isTimeDisabled = (time: string) => {
       return;
     }
     setCpfError('');
+
+    // Verifica se o profissional trabalha no dia selecionado
+    if (appointmentData.date && appointmentData.profissional) {
+      const diasSemana = [
+        'Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'
+      ];
+      const selectedDateObj = parse(appointmentData.date, 'yyyy-MM-dd', new Date());
+      const diaSemana = diasSemana[selectedDateObj.getDay()];
+      if (!diasDisponiveis.includes(diaSemana)) {
+        window.alert('O profissional selecionado não trabalha neste dia da semana. Escolha outro dia.');
+        return;
+      }
+    }
+
+    // Verifica se o horário já está reservado
+    const normalize = (t: string) => t.trim().slice(0, 5);
+    const normalizedReserved = reservedTimes.map(normalize);
+    if (normalizedReserved.includes(normalize(appointmentData.time))) {
+      window.alert('Horário indisponível! Já existe um agendamento para este profissional neste dia e horário.');
+      return;
+    }
     onSubmit(e);
   };
 
@@ -708,29 +729,28 @@ const isTimeDisabled = (time: string) => {
               </select>
             </div>
           )}
-          {/* Profissional */}
-          {!selectedProfessional && (
-            <div className={styles.selectGroup}>
-              <select
-                value={appointmentData.profissional}
-                onChange={(e) => {
-                  setAppointmentData((prev: any) => ({
-                    ...prev,
-                    profissional: e.target.value,
-                    convenio: '',
-                    procedimento: '',
-                  }));
-                }}
-                required
-                className={styles.selectStyled}
-              >
-                <option value="">Selecione um profissional</option>
-                {profissionaisCadastrados.map((p) => (
-                  <option key={p.id} value={p.nome}>{p.nome}</option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* Profissional: sempre mostra o select, mas já vem selecionado se veio de fora */}
+          <div className={styles.selectGroup}>
+            <select
+              value={appointmentData.profissional}
+              onChange={(e) => {
+                setAppointmentData((prev: any) => ({
+                  ...prev,
+                  profissional: e.target.value,
+                  convenio: '',
+                  procedimento: '',
+                }));
+              }}
+              required
+              className={styles.selectStyled}
+              disabled={!!selectedProfessional && profissionaisCadastrados.some(p => p.nome === selectedProfessional)}
+            >
+              <option value="">Selecione um profissional</option>
+              {profissionaisCadastrados.map((p) => (
+                <option key={p.id} value={p.nome}>{p.nome}</option>
+              ))}
+            </select>
+          </div>
           {/* Convenio só aparece após selecionar profissional */}
           {appointmentData.profissional && (
             <div className={styles.selectGroup}>
