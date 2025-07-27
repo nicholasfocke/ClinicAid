@@ -90,9 +90,9 @@ interface Props {
   setAppointmentData: React.Dispatch<React.SetStateAction<any>>;
   availableTimes: string[];
   reservedTimes: string[];
-  profissionais: { id: string; nome: string }[];
   fetchAvailableTimes: (date: string, profissional: string) => void;
   availableDays: string[];
+  selectedProfessional: string;
 }
 
 const CreateAppointmentModal: React.FC<Props> = ({
@@ -104,15 +104,21 @@ const CreateAppointmentModal: React.FC<Props> = ({
   setAppointmentData,
   availableTimes,
   reservedTimes,
-  profissionais,
   fetchAvailableTimes,
   availableDays,
+  selectedProfessional,
 }) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedPeriod, setSelectedPeriod] = useState<'Manhã' | 'Tarde' | 'Noite'>('Manhã');
   const daysContainerRef = useRef<HTMLDivElement>(null);
   const timesContainerRef = useRef<HTMLDivElement>(null);
   const [cpfError, setCpfError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setAppointmentData(prev => ({ ...prev, profissional: selectedProfessional }));
+    }
+  }, [isOpen, selectedProfessional, setAppointmentData]);
 
   // Gera todos os dias do mês atual exibido
   const getDaysOfMonth = (month: Date) => {
@@ -703,26 +709,28 @@ const isTimeDisabled = (time: string) => {
             </div>
           )}
           {/* Profissional */}
-          <div className={styles.selectGroup}>
-            <select
-              value={appointmentData.profissional}
-              onChange={(e) => {
-                setAppointmentData((prev: any) => ({
-                  ...prev,
-                  profissional: e.target.value,
-                  convenio: '',
-                  procedimento: '',
-                }));
-              }}
-              required
-              className={styles.selectStyled}
-            >
-              <option value="">Selecione um profissional</option>
-              {profissionaisCadastrados.map((p) => (
-                <option key={p.id} value={p.nome}>{p.nome}</option>
-              ))}
-            </select>
-          </div>
+          {!selectedProfessional && (
+            <div className={styles.selectGroup}>
+              <select
+                value={appointmentData.profissional}
+                onChange={(e) => {
+                  setAppointmentData((prev: any) => ({
+                    ...prev,
+                    profissional: e.target.value,
+                    convenio: '',
+                    procedimento: '',
+                  }));
+                }}
+                required
+                className={styles.selectStyled}
+              >
+                <option value="">Selecione um profissional</option>
+                {profissionaisCadastrados.map((p) => (
+                  <option key={p.id} value={p.nome}>{p.nome}</option>
+                ))}
+              </select>
+            </div>
+          )}
           {/* Convenio só aparece após selecionar profissional */}
           {appointmentData.profissional && (
             <div className={styles.selectGroup}>

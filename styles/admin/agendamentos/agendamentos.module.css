@@ -56,6 +56,15 @@
   background: #1746a2;
 }
 
+.selectProfissional {
+  padding: 10px 16px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  background: #f7fafc;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
 .agendamentosTableWrapper {
   background: #fff;
   border-radius: 18px;
