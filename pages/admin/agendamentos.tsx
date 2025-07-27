@@ -50,6 +50,7 @@ const Agendamentos = () => {
   const router = useRouter();
 
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
+  const [selectedProfissional, setSelectedProfissional] = useState<string>('');
   const [selectedAppointment, setSelectedAppointment] = useState<Agendamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
@@ -96,11 +97,15 @@ const Agendamentos = () => {
   // Novo: controle de semana exibida no calendário
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => startOfWeek(new Date(), { weekStartsOn: 0 }));
   const daysOfWeek = Array.from({ length: 7 }).map((_, i) => addDays(currentWeekStart, i));
+  const diasSemana = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 
   // Busca agendamentos da semana
   const fetchAgendamentosSemana = async () => {
     try {
-      const q = query(collection(firestore, 'agendamentos'));
+      const baseRef = collection(firestore, 'agendamentos');
+      const q = selectedProfissional
+        ? query(baseRef, where('profissional', '==', selectedProfissional))
+        : query(baseRef);
       const querySnapshot = await getDocs(q);
       const fetchedAgendamentos: Agendamento[] = [];
       querySnapshot.forEach((doc) => {
@@ -146,7 +151,7 @@ const Agendamentos = () => {
 
   useEffect(() => {
     fetchAgendamentosSemana();
-  }, [user, currentWeekStart]);
+  }, [user, currentWeekStart, selectedProfissional]);
 
   useEffect(() => {
     const fetchProfissionais = async () => {
@@ -182,13 +187,13 @@ const Agendamentos = () => {
 
   useEffect(() => {
     const loadSchedule = async () => {
-      if (!appointmentData.profissional) {
+      if (!selectedProfissional) {
         setHorariosProfissional([]);
         setDiasDisponiveis([]);
         return;
       }
       try {
-        const prof = profissionais.find(p => p.nome === appointmentData.profissional);
+        const prof = profissionais.find(p => p.nome === selectedProfissional);
         if (!prof) return;
         const horarios = await buscarHorariosPorMedico(prof.id);
         setHorariosProfissional(horarios as ScheduleData[]);
@@ -202,7 +207,11 @@ const Agendamentos = () => {
       }
     };
     loadSchedule();
-  }, [appointmentData.profissional]);
+  }, [selectedProfissional]);
+
+  useEffect(() => {
+    setAppointmentData(prev => ({ ...prev, profissional: selectedProfissional }));
+  }, [selectedProfissional]);
 
   // Funções para navegação de semana
   const handlePrevWeek = () => setCurrentWeekStart(prev => addDays(prev, -7));
@@ -315,12 +324,17 @@ const Agendamentos = () => {
     const hh = String(d.getHours()).padStart(2, '0');
     const mm = String(d.getMinutes()).padStart(2, '0');
     const fimPadrao = `${hh}:${mm}`;
+    const diaLabel = diasSemana[new Date(dateStr).getDay()];
+    if (!diasDisponiveis.includes(diaLabel)) {
+      alert('Profissional não trabalha nesse dia.');
+      return;
+    }
     setAppointmentData(prev => ({
       ...prev,
       date: dateStr,
       time: hora,
       fim: fimPadrao,
-      profissional: '',
+      profissional: selectedProfissional,
       detalhes: '',
       pacienteId: '',
       nomePaciente: '',
@@ -331,6 +345,15 @@ const Agendamentos = () => {
       convenio: '',
       procedimento: '',
     }));
+    setCreateModalOpen(true);
+  };
+
+  const handleOpenModal = () => {
+    if (!selectedProfissional) {
+      alert('Selecione um profissional');
+      return;
+    }
+    setAppointmentData(prev => ({ ...prev, profissional: selectedProfissional }));
     setCreateModalOpen(true);
   };
 
@@ -370,9 +393,19 @@ const Agendamentos = () => {
 
       {/* Botões de ação alinhados à direita */}
       <div className={styles.actionButtonsWrapper}>
-        <button className={styles.buttonAgendar} onClick={() => setCreateModalOpen(true)}>
+        <button className={styles.buttonAgendar} onClick={handleOpenModal}>
           + Agendar consulta
         </button>
+        <select
+          value={selectedProfissional}
+          onChange={e => setSelectedProfissional(e.target.value)}
+          className={styles.selectProfissional}
+        >
+          <option value="">Selecione o profissional</option>
+          {profissionais.map(p => (
+            <option key={p.id} value={p.nome}>{p.nome}</option>
+          ))}
+        </select>
         <button className={styles.buttonAgendar} onClick={handleToday}>
           Hoje
         </button>
@@ -479,9 +512,9 @@ const Agendamentos = () => {
         setAppointmentData={setAppointmentData}
         availableTimes={availableTimes}
         reservedTimes={reservedTimes}
-        profissionais={profissionais}
         fetchAvailableTimes={() => {}}
         availableDays={diasDisponiveis}
+        selectedProfessional={selectedProfissional}
       />
 
       <AppointmentDetailsModal
