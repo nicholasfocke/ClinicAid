@@ -75,6 +75,7 @@ interface Props {
   appointmentData: {
     date: string;
     time: string;
+    fim: string;
     profissional: string;
     detalhes: string;
     pacienteId?: string;
@@ -89,9 +90,9 @@ interface Props {
   setAppointmentData: React.Dispatch<React.SetStateAction<any>>;
   availableTimes: string[];
   reservedTimes: string[];
-  profissionais: { id: string; nome: string }[];
   fetchAvailableTimes: (date: string, profissional: string) => void;
   availableDays: string[];
+  selectedProfessional: string;
 }
 
 const CreateAppointmentModal: React.FC<Props> = ({
@@ -103,15 +104,21 @@ const CreateAppointmentModal: React.FC<Props> = ({
   setAppointmentData,
   availableTimes,
   reservedTimes,
-  profissionais,
   fetchAvailableTimes,
   availableDays,
+  selectedProfessional,
 }) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedPeriod, setSelectedPeriod] = useState<'Manhã' | 'Tarde' | 'Noite'>('Manhã');
   const daysContainerRef = useRef<HTMLDivElement>(null);
   const timesContainerRef = useRef<HTMLDivElement>(null);
   const [cpfError, setCpfError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setAppointmentData((prev: typeof appointmentData) => ({ ...prev, profissional: selectedProfessional }));
+    }
+  }, [isOpen, selectedProfessional, setAppointmentData]);
 
   // Gera todos os dias do mês atual exibido
   const getDaysOfMonth = (month: Date) => {
@@ -204,11 +211,12 @@ const CreateAppointmentModal: React.FC<Props> = ({
     setCurrentMonth((prev) => addMonths(prev, 1));
   };
 
-  // Resetar ao fechar
+  // Função para resetar o formulário ao fechar o modal
   const handleClose = () => {
     setAppointmentData({
       date: '',
       time: '',
+      fim: '',
       profissional: '',
       detalhes: '',
       pacienteId: '',
@@ -508,6 +516,27 @@ const isTimeDisabled = (time: string) => {
       return;
     }
     setCpfError('');
+
+    // Verifica se o profissional trabalha no dia selecionado
+    if (appointmentData.date && appointmentData.profissional) {
+      const diasSemana = [
+        'Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'
+      ];
+      const selectedDateObj = parse(appointmentData.date, 'yyyy-MM-dd', new Date());
+      const diaSemana = diasSemana[selectedDateObj.getDay()];
+      if (!diasDisponiveis.includes(diaSemana)) {
+        window.alert('O profissional selecionado não trabalha neste dia da semana. Escolha outro dia.');
+        return;
+      }
+    }
+
+    // Verifica se o horário já está reservado
+    const normalize = (t: string) => t.trim().slice(0, 5);
+    const normalizedReserved = reservedTimes.map(normalize);
+    if (normalizedReserved.includes(normalize(appointmentData.time))) {
+      window.alert('Horário indisponível! Já existe um agendamento para este profissional neste dia e horário.');
+      return;
+    }
     onSubmit(e);
   };
 
@@ -525,96 +554,44 @@ const isTimeDisabled = (time: string) => {
             <span className={styles.modalLoadingText}>Aguarde...</span>
           </div>
         )}
-        {/* Header com mês/ano e botões de navegação centralizados */}
+        {/* Header do modal */}
         <div className={styles.modalHeader}>
-          <div className={styles.monthNavGroup}>
-            <button
-              type="button"
-              aria-label="Mês anterior"
-              className={styles.monthNavBtn}
-              onClick={handlePrevMonth}
-            >
-              &#8592;
-            </button>
-            <span className={styles.modalTitle}>
-              {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
-            </span>
-            <button
-              type="button"
-              aria-label="Próximo mês"
-              className={styles.monthNavBtn}
-              onClick={handleNextMonth}
-            >
-              &#8594;
-            </button>
-          </div>
+          <span className={styles.modalTitle}>
+            Novo Agendamento
+          </span>
           <button type="button" className={styles.modalCloseBtn} onClick={handleClose} aria-label="Fechar">
             ×
           </button>
         </div>
-
-        {/* Linha dos dias com scroll visual, sem setas */}
-        <div className={styles.daysNavWrapper}>
-          <div className={styles.daysContainer} ref={daysScrollRef}>
-            {visibleDays.map((day) => (
-              <button
-                key={day.toDateString()}
-                type="button"
-                onClick={() => handleDayClick(day)}
-                disabled={!isDayEnabled(day)}
-                className={`${styles.dayCard} ${isSameDay(day, selectedDate) ? styles.activeDay : ''} ${!isDayEnabled(day) ? styles.disabledDay : ''}`}
-              >
-                <div className={styles.dayName}>{format(day, 'EEE', { locale: ptBR })}</div>
-                <div className={styles.dayNumber}>{format(day, 'dd')}</div>
-              </button>
-            ))}
+        {/* Mostra data e horário selecionados, editáveis */}
+        <div className={styles.selectedDateTimeRow}>
+          <div className={styles.selectGroup}>
+            <label className={styles.selectedDateTimeLabel}>Data:</label>
+            <input
+              type="date"
+              value={appointmentData.date}
+              onChange={e =>
+                setAppointmentData((prev: any) => ({ ...prev, date: e.target.value }))
+              }
+              className={styles.selectStyled}
+              required
+            />
+          </div>
+          <div className={styles.selectGroup}>
+            <label className={styles.selectedDateTimeLabel}>Início:</label>
+            <input
+              type="time"
+              value={appointmentData.time}
+              onChange={e =>
+                setAppointmentData((prev: any) => ({ ...prev, time: e.target.value }))
+              }
+              className={styles.selectStyled}
+              required
+            />
           </div>
         </div>
-
-        {/* Botões de período */}
-        <div className={styles.periodFilter}>
-          {periodLabels.map((label) => (
-            <button
-              key={label}
-              type="button"
-              className={`${styles.periodButton} ${selectedPeriod === label ? styles.activePeriod : ''}`}
-              onClick={() => handlePeriodClick(label as 'Manhã' | 'Tarde' | 'Noite')}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Horários disponíveis com scroll, sem setas */}
-        <div className={styles.timesNavWrapper}>
-          <div
-            className={styles.timeSelectorWrapper}
-            ref={timesContainerRef}
-          >
-            {(horariosGerados.length > 0) ? (
-              horariosGerados.map((time) => (
-                <button
-                  key={time}
-                  type="button"
-                  className={`${styles.timeButton} ${appointmentData.time === time ? styles.activeTime : ''} ${isTimeDisabled(time) ? styles.disabledTime : ''}`}
-                  onClick={() => setAppointmentData((prev: any) => ({ ...prev, time }))}
-                  disabled={isTimeDisabled(time)}
-                >
-                  {time}
-                </button>
-              ))
-            ) : (
-              <p className={styles.noTime}>Nenhum horário disponível para este período ou selecione um profissional e dia da semana para visualizar os horários disponíveis.</p>
-            )}
-          </div>
-        </div>
-
         {/* Box de resumo, seleção de profissional e paciente */}
         <div className={styles.summaryBoxStyled}>
-          <div className={styles.summaryRow}>
-            <span className={styles.summaryLabel}>Profissional:</span>
-            <span className={styles.summaryValue}>{appointmentData.profissional || 'Sem preferência'}</span>
-          </div>
           <div className={styles.patientTypeContainer}>
             <button
               type="button"
@@ -752,7 +729,7 @@ const isTimeDisabled = (time: string) => {
               </select>
             </div>
           )}
-          {/* Profissional */}
+          {/* Profissional: sempre mostra o select, mas já vem selecionado se veio de fora */}
           <div className={styles.selectGroup}>
             <select
               value={appointmentData.profissional}
@@ -763,12 +740,10 @@ const isTimeDisabled = (time: string) => {
                   convenio: '',
                   procedimento: '',
                 }));
-                if (appointmentData.date) {
-                  fetchAvailableTimes(appointmentData.date, e.target.value);
-                }
               }}
               required
               className={styles.selectStyled}
+              disabled={!!selectedProfessional && profissionaisCadastrados.some(p => p.nome === selectedProfessional)}
             >
               <option value="">Selecione um profissional</option>
               {profissionaisCadastrados.map((p) => (
@@ -776,7 +751,6 @@ const isTimeDisabled = (time: string) => {
               ))}
             </select>
           </div>
-
           {/* Convenio só aparece após selecionar profissional */}
           {appointmentData.profissional && (
             <div className={styles.selectGroup}>
@@ -794,7 +768,6 @@ const isTimeDisabled = (time: string) => {
               </select>
             </div>
           )}
-
           {/* Procedimento só aparece após selecionar profissional */}
           {appointmentData.profissional && (
             <div className={styles.selectGroup}>
@@ -812,7 +785,6 @@ const isTimeDisabled = (time: string) => {
             </div>
           )}
         </div>
-
         {/* Descrição menor */}
         <textarea
           placeholder="Descrição"
@@ -821,7 +793,6 @@ const isTimeDisabled = (time: string) => {
           className={styles.inputDescricao}
           style={{ minHeight: 40, maxHeight: 60 }}
         />
-
         {/* Footer com botões lado a lado e do mesmo tamanho */}
         <div className={styles.modalFooter}>
           <button
@@ -833,21 +804,22 @@ const isTimeDisabled = (time: string) => {
           >
             Cancelar
           </button>
-              <button
-              type="submit"
-              className={styles.buttonStyled}
-              style={{ flex: 1, borderRadius: "0 10px 10px 0", margin: 0, minWidth: 0 }}
-              disabled={
-                isSubmitting ||
-                !appointmentData.date ||
-                !appointmentData.profissional ||
-                !appointmentData.time ||
-                !appointmentData.nomePaciente ||
-                (isNewPatient && (!appointmentData.cpf || !isValidCPF(appointmentData.cpf)))
-              }
-              >
-              {isSubmitting ? 'Aguarde...' : 'Confirmar'}
-              </button>
+          <button
+            type="submit"
+            className={styles.buttonStyled}
+            style={{ flex: 1, borderRadius: "0 10px 10px 0", margin: 0, minWidth: 0 }}
+            disabled={
+              isSubmitting ||
+              !appointmentData.nomePaciente ||
+              !appointmentData.email ||
+              !appointmentData.cpf ||
+              !isValidCPF(appointmentData.cpf) ||
+              !appointmentData.telefone ||
+              !appointmentData.dataNascimento
+            }
+          >
+            {isSubmitting ? 'Aguarde...' : 'Confirmar'}
+          </button>
         </div>
       </form>
     </Modal>

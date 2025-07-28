@@ -2,6 +2,7 @@ import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase
 import { firestore } from '@/firebase/firebaseConfig';
 
 export interface ScheduleData {
+  profissionalId: string;
   dia: string; // YYYY-MM-DD or nome do dia
   horaInicio: string;
   horaFim: string;

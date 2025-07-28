@@ -10,6 +10,7 @@
   box-shadow: 0 12px 40px rgba(16, 30, 54, 0.18);
   outline: none;
   overflow-x: hidden;
+  margin-top: 20px;
   position: relative;
   border: none;
   animation: modalFadeIn 0.35s cubic-bezier(.4,0,.2,1);
@@ -701,4 +702,41 @@
   font-size: 0.9rem;
   margin-top: 4px;
   text-align: left;
+}
+
+.selectedDateTimeRow {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 18px;
+  align-items: flex-end;
+}
+.selectedDateTimeLabel {
+  font-weight: 600;
+  color: #2563eb;
+  margin-bottom: 4px;
+  display: block;
+  font-size: 1rem;
+}
+.selectedDateTimeRow .selectGroup {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.calendarCell {
+  position: relative;
+  min-width: 120px;
+  max-width: 220px;
+  height: 48px;
+  vertical-align: top;
+  padding: 2px 4px;
+  background: #fff;
+}
+
+.calendarAppointment {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  /* height é definida inline pelo componente */
+  z-index: 2;
 }
