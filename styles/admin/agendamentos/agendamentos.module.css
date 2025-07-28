@@ -390,6 +390,40 @@
   color: #d97706 !important;
 }
 
+/* Estilos para a mensagem de seleção de profissional */
+.selectProfissionalMessageWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 50px;
+  min-height: 320px;
+  width: 100%;
+}
+
+.selectProfissionalMessageBox {
+  background: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  padding: 40px 32px;
+  text-align: center;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.selectProfissionalMessageTitle {
+  font-size: 1.5rem;
+  color: #2563eb;
+  margin-bottom: 12px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.selectProfissionalMessageText {
+  font-size: 1.08rem;
+  color: #4a5568;
+  margin-bottom: 0;
+}
+
 /* Responsividade para o calendário */
 @media (max-width: 1200px) {
   .calendarWrapper {

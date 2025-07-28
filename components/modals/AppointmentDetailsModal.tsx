@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import styles from '@/styles/admin/agendamentos/appointmentDetails.module.css';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
@@ -43,6 +43,8 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
   const [medicos, setMedicos] = useState<{ id: string; nome: string }[]>([]);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -137,6 +139,38 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
     } catch (err) {
       setStatusLoading(false);
       setStatusError('Erro ao atualizar status.');
+    }
+  };
+
+  // Função para excluir agendamento
+  const handleDelete = async () => {
+    if (!appointment) return;
+    setDeleteLoading(true);
+    setDeleteError(null);
+    try {
+      // Remove do agendamentos
+      await deleteDoc(doc(firestore, 'agendamentos', appointment.id));
+      // Remove da lista do paciente
+      const pacienteRef = doc(firestore, 'pacientes', appointment.usuarioId);
+      const pacienteSnap = await getDoc(pacienteRef);
+      if (pacienteSnap.exists()) {
+        const pacienteData = pacienteSnap.data();
+        const ags: any[] = pacienteData.agendamentos || [];
+        const novaLista = ags.filter(
+          ag =>
+            !(ag.data === appointment.data &&
+              ag.hora === appointment.hora &&
+              ag.profissional === appointment.profissional)
+        );
+        await updateDoc(pacienteRef, { agendamentos: novaLista });
+      }
+      setDeleteLoading(false);
+      setDeleteError(null);
+      if (onComplete) onComplete(appointment.id);
+      onClose();
+    } catch (err) {
+      setDeleteLoading(false);
+      setDeleteError('Erro ao excluir agendamento.');
     }
   };
 
@@ -241,7 +275,18 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
             Pendente
           </button>
         </div>
+        <div className={styles.actionsRow}>
+          <button
+            className={styles.deleteButton}
+            onClick={handleDelete}
+            disabled={deleteLoading}
+            type="button"
+          >
+            {deleteLoading ? 'Excluindo...' : 'Excluir'}
+          </button>
+        </div>
         {statusError && <p className={styles.statusError}>{statusError}</p>}
+        {deleteError && <p className={styles.statusError}>{deleteError}</p>}
       </div>
     </div>
   );
