@@ -1,0 +1,202 @@
+.headerDespesas {
+  margin-left: 270px;
+  margin-top: 32px;
+  margin-bottom: 8px;
+}
+
+.containerDespesasGeral {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  margin-top: 100px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+  min-width: 900px;
+  max-width: 1200px;
+  margin-left: 250px;
+  margin-right: auto;
+}
+.titleDespesas {
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.subtitleDespesas {
+  font-size: 1.2rem;
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+.btnAdicionarDespesa {
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 24px;
+  transition: background 0.2s;
+  display: block;
+}
+.btnAdicionarDespesa:hover {
+  background: #1746a2;
+}
+.filtrosBox {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.filtrosBox select, .filtrosBox input[type="month"] {
+  min-width: 120px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 1rem;
+}
+.pesquisaBox {
+  display: flex;
+  justify-content: flex-end;
+  flex: 1;
+}
+.pesquisaInput {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 1rem;
+  min-width: 180px;
+}
+.tabelaDespesas {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.tabelaDespesas th {
+  background: #f3f4f6;
+  font-weight: 600;
+  padding: 12px;
+  text-align: left;
+  color: #374151;
+}
+.tabelaDespesas td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+}
+.tabelaDespesas tr:last-child td {
+  border-bottom: none;
+}
+.statusPendente {
+  background: #e0f2fe;
+  color: #2563eb;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: inline-block;
+}
+.statusPaga {
+  background: #dcfce7;
+  color: #16a34a;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: inline-block;
+}
+.btnEditarDespesa {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-right: 8px;
+  cursor: pointer;
+}
+.btnEditarDespesa:hover {
+  background: #1746a2;
+}
+.btnRemoverDespesa {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btnRemoverDespesa:hover {
+  background: #b91c1c;
+}
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modalContent {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  min-width: 340px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+}
+.modalTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.modalForm input, .modalForm select {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 1rem;
+}
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+.modalBtnSalvar {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.modalBtnSalvar:hover {
+  background: #1746a2;
+}
+.modalBtnCancelar {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.modalBtnCancelar:hover {
+  background: #e5e7eb;
+}

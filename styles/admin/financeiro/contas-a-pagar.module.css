@@ -1,0 +1,234 @@
+.btnEditar {
+  background: #2563eb;
+  color: #fff;
+  min-width: 120px;
+  height: 40px;
+  font-size: 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: background 0.2s;
+  display: inline-block;
+}
+.btnEditar:hover {
+  background: #1e40af;
+}
+/* Modal styles */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modalBox {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+  padding: 28px 28px 22px 28px;
+  min-width: 340px;
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+.modalTitle {
+  font-size: 1.18rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #222;
+  align-self: flex-start;
+}
+.modalForm {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.modalLabel {
+  font-weight: 500;
+  color: #222;
+  margin-bottom: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.modalInput {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 1rem;
+  background: #f8fafc;
+  margin-top: 2px;
+}
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.btnRemover, .btnAdicionar {
+  min-width: 120px;
+  height: 40px;
+  font-size: 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: inline-block;
+}
+.btnRemover {
+  background: #e53935;
+  color: #fff;
+}
+.btnRemover:hover {
+  background: #b71c1c;
+}
+.btnAdicionar {
+  background: #2563eb;
+  color: #fff;
+}
+.btnAdicionar:hover {
+  background: #1e40af;
+}
+.containerContasPagar {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 32px;
+  margin-top: 24px;
+}
+.saldoBox {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 24px 32px;
+  margin-bottom: 24px;
+  font-size: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.saldoLabel {
+  color: #222;
+  font-weight: 500;
+  font-size: 1rem;
+}
+.saldoValor {
+  color: #222;
+  font-weight: bold;
+  font-size: 2rem;
+}
+
+.saldoNegativo {
+  color: #e53935;
+}
+
+.tabelaContas {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.tabelaContas th:last-child {
+  text-align: center;
+}
+.tabelaContas th {
+  background: #f8fafc;
+  color: #222;
+  font-weight: 600;
+  padding: 16px;
+  text-align: left;
+  font-size: 1rem;
+}
+.tabelaContas {
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  background: #fff;
+  width: 100%;
+  margin-top: 16px;
+  overflow: hidden;
+}
+
+.tabelaContas th, .tabelaContas td {
+  border-bottom: 1px solid #eee;
+  padding: 12px 8px;
+  text-align: left;
+}
+
+.tabelaContas th {
+  background: #f7f7f7;
+  font-weight: 600;
+}
+
+.statusPendente {
+  background: none;
+  color: #b8860b;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-weight: 600;
+  display: inline;
+}
+
+.statusPago {
+  background: none;
+  color: #389e0d;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-weight: 600;
+  display: inline;
+}
+.tabelaContas td:last-child {
+  text-align: center;
+}
+.tabelaContas td {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 1rem;
+}
+.tabelaContas tr:last-child td {
+  border-bottom: none;
+}
+.btnRemover {
+  background: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btnRemover:hover {
+  background: #b71c1c;
+}
+.btnAdicionar {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 18px;
+  transition: background 0.2s;
+}
+.btnAdicionar:hover {
+  background: #1e40af;
+}
