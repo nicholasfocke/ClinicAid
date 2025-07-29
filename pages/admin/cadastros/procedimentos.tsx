@@ -153,7 +153,7 @@ const Procedimentos = () => {
     }
 
     try {
-      await atualizarProcedimento(id, { ...formData, id }); // Inclua o id aqui
+      await atualizarProcedimento(id, { ...formData });
       setProcedimentos(prev => prev.map(p => (p.id === id ? { id, ...formData } : p)));
       setEditingId(null);
       setError(null);
@@ -189,10 +189,14 @@ const Procedimentos = () => {
 
     try {
       const id = await criarProcedimento(newProc);
-      setProcedimentos(prev => [...prev, { id, ...newProc }]);
-      setShowModal(false);
-      setNewProc({ nome: '', valor: 0, duracao: 0, convenio: false, tipo: 'consulta' });
-      setError(null);
+      if (typeof id === 'string') {
+        setProcedimentos(prev => [...prev, { id, ...newProc }]);
+        setShowModal(false);
+        setNewProc({ nome: '', valor: 0, duracao: 0, convenio: false, tipo: 'consulta' });
+        setError(null);
+      } else {
+        setError('Erro ao criar procedimento: ID inválido.');
+      }
     } catch (error) {
       setError('Erro ao criar procedimento');
     }
@@ -346,7 +350,7 @@ const Procedimentos = () => {
               <th>DURAÇÃO (min)</th>
               <th>CONVÊNIO</th>
               <th>TIPO</th>
-              <th></th>
+              <th>AÇÕES</th>
             </tr>
           </thead>
           <tbody>
@@ -400,15 +404,32 @@ const Procedimentos = () => {
                       ></span>
                       {p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1)}
                     </td>
-                    <td>
-                      <button className={tableStyles.buttonAcao} onClick={() => startEdit(p)}>
-                        Editar
+                    <td className={tableStyles.acoesTd}>
+                      <button
+                        className={tableStyles.iconBtn + ' ' + tableStyles.iconEdit}
+                        title="Editar"
+                        onClick={() => startEdit(p)}
+                        aria-label="Editar"
+                      >
+                        {/* Feather Icon: edit (caneta) */}
+                        <svg width="22" height="22" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          <path d="M12 20h9"/>
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z"/>
+                        </svg>
                       </button>
                       <button
-                        className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+                        className={tableStyles.iconBtn + ' ' + tableStyles.iconDelete}
+                        title="Excluir"
                         onClick={() => handleDelete(p.id)}
+                        aria-label="Excluir"
                       >
-                        Excluir
+                        {/* Feather Icon: trash (lixeira) */}
+                        <svg width="22" height="22" fill="none" stroke="#e53935" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+                          <line x1="10" y1="11" x2="10" y2="17"/>
+                          <line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
                       </button>
                     </td>
                   </>
