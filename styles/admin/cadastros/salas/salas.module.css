@@ -1,3 +1,44 @@
+.iconBtn {
+  background: none;
+  border: none;
+  padding: 4px;
+  margin-left: 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.18s;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconBtn:hover {
+  background: #f1f5f9;
+}
+
+.iconEdit {
+  stroke: #1976D2;
+  transition: stroke 0.18s;
+}
+.iconBtn:hover .iconEdit {
+  stroke: #1746a2;
+}
+
+.iconDelete {
+  stroke: #F44336;
+  transition: stroke 0.18s;
+}
+.iconBtn:hover .iconDelete {
+  stroke: #b91c1c;
+}
+
+.iconAtivar {
+  stroke: #4CAF50;
+  transition: stroke 0.18s;
+}
+.iconBtn:hover .iconAtivar {
+  stroke: #256029;
+}
 .container {
   margin-left: 260px;
   padding: 2rem 3rem;
@@ -60,6 +101,12 @@
   padding-right: 16px;
   text-align: left;
   vertical-align: middle;
+}
+
+.acoesTh {
+  text-align: center !important;
+  padding-left: 0 !important;
+  padding-right: 80px !important;
 }
 
 .salasTable td {

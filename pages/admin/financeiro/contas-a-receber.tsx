@@ -196,12 +196,32 @@ const ContasAReceber = () => {
                         {conta.status}
                       </span>
                     </td>
-                    <td>
-                      <button className={receberStyles.btnEditarReceber} onClick={() => abrirModalEditar(conta)}>
-                        Editar
+                    <td className={receberStyles.acoesTd}>
+                      <button
+                        className={receberStyles.iconBtn + ' ' + receberStyles.iconEdit}
+                        title="Editar"
+                        onClick={() => abrirModalEditar(conta)}
+                        aria-label="Editar"
+                      >
+                        {/* Feather Icon: edit (caneta) */}
+                        <svg width="22" height="22" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          <path d="M12 20h9"/>
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z"/>
+                        </svg>
                       </button>
-                      <button className={receberStyles.btnRemoverReceber} onClick={() => removerConta(conta.id)}>
-                        Remover
+                      <button
+                        className={receberStyles.iconBtn + ' ' + receberStyles.iconDelete}
+                        title="Excluir"
+                        onClick={() => removerConta(conta.id)}
+                        aria-label="Excluir"
+                      >
+                        {/* Feather Icon: trash (lixeira) */}
+                        <svg width="22" height="22" fill="none" stroke="#e53935" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+                          <line x1="10" y1="11" x2="10" y2="17"/>
+                          <line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
                       </button>
                     </td>
                   </tr>

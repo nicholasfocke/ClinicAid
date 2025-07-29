@@ -1,3 +1,34 @@
+.acoesTd {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-start;
+  align-items: center;
+  padding-left: 10px;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  padding: 4px;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.iconBtn:focus {
+  outline: 2px solid #2563eb33;
+}
+.iconEdit:hover {
+  background: #e8f0fe;
+  box-shadow: 0 1px 4px 0 #2563eb11;
+}
+.iconDelete:hover {
+  background: #ffebee;
+  box-shadow: 0 1px 4px 0 #e5393511;
+}
 .container {
   margin-left: 260px;
   padding: 2rem 3rem;
