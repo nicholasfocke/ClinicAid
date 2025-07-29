@@ -213,10 +213,10 @@ const Agendamentos = () => {
   const handleToday = () => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 0 }));
 
   // Gera os horários do calendário de acordo com o expediente do profissional selecionado
-  let horarios: string[] = [];
+  // Inclui horários "quebrados" de início/fim dos agendamentos
+  let horariosSet = new Set<string>();
+  let minInicio = 24, minMin = 0, maxFim = 0, maxMax = 0;
   if (selectedProfissional && horariosProfissional.length > 0) {
-    // Pega menor horaInicio e maior horaFim entre os dias de trabalho do profissional
-    let minInicio = 24, minMin = 0, maxFim = 0, maxMax = 0;
     horariosProfissional.forEach(h => {
       if (h.horaInicio) {
         const [h1, m1] = h.horaInicio.split(":").map(Number);
@@ -233,25 +233,44 @@ const Agendamentos = () => {
         }
       }
     });
-    // Gera os horários de acordo com o intervalo de 15min
-    let h = minInicio, m = minMin;
-    while (h < maxFim || (h === maxFim && m <= maxMax)) {
-      horarios.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-      m += 15;
-      if (m >= 60) {
-        m = 0;
-        h++;
-      }
-    }
   } else {
-    // Padrão: 08:00 até 18:00
-    for (let h = 8; h <= 18; h++) {
-      for (let m = 0; m < 60; m += 15) {
-        const hora = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        horarios.push(hora);
-      }
+    minInicio = 8; minMin = 0; maxFim = 18; maxMax = 0;
+  }
+  // Gera horários regulares de 15 em 15 min
+  let h = minInicio, m = minMin;
+  while (h < maxFim || (h === maxFim && m <= maxMax)) {
+    horariosSet.add(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    m += 15;
+    if (m >= 60) {
+      m = 0;
+      h++;
     }
   }
+  // Adiciona horários de início e fim de todos os agendamentos da semana
+  agendamentos.forEach(ag => {
+    if (ag.data && ag.hora) {
+      horariosSet.add(ag.hora);
+      // Calcular fim do agendamento
+      let duracao = 15;
+      if (ag.procedimento) {
+        const proc = procedimentos.find(p => p.nome === ag.procedimento);
+        if (proc && proc.duracao) duracao = proc.duracao;
+      }
+      const [hA, mA] = ag.hora.split(":").map(Number);
+      const d = new Date();
+      d.setHours(hA, mA + duracao, 0, 0);
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      horariosSet.add(`${hh}:${mm}`);
+    }
+  });
+  // Ordena os horários
+  let horarios = Array.from(horariosSet);
+  horarios.sort((a, b) => {
+    const [ha, ma] = a.split(":").map(Number);
+    const [hb, mb] = b.split(":").map(Number);
+    return ha !== hb ? ha - hb : ma - mb;
+  });
 
   // Mapeia agendamentos por dia/hora
   const agendamentosSemana: { [key: string]: { [hora: string]: Agendamento[] } } = {};
@@ -554,7 +573,7 @@ const Agendamentos = () => {
               </tr>
             </thead>
             <tbody>
-              {/* Nova lógica para cards ocupando linhas conforme duração */}
+              {/* Nova lógica para cards ocupando linhas conforme duração, com rowSpan dinâmico */}
               {(() => {
                 // Para cada coluna (dia), manter controle dos horários ocupados
                 const ocupadosPorDia: { [dateStr: string]: Set<string> } = {};
@@ -562,45 +581,131 @@ const Agendamentos = () => {
                   const dateStr = format(day, 'yyyy-MM-dd');
                   ocupadosPorDia[dateStr] = new Set();
                 });
-                return horarios.map(hora => (
-                  <tr key={hora}>
-                    <td className={styles.calendarHourCell}>{hora}</td>
-                    {daysOfWeek.map(day => {
-                      const dateStr = format(day, 'yyyy-MM-dd');
-                      const ags = agendamentosSemana[dateStr]?.[hora] || [];
-                      const ag = ags.length > 0 ? ags[0] : null;
-                      // Verifica se este horário já está ocupado por um card anterior
-                      if (ocupadosPorDia[dateStr].has(hora)) {
-                        return null;
-                      }
-                      // Verifica se pode agendar nesse dia
-                      const diaSemana = diasSemana[day.getDay()];
-                      const podeAgendar = selectedProfissional && diasDisponiveis.includes(diaSemana);
-                      // Se existe agendamento iniciando neste horário
-                      if (ag && ag.hora === hora) {
-                        let rowSpan = 1;
-                        if (ag.procedimento) {
-                          const proc = procedimentos.find(p => p.nome === ag.procedimento);
-                          const duracao = proc?.duracao || 15;
-                          rowSpan = Math.max(1, Math.ceil(duracao / 15));
+                // Agrupar horários por hora cheia, mas agora de forma dinâmica
+                // Para cada hora cheia, pegue todos os horários até a próxima hora cheia
+                const horasCheias: string[] = horarios.filter(horario => horario.endsWith(':00'));
+                const horariosPorHora: { [hora: string]: string[] } = {};
+                for (let i = 0; i < horasCheias.length; i++) {
+                  const horaCheia = horasCheias[i];
+                  const idxInicio = horarios.indexOf(horaCheia);
+                  const idxFim = i + 1 < horasCheias.length ? horarios.indexOf(horasCheias[i + 1]) : horarios.length;
+                  horariosPorHora[horaCheia] = horarios.slice(idxInicio, idxFim);
+                }
+                return horasCheias.map(horaCheia => (
+                  horariosPorHora[horaCheia].map((hora, idx) => (
+                    <tr key={hora}>
+                      {/* Só mostra a célula da hora na primeira linha do bloco */}
+                      {idx === 0 ? (
+                        <td className={styles.calendarHourCell} rowSpan={horariosPorHora[horaCheia].length}>{horaCheia}</td>
+                      ) : null}
+                      {daysOfWeek.map(day => {
+                        const dateStr = format(day, 'yyyy-MM-dd');
+                        const ags = agendamentosSemana[dateStr]?.[hora] || [];
+                        const ag = ags.length > 0 ? ags[0] : null;
+                        // Verifica se este horário já está ocupado por um card anterior
+                        if (ocupadosPorDia[dateStr].has(hora)) {
+                          return null;
                         }
-                        // Marcar horários ocupados por este agendamento
-                        let h = Number(hora.split(':')[0]);
-                        let m = Number(hora.split(':')[1]);
-                        for (let i = 0; i < rowSpan; i++) {
-                          const horaOcupada = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                          ocupadosPorDia[dateStr].add(horaOcupada);
-                          m += 15;
-                          if (m >= 60) {
-                            m = 0;
-                            h++;
+                        // Verifica se pode agendar nesse dia
+                        const diaSemana = diasSemana[day.getDay()];
+                        const podeAgendar = selectedProfissional && diasDisponiveis.includes(diaSemana);
+                        // Se existe agendamento iniciando neste horário
+                        if (ag && ag.hora === hora) {
+                          let rowSpan = 1;
+                          if (ag.procedimento) {
+                            const proc = procedimentos.find(p => p.nome === ag.procedimento);
+                            const duracao = proc?.duracao || 15;
+                            // rowSpan = Math.max(1, Math.ceil(duracao / 15));
+                            // Novo: calcular rowSpan baseado nos horários reais
+                            // Encontre todos os horários seguintes que estão dentro do intervalo do agendamento
+                            const [hIni, mIni] = hora.split(":").map(Number);
+                            const dIni = new Date();
+                            dIni.setHours(hIni, mIni, 0, 0);
+                            const dFim = new Date(dIni.getTime() + duracao * 60000);
+                            let count = 0;
+                            for (let i = horarios.indexOf(hora); i < horarios.length; i++) {
+                              const [hTest, mTest] = horarios[i].split(":").map(Number);
+                              const dTest = new Date();
+                              dTest.setHours(hTest, mTest, 0, 0);
+                              if (dTest >= dIni && dTest < dFim) {
+                                count++;
+                              } else {
+                                break;
+                              }
+                            }
+                            rowSpan = Math.max(1, count);
                           }
+                          // Marcar horários ocupados por este agendamento
+                          let h = Number(hora.split(':')[0]);
+                          let m = Number(hora.split(':')[1]);
+                          for (let i = 0; i < rowSpan; i++) {
+                            const horaOcupada = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                            ocupadosPorDia[dateStr].add(horaOcupada);
+                            // Avança para o próximo horário real do array
+                            const idxAtual = horarios.indexOf(hora) + i;
+                            if (idxAtual + 1 < horarios.length) {
+                              const [hNext, mNext] = horarios[idxAtual + 1].split(":").map(Number);
+                              h = hNext;
+                              m = mNext;
+                            }
+                          }
+                          return (
+                            <td
+                              key={dateStr + hora}
+                              className={styles.calendarCell}
+                              rowSpan={rowSpan}
+                              onClick={e => {
+                                if (!ag && podeAgendar) handleCalendarCellClick(dateStr, hora, diaSemana);
+                              }}
+                              onDragOver={handleDragOver}
+                              onDrop={e => {
+                                handleDrop(dateStr, hora, diaSemana);
+                              }}
+                              style={{
+                                cursor: !ag && podeAgendar ? 'pointer' : 'not-allowed',
+                                position: 'relative',
+                                verticalAlign: 'top',
+                                opacity: !ag && !podeAgendar ? 0.4 : 1,
+                                padding: 0,
+                              }}
+                            >
+                              <div
+                                className={`${styles.calendarAppointment} ${statusClassMap[ag.status] || styles.statusAgendado}`}
+                                style={{
+                                zIndex: 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                width: '100%',
+                                height: '100%',
+                                }}
+                                draggable
+                                onDragStart={ev => {
+                                  handleDragStart(ag);
+                                }}
+                                onClick={ev => {
+                                  ev.stopPropagation();
+                                  openDetails(ag);
+                                }}
+                                title={`${ag.nomePaciente} - ${ag.profissional}`}
+                              >
+                                <span className={styles.calendarAppointmentTime}>
+                                  {ag.hora} - {getAgendamentoFim(ag)}
+                                </span>
+                                <span className={styles.calendarAppointmentName}>
+                                  {ag.nomePaciente}
+                                </span>
+                              </div>
+                            </td>
+                          );
                         }
+                        // Se não há agendamento, renderiza célula normal
                         return (
                           <td
                             key={dateStr + hora}
-                            className={styles.calendarCell}
-                            rowSpan={rowSpan}
+                            className={
+                              `${styles.calendarCell} ${!ag && podeAgendar ? styles.calendarCellHoverable : ''}`
+                            }
                             onClick={e => {
                               if (!ag && podeAgendar) handleCalendarCellClick(dateStr, hora, diaSemana);
                             }}
@@ -608,70 +713,24 @@ const Agendamentos = () => {
                             onDrop={e => {
                               handleDrop(dateStr, hora, diaSemana);
                             }}
-                            style={{
-                              cursor: !ag && podeAgendar ? 'pointer' : 'not-allowed',
-                              position: 'relative',
-                              verticalAlign: 'top',
-                              opacity: !ag && !podeAgendar ? 0.4 : 1,
-                              padding: 0,
-                            }}
+                            style={
+                              {
+                                cursor: !ag && podeAgendar ? 'pointer' : 'not-allowed',
+                                position: 'relative',
+                                verticalAlign: 'top',
+                                opacity: !ag && !podeAgendar ? 0.4 : 1,
+                              }
+                            }
                           >
-                            <div
-                              className={`${styles.calendarAppointment} ${statusClassMap[ag.status] || styles.statusAgendado}`}
-                              style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                height: '100%',
-                                zIndex: 2,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center',
-                              }}
-                              draggable
-                              onDragStart={ev => {
-                                handleDragStart(ag);
-                              }}
-                              onClick={ev => {
-                                ev.stopPropagation();
-                                openDetails(ag);
-                              }}
-                              title={`${ag.nomePaciente} - ${ag.profissional}`}
-                            >
-                              <span className={styles.calendarAppointmentTime}>
-                                {ag.hora} - {getAgendamentoFim(ag)}
-                              </span>
-                              <span className={styles.calendarAppointmentName}>
-                                {ag.nomePaciente}
-                              </span>
-                            </div>
+                            {/* Overlay do horário no hover */}
+                            {!ag && podeAgendar && (
+                              <span className={styles.calendarCellHoverOverlay}>{hora}</span>
+                            )}
                           </td>
                         );
-                      }
-                      // Se não há agendamento, renderiza célula normal
-                      return (
-                        <td
-                          key={dateStr + hora}
-                          className={styles.calendarCell}
-                          onClick={e => {
-                            if (!ag && podeAgendar) handleCalendarCellClick(dateStr, hora, diaSemana);
-                          }}
-                          onDragOver={handleDragOver}
-                          onDrop={e => {
-                            handleDrop(dateStr, hora, diaSemana);
-                          }}
-                          style={{
-                            cursor: !ag && podeAgendar ? 'pointer' : 'not-allowed',
-                            position: 'relative',
-                            verticalAlign: 'top',
-                            opacity: !ag && !podeAgendar ? 0.4 : 1,
-                          }}
-                        />
-                      );
-                    })}
-                  </tr>
+                      })}
+                    </tr>
+                  ))
                 ));
               })()}
             </tbody>
@@ -691,6 +750,14 @@ const Agendamentos = () => {
         fetchAvailableTimes={() => {}}
         availableDays={diasDisponiveis}
         selectedProfessional={selectedProfissional}
+        agendamentosDoDia={agendamentos
+          .filter(
+            ag => ag.data === appointmentData.date && ag.profissional === selectedProfissional
+          )
+          .map(ag => ({
+            ...ag,
+            procedimento: ag.procedimento ?? '',
+          }))}
       />
 
       <AppointmentDetailsModal

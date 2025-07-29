@@ -67,6 +67,11 @@ const getFirstIndexOfPeriod = (times: string[], period: string) => {
   return times.findIndex((time) => getPeriod(time) === period);
 };
 
+interface AgendamentoDia {
+  hora: string;
+  procedimento: string;
+}
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -90,6 +95,7 @@ interface Props {
   setAppointmentData: React.Dispatch<React.SetStateAction<any>>;
   availableTimes: string[];
   reservedTimes: string[];
+  agendamentosDoDia: AgendamentoDia[]; // <-- ensure this prop exists
   fetchAvailableTimes: (date: string, profissional: string) => void;
   availableDays: string[];
   selectedProfessional: string;
@@ -104,6 +110,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
   setAppointmentData,
   availableTimes,
   reservedTimes,
+  agendamentosDoDia, // <-- add this to the destructuring
   fetchAvailableTimes,
   availableDays,
   selectedProfessional,
@@ -492,10 +499,45 @@ const CreateAppointmentModal: React.FC<Props> = ({
     return slots.filter(s => !reservedTimes.includes(s));
   };
 
-  const horariosGerados = horarioDoDia ? gerarHorarios() : availableTimes;
+  // Função para bloquear horários que estejam dentro do intervalo de agendamentos já existentes
+  const bloquearHorariosSobrepostos = (horarios: string[]) => {
+    // Para cada horário possível, bloqueie se ele estiver dentro do intervalo de algum agendamento
+    return horarios.filter(horario => {
+      const [h, m] = horario.split(':').map(Number);
+      const inicioNovo = new Date(0, 0, 0, h, m, 0, 0);
+      // Não pode começar se estiver >= início e < fim de algum agendamento
+      for (const ag of agendamentosDoDia) {
+        const proc = procedimentos.find(p => p.nome === ag.procedimento);
+        const duracao = proc ? proc.duracao : 15;
+        const [hA, mA] = ag.hora.split(':').map(Number);
+        const inicioAg = new Date(0, 0, 0, hA, mA, 0, 0);
+        const fimAg = new Date(inicioAg.getTime() + duracao * 60000);
+        if (inicioNovo >= inicioAg && inicioNovo < fimAg) {
+          return false;
+        }
+      }
+      return true;
+    });
+  };
+
+  const horariosGerados = horarioDoDia ? bloquearHorariosSobrepostos(gerarHorarios()) : bloquearHorariosSobrepostos(availableTimes);
   const normalize = (t: string) => t.trim().slice(0, 5);
 const normalizedReserved = reservedTimes.map(normalize);
+// Bloqueia horários sobrepostos também na função de desabilitar
 const isTimeDisabled = (time: string) => {
+  // Verifica se está bloqueado por sobreposição
+  const [h, m] = time.split(':').map(Number);
+  const inicioNovo = new Date(0, 0, 0, h, m, 0, 0);
+  for (const ag of agendamentosDoDia) {
+    const proc = procedimentos.find(p => p.nome === ag.procedimento);
+    const duracao = proc ? proc.duracao : 15;
+    const [hA, mA] = ag.hora.split(':').map(Number);
+    const inicioAg = new Date(0, 0, 0, hA, mA, 0, 0);
+    const fimAg = new Date(inicioAg.getTime() + duracao * 60000);
+    if (inicioNovo >= inicioAg && inicioNovo < fimAg) {
+      return true;
+    }
+  }
   if (normalizedReserved.includes(normalize(time))) return true;
   if (isSameDay(selectedDate, startOfToday())) {
     const [h, m] = time.split(':').map(Number);
@@ -530,10 +572,22 @@ const isTimeDisabled = (time: string) => {
       }
     }
 
-    // Verifica se o horário já está reservado
-    const normalize = (t: string) => t.trim().slice(0, 5);
-    const normalizedReserved = reservedTimes.map(normalize);
-    if (normalizedReserved.includes(normalize(appointmentData.time))) {
+    // Verifica se o horário já está reservado ou sobreposto
+    const [h, m] = appointmentData.time.split(':').map(Number);
+    const inicioNovo = new Date(0, 0, 0, h, m, 0, 0);
+    let bloqueado = false;
+    for (const ag of agendamentosDoDia) {
+      const proc = procedimentos.find(p => p.nome === ag.procedimento);
+      const duracao = proc ? proc.duracao : 15;
+      const [hA, mA] = ag.hora.split(':').map(Number);
+      const inicioAg = new Date(0, 0, 0, hA, mA, 0, 0);
+      const fimAg = new Date(inicioAg.getTime() + duracao * 60000);
+      if (inicioNovo >= inicioAg && inicioNovo < fimAg) {
+        bloqueado = true;
+        break;
+      }
+    }
+    if (bloqueado || normalizedReserved.includes(normalize(appointmentData.time))) {
       window.alert('Horário indisponível! Já existe um agendamento para este profissional neste dia e horário.');
       return;
     }
