@@ -409,15 +409,7 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                 className={styles.inputEditar}
                 placeholder="Email"
               />
-              <div className={styles.convenioHeader}>Intervalo entre consultas</div>
-              <input
-                type="number"
-                name="intervaloConsultas"
-                value={formData.intervaloConsultas}
-                onChange={handleChange}
-                className={styles.inputEditar}
-                placeholder="Intervalo das consultas (min)"
-              />
+              {/* Intervalo entre consultas removido */}
               <div className={styles.convenioHeader}>Convênios:</div>
               <div className={styles.conveniosBox}>
                 {convenios.map((c) => (

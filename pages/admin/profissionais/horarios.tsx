@@ -36,6 +36,7 @@ const Horarios = () => {
   const [horarios, setHorarios] = useState<ScheduleItem[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<ScheduleData>({
+    profissionalId: '',
     dia: '',
     horaInicio: '',
     horaFim: '',

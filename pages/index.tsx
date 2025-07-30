@@ -28,6 +28,8 @@ const Index = () => {
 
   const [user, setUser] = useState<User | null>(null);
   const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
+  const [profissionais, setProfissionais] = useState<{ id: string; nome: string }[]>([]);
+  const [selectedProfissional, setSelectedProfissional] = useState<string>('');
   const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [pacientesPorDia, setPacientesPorDia] = useState<{ [dia: string]: number }>({});
@@ -109,6 +111,18 @@ const Index = () => {
       }
     };
     fetchPacientesPorDia();
+
+    // Buscar profissionais para o filtro
+    const fetchProfissionais = async () => {
+      try {
+        const snap = await getDocs(collection(firestore, 'profissionais'));
+        const list = snap.docs.map(doc => ({ id: doc.id, nome: doc.data().nome }));
+        setProfissionais(list);
+      } catch {
+        setProfissionais([]);
+      }
+    };
+    fetchProfissionais();
   }, []);
 
   const openDetails = (ag: any) => {
@@ -162,8 +176,8 @@ const Index = () => {
       y: {
         beginAtZero: true,
         grid: { color: '#f1f1f1' },
-        ticks: { color: '#8b98a9', font: { size: 13 } },
-        suggestedMax: Math.max(...pacientesData, 5) + 1
+        ticks: { color: '#8b98a9', font: { size: 14 } },
+        suggestedMax: Math.max(...pacientesData, 100) + 1
       }
     }
   };
@@ -327,44 +341,68 @@ const Index = () => {
                   </tr>
                 </thead>
                 <tbody>
+                  {/* Filtro de profissionais */}
+                  <tr>
+                    <td colSpan={5} className={styles.filterProfissionalCell}>
+                      <div className={styles.filterProfissionalWrapper}>
+                        <label htmlFor="filtro-profissional" className={styles.filterProfissionalLabel}>Filtrar por profissional:</label>
+                        <select
+                          id="filtro-profissional"
+                          className={styles.filterProfissionalSelect}
+                          value={selectedProfissional}
+                          onChange={e => setSelectedProfissional(e.target.value)}
+                        >
+                          <option value="">Todos</option>
+                          {profissionais.map(p => (
+                            <option key={p.id} value={p.nome}>{p.nome}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </td>
+                  </tr>
+                  {/* Lista de agendamentos filtrada */}
                   {todayAppointments.length > 0 ? (
-                    todayAppointments.map((appointment) => (
-                      <tr key={appointment.id}>
-                        <td className={styles.upcomingPacienteCell}>
-                          {appointment.nomePaciente
-                            ? appointment.nomePaciente
-                            : (Array.isArray(appointment.nomesPacientes) && appointment.nomesPacientes.length > 0
-                              ? appointment.nomesPacientes[0]
-                              : '')}
-                        </td>
-                        <td>
-                          {appointment.data && appointment.hora
-                            ? `${format(new Date(appointment.data + 'T' + appointment.hora), 'dd/MM/yy, HH:mm')}`
-                            : ''}
-                        </td>
-                        <td className={styles.upcomingDoutorCell}>
-                          {appointment.profissional || appointment.funcionaria || ''}
-                        </td>
-                        <td>
-                          <span
-                            className={`${styles.statusBadge} ${
-                              statusClassMap[appointment.status] || styles.statusAgendado
-                            }`}
-                          >
-                            {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                          </span>
-                        </td>
-                        <td>
-                          <button onClick={() => openDetails(appointment)} className={styles.externalLink} title="Ver detalhes">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24">
-                              <path d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <polyline points="15 3 21 3 21 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <line x1="10" y1="14" x2="21" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                        </td>
-                      </tr>
-                    ))
+                    todayAppointments
+                      .filter(appointment =>
+                        !selectedProfissional || appointment.profissional === selectedProfissional
+                      )
+                      .map((appointment) => (
+                        <tr key={appointment.id}>
+                          <td className={styles.upcomingPacienteCell}>
+                            {appointment.nomePaciente
+                              ? appointment.nomePaciente
+                              : (Array.isArray(appointment.nomesPacientes) && appointment.nomesPacientes.length > 0
+                                ? appointment.nomesPacientes[0]
+                                : '')}
+                          </td>
+                          <td>
+                            {appointment.data && appointment.hora
+                              ? `${format(new Date(appointment.data + 'T' + appointment.hora), 'dd/MM/yy, HH:mm')}`
+                              : ''}
+                          </td>
+                          <td className={styles.upcomingDoutorCell}>
+                            {appointment.profissional || appointment.funcionaria || ''}
+                          </td>
+                          <td>
+                            <span
+                              className={`${styles.statusBadge} ${
+                                statusClassMap[appointment.status] || styles.statusAgendado
+                              }`}
+                            >
+                              {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                            </span>
+                          </td>
+                          <td>
+                            <button onClick={() => openDetails(appointment)} className={styles.externalLink} title="Ver detalhes">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <polyline points="15 3 21 3 21 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <line x1="10" y1="14" x2="21" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
                   ) : (
                     <tr>
                       <td colSpan={4} className={styles.noAppointments}>Nenhum agendamento encontrado.</td>

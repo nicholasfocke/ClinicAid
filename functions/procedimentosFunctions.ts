@@ -15,7 +15,8 @@ export const buscarProcedimentos = async () => {
 };
 
 export const criarProcedimento = async (data: ProcedimentoData) => {
-  await addDoc(collection(firestore, 'procedimentos'), data);
+  const docRef = await addDoc(collection(firestore, 'procedimentos'), data);
+  return docRef.id;
 };
 
 export const excluirProcedimento = async (id: string) => {

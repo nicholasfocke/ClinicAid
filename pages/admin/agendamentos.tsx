@@ -236,10 +236,30 @@ const Agendamentos = () => {
   } else {
     minInicio = 8; minMin = 0; maxFim = 18; maxMax = 0;
   }
-  // Gera horários regulares de 15 em 15 min
+  // Gera horários regulares de 15 em 15 min, pulando intervalo de almoço se definido
+  let almocoInicio = null, almocoFim = null;
+  if (selectedProfissional && horariosProfissional.length > 0) {
+    // Considera o primeiro horário do array (pode ser ajustado se necessário)
+    const hProf = horariosProfissional[0];
+    if (hProf.almocoInicio && hProf.almocoFim) {
+      almocoInicio = hProf.almocoInicio;
+      almocoFim = hProf.almocoFim;
+    }
+  }
   let h = minInicio, m = minMin;
   while (h < maxFim || (h === maxFim && m <= maxMax)) {
-    horariosSet.add(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    const horarioAtual = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    // Se existe intervalo de almoço, pula horários dentro dele
+    let dentroAlmoco = false;
+    if (almocoInicio && almocoFim) {
+      // Compara horários como string "HH:MM"
+      if (horarioAtual >= almocoInicio && horarioAtual < almocoFim) {
+        dentroAlmoco = true;
+      }
+    }
+    if (!dentroAlmoco) {
+      horariosSet.add(horarioAtual);
+    }
     m += 15;
     if (m >= 60) {
       m = 0;
