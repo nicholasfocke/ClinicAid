@@ -69,3 +69,26 @@
   color: #000000;
   margin-bottom: auto;
 }
+
+/* Novo layout horizontal para modais de criação */
+.horizontalModal {
+  max-width: 820px;
+}
+
+.formHorizontal {
+  display: flex;
+  gap: 24px;
+}
+
+.basicInfo,
+.addressInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.divider {
+  width: 1px;
+  background-color: #e5e7eb; /* Cinza claro, quase branco */
+}
