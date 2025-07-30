@@ -8,6 +8,16 @@ export interface PacienteArquivo {
   path: string;
 }
 
+export interface EnderecoPaciente {
+  logradouro: string;
+  numero: string;
+  complemento?: string;
+  cep: string;
+  bairro: string;
+  estado: string;
+  cidade: string;
+}
+
 export const atualizarPaciente = async (id: string, data: Partial<any>) => {
   await updateDoc(doc(firestore, 'pacientes', id), data);
 };
@@ -88,7 +98,10 @@ export interface PacienteDetails {
   cpf?: string;
   telefone?: string;
   dataNascimento?: string;
+  sexo?: string;
   convenio?: string;
+  foto?: string;
+  endereco?: EnderecoPaciente;
 }
 
 export const buscarPacientesComDetalhes = async (): Promise<PacienteDetails[]> => {
@@ -102,7 +115,10 @@ export const buscarPacientesComDetalhes = async (): Promise<PacienteDetails[]> =
       cpf: data.cpf || '',
       telefone: data.telefone || '',
       dataNascimento: data.dataNascimento || '',
+      sexo: data.sexo || '',
       convenio: data.convenio || '',
+      foto: data.foto || '',
+      endereco: data.endereco || undefined,
     };
   });
 };
@@ -114,6 +130,10 @@ export interface CriarPacienteData {
   telefone?: string;
   convenio?: string;
   dataNascimento?: string;
+  sexo?: string;
+  foto?: string;
+  fotoPath?: string;
+  endereco?: EnderecoPaciente;
 }
 
 export const criarPaciente = async (data: CriarPacienteData) => {
