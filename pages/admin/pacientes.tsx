@@ -12,7 +12,8 @@ import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { statusAgendamento } from '@/functions/agendamentosFunction';
 import { atualizarPaciente, excluirPaciente, uploadArquivoPaciente, uploadArquivoPacienteSecao, uploadArquivoTemp,
     adicionarEvolucaoPaciente, criarPaciente, PacienteArquivo, } from '@/functions/pacientesFunctions';
-import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage';
+import { buscarConvenios } from '@/functions/conveniosFunctions';
+import { getStorage, ref as storageRef, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { format as formatDateFns, parse as parseDateFns } from 'date-fns';
 
 interface EvolucaoClinica {
@@ -57,6 +58,17 @@ interface Paciente {
   telefone?: string;
   convenio?: string;
   dataNascimento?: string;
+  sexo?: string;
+  foto?: string;
+  endereco?: {
+    logradouro: string;
+    numero: string;
+    complemento?: string;
+    cep: string;
+    bairro: string;
+    estado: string;
+    cidade: string;
+  };
   arquivos?: PacienteArquivo[];
   infoArquivos?: PacienteArquivo[];
   prontuarios?: EvolucaoClinica[];
@@ -93,8 +105,19 @@ const Pacientes = () => {
     email: '',
     cpf: '',
     telefone: '',
-    convenio: '',
-    dataNascimento: '',
+  convenio: '',
+  dataNascimento: '',
+  sexo: '',
+  foto: '',
+    endereco: {
+      logradouro: '',
+      numero: '',
+      complemento: '',
+      cep: '',
+      bairro: '',
+      estado: '',
+      cidade: '',
+    },
     arquivos: [],
     infoArquivos: [],
     prontuarios: [],
@@ -108,16 +131,27 @@ const Pacientes = () => {
     tags: [],
   });
   const [file, setFile] = useState<File | null>(null);
+  const [foto, setFoto] = useState<string | null>(null);
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [pacienteInfo, setPacienteInfo] = useState<Paciente | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
   const [newPaciente, setNewPaciente] = useState({
     nome: '',
     email: '',
     cpf: '',
-    telefone: '',
-    convenio: '',
-    dataNascimento: '',
+  telefone: '',
+  convenio: '',
+  dataNascimento: '',
+  sexo: '',
+  logradouro: '',
+    numero: '',
+    complemento: '',
+    cep: '',
+    bairro: '',
+    estado: '',
+    cidade: '',
   });
   const [availableAppointments, setAvailableAppointments] = useState<HistoricoAgendamento[]>([]);
   const [selectedAppointmentIdToLink, setSelectedAppointmentIdToLink] = useState('');
@@ -168,6 +202,16 @@ const Pacientes = () => {
             telefone: data.telefone || '',
             convenio: data.convenio || '',
             dataNascimento: data.dataNascimento || '',
+            sexo: data.sexo || '',
+            endereco: data.endereco || {
+              logradouro: '',
+              numero: '',
+              complemento: '',
+              cep: '',
+              bairro: '',
+              estado: '',
+              cidade: '',
+            },
             arquivos: data.arquivos || [],
             infoArquivos: data.infoArquivos || [],
             prontuarios: data.prontuarios || [],
@@ -217,6 +261,18 @@ const Pacientes = () => {
     fetchAppointments();
   }, []);
 
+  useEffect(() => {
+    if (!showCreateModal) return;
+    (async () => {
+      try {
+        const docs = await buscarConvenios();
+        setConvenios(docs as any);
+      } catch (err) {
+        console.error('Erro ao buscar convenios', err);
+      }
+    })();
+  }, [showCreateModal]);
+
   // Máscaras de formatação
   const formatCPF = (value: string) => {
     return value
@@ -233,6 +289,13 @@ const Pacientes = () => {
       .replace(/^(\d{2})(\d)/, '($1) $2')
       .replace(/(\d{5})(\d)/, '$1-$2')
       .slice(0, 15);
+  };
+
+  const formatCEP = (value: string) => {
+  return value
+    .replace(/\D/g, '')              
+    .replace(/^(\d{5})(\d)/, '$1-$2') // insere o hífen
+    .slice(0, 9);                     
   };
 
   const maskDataNascimento = (value: string) => {
@@ -282,45 +345,6 @@ const Pacientes = () => {
   }, [router]);
 
   useEffect(() => {
-    const fetchPacientes = async () => {
-      try {
-        const snap = await getDocs(collection(firestore, 'pacientes'));
-        const lista: Paciente[] = [];
-        snap.forEach(docSnap => {
-          const data = docSnap.data();
-          lista.push({
-            id: docSnap.id,
-            nome: data.nome || '',
-            email: data.email || '',
-            cpf: data.cpf || '',
-            telefone: data.telefone || '',
-            convenio: data.convenio || '',
-            dataNascimento: data.dataNascimento || '',
-            arquivos: data.arquivos || [],
-            infoArquivos: data.infoArquivos || [],
-            prontuarios: data.prontuarios || [],
-            conversasIA: data.conversasIA || [],
-            conversasArquivos: data.conversasArquivos || [],
-            agendamentos: data.agendamentos || [],
-            profissionaisAtendimentos: data.profissionaisAtendimentos || [],
-            profissionaisArquivos: data.profissionaisArquivos || [],
-            observacoes: data.observacoes || '',
-            alertas: data.alertas || [],
-            tags: data.tags || [],
-          });
-        });
-        setPacientes(lista);
-      } catch (err) {
-        console.error('Erro ao buscar pacientes:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPacientes();
-  }, []);
-
-  useEffect(() => {
     const fetchAppointments = async () => {
       try {
         const snap = await getDocs(collection(firestore, 'agendamentos'));
@@ -360,16 +384,58 @@ const Pacientes = () => {
     setActiveTab('info');
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const buscarEnderecoPorCEP = async (cep: string) => {
+  const cepLimpo = cep.replace(/\D/g, '');
+  if (cepLimpo.length !== 8) return;
+
+  try {
+    const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+    const data = await response.json();
+    if (data.erro) {
+      alert('CEP não encontrado.');
+      return;
+    }
+
+    setNewPaciente(prev => ({
+      ...prev,
+      logradouro: data.logradouro || '',
+      bairro: data.bairro || '',
+      cidade: data.localidade || '',
+      estado: data.uf || '',
+    }));
+  } catch (error) {
+    console.error('Erro ao buscar CEP:', error);
+  }
+};
+
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    if (name === 'dataNascimento') {
-      setFormData(prev => ({ ...prev, [name]: maskDataNascimento(value) }));
+    if (name === 'cpf') {
+      setFormData(prev => ({ ...prev, cpf: formatCPF(value) }));
+    } else if (name === 'telefone') {
+      setFormData(prev => ({ ...prev, telefone: formatTelefone(value) }));
+    } else if (name === 'dataNascimento') {
+      setFormData(prev => ({ ...prev, dataNascimento: maskDataNascimento(value) }));
+    } else if (
+      ['cep', 'logradouro', 'numero', 'complemento', 'bairro', 'estado', 'cidade'].includes(
+        name
+      )
+    ) { 
+      const val = name === 'cep' ? formatCEP(value) : value;
+      setFormData(prev => ({
+      ...prev,
+      endereco: { ...(prev.endereco ?? { logradouro: '', numero: '', complemento: '', cep: '', bairro: '',
+                        estado: '', cidade: '', }), [name]: val, },
+      }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleNewChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNewChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     if (name === 'cpf') {
       setNewPaciente(prev => ({ ...prev, cpf: formatCPF(value) }));
@@ -377,8 +443,20 @@ const Pacientes = () => {
       setNewPaciente(prev => ({ ...prev, telefone: formatTelefone(value) }));
     } else if (name === 'dataNascimento') {
       setNewPaciente(prev => ({ ...prev, dataNascimento: maskDataNascimento(value) }));
+    } else if (name === 'cep') {  
+      const cepFormatado = formatCEP(value);
+      setNewPaciente(prev => ({ ...prev, cep: cepFormatado }));
+      if (cepFormatado.replace(/\D/g, '').length === 8) {
+        buscarEnderecoPorCEP(cepFormatado);  }
     } else {
       setNewPaciente(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFoto(URL.createObjectURL(e.target.files[0]));
+      setFotoFile(e.target.files[0]);
     }
   };
 
@@ -391,6 +469,8 @@ const Pacientes = () => {
       telefone: formData.telefone,
       convenio: formData.convenio,
       dataNascimento: formData.dataNascimento,
+      sexo: formData.sexo,
+      endereco: formData.endereco,
     });
     const updated = { ...selectedPaciente, ...formData };
     setPacientes(prev => prev.map(p => (p.id === updated.id ? updated : p)));
@@ -500,8 +580,58 @@ const Pacientes = () => {
   };
 
   const createPaciente = async () => {
-    const id = await criarPaciente(newPaciente);
-    const novo: Paciente = { id, ...newPaciente };
+    const { logradouro, numero, cep, bairro, estado, cidade } = newPaciente;
+    if (!logradouro || !numero || !cep || !bairro || !estado || !cidade) {
+      alert('Preencha todos os campos obrigatórios do endereço.');
+      return;
+    }
+
+    let fotoUrl = '';
+    let fotoPath = '';
+    if (fotoFile) {
+      const storage = getStorage();
+      const uniqueName = `${newPaciente.cpf.replace(/\D/g, '')}_${Date.now()}`;
+      const ref = storageRef(storage, `paciente_photos/${uniqueName}`);
+      await uploadBytes(ref, fotoFile);
+      fotoUrl = await getDownloadURL(ref);
+      fotoPath = ref.fullPath;
+    }
+
+    const id = await criarPaciente({
+      nome: newPaciente.nome,
+      email: newPaciente.email,
+      cpf: newPaciente.cpf,
+      telefone: newPaciente.telefone,
+      convenio: newPaciente.convenio,
+      dataNascimento: newPaciente.dataNascimento,
+      sexo: newPaciente.sexo,
+      foto: fotoUrl,
+      fotoPath,
+      endereco: {
+        logradouro: newPaciente.logradouro,
+        numero: newPaciente.numero,
+        complemento: newPaciente.complemento,
+        cep: newPaciente.cep,
+        bairro: newPaciente.bairro,
+        estado: newPaciente.estado,
+        cidade: newPaciente.cidade,
+      },
+    });
+
+    const novo: Paciente = {
+      id,
+      ...newPaciente,
+      foto: fotoUrl,
+      endereco: {
+        logradouro: newPaciente.logradouro,
+        numero: newPaciente.numero,
+        complemento: newPaciente.complemento,
+        cep: newPaciente.cep,
+        bairro: newPaciente.bairro,
+        estado: newPaciente.estado,
+        cidade: newPaciente.cidade,
+      },
+    } as Paciente;
     setPacientes(prev => [...prev, novo]);
     setShowCreateModal(false);
     setNewPaciente({
@@ -511,7 +641,17 @@ const Pacientes = () => {
       telefone: '',
       convenio: '',
       dataNascimento: '',
+      sexo: '',
+      logradouro: '',
+      numero: '',
+      complemento: '',
+      cep: '',
+      bairro: '',
+      estado: '',
+      cidade: '',
     });
+    setFoto(null);
+    setFotoFile(null);
   };
 
   // Busca todas as informações do paciente ao abrir o modal de detalhes
@@ -609,7 +749,7 @@ const Pacientes = () => {
           onClick={() => setShowCreateModal(false)}
         >
           <div
-            className={modalStyles.modal}
+            className={`${modalStyles.modal} ${modalStyles.horizontalModal}`}
             onClick={e => e.stopPropagation()}
           >
             <button
@@ -619,51 +759,131 @@ const Pacientes = () => {
               X
             </button>
             <h3>Novo Paciente</h3>
-            <label className={modalStyles.label}>Nome</label>
-            <input
-              name="nome"
-              className={modalStyles.input}
-              value={newPaciente.nome}
-              onChange={handleNewChange}
-            />
-            <label className={modalStyles.label}>Email</label>
-            <input
-              name="email"
-              className={modalStyles.input}
-              value={newPaciente.email}
-              onChange={handleNewChange}
-            />
-            <label className={modalStyles.label}>CPF</label>
-            <input
-              name="cpf"
-              className={modalStyles.input}
-              value={newPaciente.cpf}
-              onChange={handleNewChange}
-              maxLength={14}
-            />
-            <label className={modalStyles.label}>Telefone</label>
-            <input
-              name="telefone"
-              className={modalStyles.input}
-              value={newPaciente.telefone}
-              onChange={handleNewChange}
-              maxLength={15}
-            />
-            <label className={modalStyles.label}>Convênio</label>
-            <input
-              name="convenio"
-              className={modalStyles.input}
-              value={newPaciente.convenio}
-              onChange={handleNewChange}
-            />
-            <label className={modalStyles.label}>Nascimento (DD/MM/AAAA)</label>
-            <input
-              name="dataNascimento"
-              maxLength={10}
-              className={modalStyles.input}
-              value={newPaciente.dataNascimento}
-              onChange={handleNewChange}
-            />
+            <div className={modalStyles.formHorizontal}>
+              <div className={modalStyles.basicInfo}>
+                <label className={modalStyles.label}>Nome</label>
+                <input
+                  name="nome"
+                  className={modalStyles.input}
+                  value={newPaciente.nome}
+                  onChange={handleNewChange}
+                />
+                <label className={modalStyles.label}>Email</label>
+                <input
+                  name="email"
+                  className={modalStyles.input}
+                  value={newPaciente.email}
+                  onChange={handleNewChange}
+                />
+                <label className={modalStyles.label}>CPF</label>
+                <input
+                  name="cpf"
+                  className={modalStyles.input}
+                  value={newPaciente.cpf}
+                  onChange={handleNewChange}
+                  maxLength={14}
+                />
+                <label className={modalStyles.label}>Telefone</label>
+                <input
+                  name="telefone"
+                  className={modalStyles.input}
+                  value={newPaciente.telefone}
+                  onChange={handleNewChange}
+                  maxLength={15}
+                />
+                <label className={modalStyles.label}>Convênio</label>
+                <select
+                  name="convenio"
+                  className={modalStyles.input}
+                  value={newPaciente.convenio}
+                  onChange={handleNewChange}
+                >
+                  <option value="">Selecione</option>
+                  <option value="Particular">Particular</option>
+                  {convenios.map(c => (
+                    <option key={c.id} value={c.nome}>{c.nome}</option>
+                  ))}
+                </select>
+                <label className={modalStyles.label}>Nascimento (DD/MM/AAAA)</label>
+                <input
+                  name="dataNascimento"
+                  maxLength={10}
+                  className={modalStyles.input}
+                  value={newPaciente.dataNascimento}
+                  onChange={handleNewChange}
+                />
+                <label className={modalStyles.label}>Sexo</label>
+                <select
+                  name="sexo"
+                  className={modalStyles.input}
+                  value={newPaciente.sexo}
+                  onChange={handleNewChange}
+                >
+                  <option value="">Selecione o sexo</option>
+                  <option value="masculino">Masculino</option>
+                  <option value="feminino">Feminino</option>
+                  <option value="outro">Outro</option>
+                  <option value="prefiro não informar">Prefiro não informar</option>
+                </select>
+                <label className={modalStyles.label}>Foto</label>
+                <input type="file" accept="image/*" onChange={handleFotoChange} />
+                {foto && (
+                  <img src={foto} alt="Foto" style={{ width: 80, height: 80, objectFit: 'cover', marginTop: 8 }} />
+                )}
+              </div>
+              <div className={modalStyles.divider}></div>
+              <div className={modalStyles.addressInfo}>
+                <label className={modalStyles.label}>CEP</label>
+                <input
+                  name="cep"
+                  className={modalStyles.input}
+                  value={newPaciente.cep}
+                  onChange={handleNewChange}
+                />
+                <label className={modalStyles.label}>Logradouro</label>
+                <input
+                  name="logradouro"
+                  className={modalStyles.input}
+                  value={newPaciente.logradouro}
+                  onChange={handleNewChange}
+                />
+                <label className={modalStyles.label}>Número</label>
+                <input
+                  name="numero"
+                  className={modalStyles.input}
+                  value={newPaciente.numero}
+                  onChange={handleNewChange}
+                />
+                <label className={modalStyles.label}>Complemento</label>
+                <input
+                  name="complemento"
+                  className={modalStyles.input}
+                  value={newPaciente.complemento}
+                  onChange={handleNewChange}
+                />
+                <label className={modalStyles.label}>Bairro</label>
+                <input
+                  name="bairro"
+                  className={modalStyles.input}
+                  value={newPaciente.bairro}
+                  onChange={handleNewChange}
+                />
+                <label className={modalStyles.label}>Estado</label>
+                <input
+                  name="estado"
+                  className={modalStyles.input}
+                  value={newPaciente.estado}
+                  onChange={handleNewChange}
+                />
+                <label className={modalStyles.label}>Cidade</label>
+                <input
+                  name="cidade"
+                  className={modalStyles.input}
+                  value={newPaciente.cidade}
+                  onChange={handleNewChange}
+                />
+              </div>
+            </div>
             <button
               className={modalStyles.buttonSalvar}
               onClick={createPaciente}
@@ -737,49 +957,117 @@ const Pacientes = () => {
               </>
             ) : editing ? (
               <>
-                <input
-                  name="nome"
-                  value={formData.nome}
-                  onChange={handleChange}
-                  className={detailsStyles.input}
-                  placeholder="Nome"
-                />
-                <input
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={detailsStyles.input}
-                  placeholder="Email"
-                />
-                <input
-                  name="cpf"
-                  value={formData.cpf || ''}
-                  onChange={handleChange}
-                  className={detailsStyles.input}
-                  placeholder="CPF"
-                />
-                <input
-                  name="telefone"
-                  value={formData.telefone || ''}
-                  onChange={handleChange}
-                  className={detailsStyles.input}
-                  placeholder="Telefone"
-                />
-                <input
-                  name="convenio"
-                  value={formData.convenio || ''}
-                  onChange={handleChange}
-                  className={detailsStyles.input}
-                  placeholder="Convênio"
-                />
-                <input
-                  name="dataNascimento"
-                  value={formData.dataNascimento || ''}
-                  onChange={handleChange}
-                  className={detailsStyles.input}
-                  placeholder="Nascimento (DD/MM/AAAA)"
-                  maxLength={10}
-                />
+                <div className={detailsStyles.infoLayout} style={{ marginBottom: 16 }}>
+                  <div className={detailsStyles.basicInfo}>
+                    <input
+                      name="nome"
+                      value={formData.nome}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                      placeholder="Nome"
+                    />
+                    <input
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                      placeholder="Email"
+                    />
+                    <input
+                      name="cpf"
+                      value={formData.cpf || ''}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                      placeholder="CPF"
+                    />
+                    <input
+                      name="telefone"
+                      value={formData.telefone || ''}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                      placeholder="Telefone"
+                    />
+                    <input
+                      name="convenio"
+                      value={formData.convenio || ''}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                      placeholder="Convênio"
+                    />
+                    <input
+                      name="dataNascimento"
+                      value={formData.dataNascimento || ''}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                      placeholder="Nascimento (DD/MM/AAAA)"
+                      maxLength={10}
+                    />
+                    <select
+                      name="sexo"
+                      value={formData.sexo || ''}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                    >
+                      <option value="">Selecione o sexo</option>
+                      <option value="masculino">Masculino</option>
+                      <option value="feminino">Feminino</option>
+                      <option value="outro">Outro</option>
+                      <option value="prefiro não informar">Prefiro não informar</option>
+                    </select>
+                  </div>
+                  <div className={detailsStyles.divider}></div>
+                  <div className={detailsStyles.addressInfo}>
+                    <input
+                      name="cep"
+                      value={formData.endereco?.cep ?? ''}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                      placeholder="CEP"
+                    />
+                    <input
+                      name="logradouro"
+                      value={formData.endereco?.logradouro ?? ''}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                      placeholder="Logradouro"
+                    />
+                    <input
+                      name="numero"
+                      value={(formData.endereco?.numero ?? '')}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                      placeholder="Número"
+                    />
+                    <input
+                      name="complemento"
+                      value={formData.endereco?.complemento ?? ''}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                      placeholder="Complemento"
+                    />
+                    <input
+                      name="bairro"
+                      value={formData.endereco?.bairro ?? ''}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                      placeholder="Bairro"
+                    />
+                    <input
+                      name="estado"
+                      value={formData.endereco?.estado ?? ''}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                      placeholder="Estado"
+                    />
+                    <input
+                      name="cidade"
+                      value={formData.endereco?.cidade ?? ''}
+                      onChange={handleChange}
+                      className={detailsStyles.input}
+                      placeholder="Cidade"
+                    />
+                  </div>
+                </div>
                 <div>
                   <input
                     type="file"
@@ -837,45 +1125,59 @@ const Pacientes = () => {
             ) : (
               <>
                 {activeTab === 'info' && pacienteInfo && (
-                  <div style={{ marginBottom: 16 }}>
-                    <h3>Informações completas do paciente</h3>
-                    <p><strong>Nome:</strong> {pacienteInfo.nome}</p>
-                    <p><strong>Email:</strong> {pacienteInfo.email}</p>
-                    <p><strong>CPF:</strong> {pacienteInfo.cpf || '-'}</p>
-                    <p><strong>Telefone:</strong> {pacienteInfo.telefone || '-'}</p>
-                    <p><strong>Convênio:</strong> {pacienteInfo.convenio || '-'}</p>
-                    <p><strong>Nascimento:</strong> {pacienteInfo.dataNascimento || '-'}</p>
-                    {pacienteInfo.infoArquivos && pacienteInfo.infoArquivos.length > 0 && (
-                      <ul>
-                        {pacienteInfo.infoArquivos.map(a => (
-                          <li key={a.path} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
-                            <button
-                              style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
-                              onClick={() => handleDeleteArquivo('infoArquivos', a)}
-                              title="Excluir arquivo"
-                              type="button"
-                            >
-                              Excluir
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    <div style={{ marginTop: 8 }}>
-                      <input
-                        type="file"
-                        onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
-                      />
-                      {file && (
-                        <button
-                          className={detailsStyles.buttonEditar}
-                          onClick={() => handleFileUpload('infoArquivos')}
-                          disabled={uploading}
-                        >
-                          {uploading ? 'Enviando...' : 'Enviar arquivo'}
-                        </button>
+                  <div className={detailsStyles.infoLayout} style={{ marginBottom: 16 }}>
+                    <div className={detailsStyles.basicInfo}>
+                      <h3>Informações completas do paciente</h3>
+                      <p><strong>Nome:</strong> {pacienteInfo.nome}</p>
+                      <p><strong>Email:</strong> {pacienteInfo.email}</p>
+                      <p><strong>CPF:</strong> {pacienteInfo.cpf || '-'}</p>
+                      <p><strong>Telefone:</strong> {pacienteInfo.telefone || '-'}</p>
+                      <p><strong>Convênio:</strong> {pacienteInfo.convenio || '-'}</p>
+                      <p><strong>Nascimento:</strong> {pacienteInfo.dataNascimento || '-'}</p>
+                      <p><strong>Sexo:</strong> {pacienteInfo.sexo || '-'}</p>
+                      {pacienteInfo.infoArquivos && pacienteInfo.infoArquivos.length > 0 && (
+                        <ul>
+                          {pacienteInfo.infoArquivos.map(a => (
+                            <li key={a.path} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
+                              <button
+                                style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
+                                onClick={() => handleDeleteArquivo('infoArquivos', a)}
+                                title="Excluir arquivo"
+                                type="button"
+                              >
+                                Excluir
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
                       )}
+                      <div style={{ marginTop: 8 }}>
+                        <input
+                          type="file"
+                          onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
+                        />
+                        {file && (
+                          <button
+                            className={detailsStyles.buttonEditar}
+                            onClick={() => handleFileUpload('infoArquivos')}
+                            disabled={uploading}
+                          >
+                            {uploading ? 'Enviando...' : 'Enviar arquivo'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className={detailsStyles.divider}></div>
+                    <div className={detailsStyles.addressInfo}>
+                      <h3>Endereço</h3>
+                      <p><strong>CEP:</strong> {pacienteInfo.endereco?.cep || '-'}</p>
+                      <p><strong>Logradouro:</strong> {pacienteInfo.endereco?.logradouro || '-'}</p>
+                      <p><strong>Número:</strong> {pacienteInfo.endereco?.numero || '-'}</p>
+                      <p><strong>Complemento:</strong> {pacienteInfo.endereco?.complemento || '-'}</p>
+                      <p><strong>Bairro:</strong> {pacienteInfo.endereco?.bairro || '-'}</p>
+                      <p><strong>Estado:</strong> {pacienteInfo.endereco?.estado || '-'}</p>
+                      <p><strong>Cidade:</strong> {pacienteInfo.endereco?.cidade || '-'}</p>
                     </div>
                   </div>
                 )}
