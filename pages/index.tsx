@@ -177,7 +177,7 @@ const Index = () => {
         beginAtZero: true,
         grid: { color: '#f1f1f1' },
         ticks: { color: '#8b98a9', font: { size: 14 } },
-        suggestedMax: Math.max(...pacientesData, 20) + 1
+        suggestedMax: Math.max(...pacientesData, 100) + 1
       }
     }
   };
@@ -343,18 +343,21 @@ const Index = () => {
                 <tbody>
                   {/* Filtro de profissionais */}
                   <tr>
-                    <td colSpan={5} style={{ paddingBottom: 12 }}>
-                      <label style={{ fontWeight: 500, marginRight: 8 }}>Filtrar por profissional:</label>
-                      <select
-                        value={selectedProfissional}
-                        onChange={e => setSelectedProfissional(e.target.value)}
-                        style={{ minWidth: 180, padding: 4, borderRadius: 6 }}
-                      >
-                        <option value="">Todos</option>
-                        {profissionais.map(p => (
-                          <option key={p.id} value={p.nome}>{p.nome}</option>
-                        ))}
-                      </select>
+                    <td colSpan={5} className={styles.filterProfissionalCell}>
+                      <div className={styles.filterProfissionalWrapper}>
+                        <label htmlFor="filtro-profissional" className={styles.filterProfissionalLabel}>Filtrar por profissional:</label>
+                        <select
+                          id="filtro-profissional"
+                          className={styles.filterProfissionalSelect}
+                          value={selectedProfissional}
+                          onChange={e => setSelectedProfissional(e.target.value)}
+                        >
+                          <option value="">Todos</option>
+                          {profissionais.map(p => (
+                            <option key={p.id} value={p.nome}>{p.nome}</option>
+                          ))}
+                        </select>
+                      </div>
                     </td>
                   </tr>
                   {/* Lista de agendamentos filtrada */}

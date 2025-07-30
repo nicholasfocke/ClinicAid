@@ -5,6 +5,7 @@ import { criarMedico, medicoExiste } from '@/functions/medicosFunctions';
 import { criarHorario } from '@/functions/scheduleFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
+import { buscarCargosSaude } from '@/functions/cargosFunctions';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import modalStyles from '@/styles/admin/medico/modalNovoMedico.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
@@ -57,7 +58,6 @@ interface MedicoForm {
   horaFim: string;
   almocoInicio: string;
   almocoFim: string;
-  intervaloConsultas: number;
   telefone: string;
   cpf: string;
   email: string;
@@ -78,7 +78,7 @@ interface User {
 }
 
 const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
-  const [formData, setFormData] = useState<MedicoForm>({
+  const initialForm: MedicoForm = {
     nome: '',
     especialidade: '',
     diasAtendimento: [],
@@ -86,15 +86,16 @@ const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
     horaFim: '',
     almocoInicio: '',
     almocoFim: '',
-    intervaloConsultas: 0,
     telefone: '',
     cpf: '',
     email: '',
     convenio: [],
     procedimentos: [],
-  });
+  };
+  const [formData, setFormData] = useState<MedicoForm>(initialForm);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
   const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
+  const [cargosSaude, setCargosSaude] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
@@ -131,8 +132,10 @@ const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
         setConvenios(fetchedConvenios);
         const fetchedProcedimentos = await buscarProcedimentos();
         setProcedimentos(fetchedProcedimentos);
+        const fetchedCargosSaude = await buscarCargosSaude();
+        setCargosSaude(fetchedCargosSaude);
       } catch (error) {
-        console.error('Erro ao buscar convênios ou procedimentos:', error);
+        console.error('Erro ao buscar convênios, procedimentos ou cargos:', error);
       }
     })();
   }, [isOpen]);
@@ -150,7 +153,7 @@ const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
     let newValue: string | number = value;
     if (name === 'cpf') newValue = formatCPF(value);
     if (name === 'telefone') newValue = formatTelefone(value);
-    if (name === 'intervaloConsultas') newValue = Number(value);
+    // if (name === 'intervaloConsultas') newValue = Number(value);
     setFormData(prev => ({ ...prev, [name]: newValue as any }));
   };
 
@@ -159,6 +162,14 @@ const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
       setFoto(URL.createObjectURL(e.target.files[0]));
       setFotoFile(e.target.files[0]);
     }
+  };
+
+  // Função para resetar todos os campos do formulário e foto
+  const resetForm = () => {
+    setFormData(initialForm);
+    setFoto(null);
+    setFotoFile(null);
+    setError('');
   };
 
   const handleCheckConvenio = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -255,7 +266,7 @@ const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
         cpf: formData.cpf,
         email: formData.email,
         convenio: formData.convenio,
-        intervaloConsultas: formData.intervaloConsultas,
+        // intervaloConsultas: formData.intervaloConsultas,
         foto: fotoUrl,
         fotoPath,
         procedimentos: formData.procedimentos,
@@ -269,12 +280,13 @@ const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
             horaFim: formData.horaFim,
             almocoInicio: formData.almocoInicio,
             almocoFim: formData.almocoFim,
-            intervaloConsultas: formData.intervaloConsultas,
+            intervaloConsultas: 0, // valor padrão já que não existe mais no formulário
           });
         }
       }
 
       if (onCreate) onCreate();
+      resetForm();
       onClose();
     } catch (err) {
       console.error('Erro ao cadastrar médico:', err);
@@ -284,21 +296,28 @@ const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
     }
   };
 
+  // Sempre que o modal for fechado, reseta o formulário
+  useEffect(() => {
+    if (!isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
     <div className={modalStyles.overlay} onClick={onClose}>
       <div className={modalStyles.modal} onClick={e => e.stopPropagation()}>
-        <button className={modalStyles.closeButton} onClick={onClose}>X</button>
+        <button className={modalStyles.closeButton} onClick={() => { resetForm(); onClose(); }}>X</button>
         <div className={styles.container}>
           <h1 className={styles.title}>Novo Profissional</h1>
           <form onSubmit={handleSubmit} className={styles.form}>
             <input name="nome" value={formData.nome} onChange={handleChange} placeholder="Nome" className={styles.input} required />
             <select name="especialidade" value={formData.especialidade} onChange={handleChange} className={styles.input} required>
               <option value="">Selecione a especialidade</option>
-              {procedimentos.map((c) => (
-                <option key={c.id} value={c.nome}>
-                  {c.nome}
+              {cargosSaude.map((cargo) => (
+                <option key={cargo.id} value={cargo.nome}>
+                  {cargo.nome}
                 </option>
               ))}
             </select>
@@ -351,15 +370,7 @@ const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
               placeholder="Intervalo almoço fim"
               className={styles.input}
             />
-            <div className={styles.convenioHeader}>Intervalo entre consultas</div>
-            <input
-              type="number"
-              name="intervaloConsultas"
-              value={formData.intervaloConsultas}
-              onChange={handleChange}
-              placeholder="Intervalo das consultas (min)"
-              className={styles.input}
-            />
+            {/* Intervalo entre consultas removido */}
             <input name="telefone" value={formData.telefone} onChange={handleChange} placeholder="Telefone" className={styles.input} />
             <input name="cpf" value={formData.cpf} onChange={handleChange} placeholder="CPF" className={styles.input} />
             <input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Email" className={styles.input} />
@@ -418,7 +429,7 @@ const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
             <button type="submit" className={styles.buttonSalvar} disabled={loading}>
               {loading ? 'Salvando...' : 'Salvar'}
             </button>
-            <button type="button" className={styles.buttonCancelar} onClick={onClose}>
+            <button type="button" className={styles.buttonCancelar} onClick={() => { resetForm(); onClose(); }}>
               Cancelar
             </button>
           </form>

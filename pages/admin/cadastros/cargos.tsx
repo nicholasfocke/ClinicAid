@@ -85,8 +85,27 @@ const Cargos = () => {
   };
 
   const saveEdit = async (id: string) => {
-    await atualizarCargo(id, formData);
-    setCargos(prev => prev.map(c => (c.id === id ? { id, ...formData } : c)));
+    // Busca o cargo original para manter campos não editáveis
+    const original = cargos.find(c => c.id === id);
+    if (!original) return;
+    // Garante que quantidadeUsuarios nunca seja undefined ou NaN
+    const quantidadeUsuarios =
+      typeof formData.quantidadeUsuarios === 'number' && !isNaN(formData.quantidadeUsuarios)
+        ? formData.quantidadeUsuarios
+        : original.quantidadeUsuarios;
+    const payload = {
+      nome: formData.nome,
+      quantidadeUsuarios,
+      profissionalSaude: formData.profissionalSaude,
+    };
+    await atualizarCargo(id, payload);
+    setCargos(prev =>
+      prev.map(c =>
+        c.id === id
+          ? { ...c, ...payload }
+          : c
+      )
+    );
     setEditingId(null);
   };
 
@@ -102,7 +121,9 @@ const Cargos = () => {
     const nomeTrim = newCargo.nome.trim();
     if (!nomeTrim) { setError('O nome não pode estar vazio.'); return; }
     await criarCargo({ nome: nomeTrim, quantidadeUsuarios: 0, profissionalSaude: newCargo.profissionalSaude });
-    setCargos(prev => [...prev, { id: Date.now().toString(), nome: nomeTrim, quantidadeUsuarios: 0, profissionalSaude: newCargo.profissionalSaude }]);
+    // Após criar, busque novamente os cargos do Firestore para garantir IDs corretos
+    const docs = await buscarCargos();
+    setCargos(docs as Cargo[]);
     setShowModal(false);
     setNewCargo({ nome: '', profissionalSaude: false });
   };
