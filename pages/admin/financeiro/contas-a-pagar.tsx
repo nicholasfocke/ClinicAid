@@ -5,9 +5,19 @@ import contasStyles from '@/styles/admin/financeiro/contas-a-pagar.module.css';
 
 
 import React, { useState, useEffect } from 'react';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { ModalAdicionarConta } from '@/components/modals/ModalAdicionarConta';
+
+function formatarMoeda(valor: string) {
+  // Remove tudo que não for dígito
+  const onlyDigits = valor.replace(/\D/g, '');
+  // Converte para centavos
+  const number = Number(onlyDigits) / 100;
+  if (isNaN(number)) return '';
+  return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
 import { ModalEditarConta } from '@/components/modals/ModalEditarConta';
 
 interface ContaPagar {
@@ -25,6 +35,8 @@ const ContasAPagar = () => {
   const [modalEditOpen, setModalEditOpen] = useState(false);
   const [contaEdit, setContaEdit] = useState<ContaPagar | null>(null);
   const [loading, setLoading] = useState(true);
+  const [modalState, setModalState] = useState<{ isOpen: boolean; onConfirm: () => void }>({ isOpen: false, onConfirm: () => {} });
+  const [contaIdParaExcluir, setContaIdParaExcluir] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchContas = async () => {
@@ -54,12 +66,20 @@ const ContasAPagar = () => {
     .reduce((acc, c) => acc + c.valor, 0);
 
   const removerConta = async (id: string) => {
-    try {
-      await deleteDoc(doc(firestore, 'contasAPagar', id));
-      setContas(prev => prev.filter(c => c.id !== id));
-    } catch (err) {
-      // erro ao remover
-    }
+    setContaIdParaExcluir(id);
+    setModalState({
+      isOpen: true,
+      onConfirm: async () => {
+        try {
+          await deleteDoc(doc(firestore, 'contasAPagar', id));
+          setContas(prev => prev.filter(c => c.id !== id));
+        } catch (err) {
+          // erro ao remover
+        }
+        setModalState({ isOpen: false, onConfirm: () => {} });
+        setContaIdParaExcluir(null);
+      },
+    });
   };
 
   const adicionarConta = async (data: { vencimento: string; fornecedor: string; descricao: string; valor: number; status?: 'Pendente' | 'Pago' }) => {
@@ -219,6 +239,15 @@ const ContasAPagar = () => {
           )}
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={modalState.isOpen}
+        message="Você tem certeza que deseja excluir esta conta a pagar?"
+        onConfirm={modalState.onConfirm}
+        onCancel={() => {
+          setModalState({ isOpen: false, onConfirm: () => {} });
+          setContaIdParaExcluir(null);
+        }}
+      />
     </ProtectedRoute>
   );
 };

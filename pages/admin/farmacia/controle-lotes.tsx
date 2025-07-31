@@ -11,7 +11,11 @@ import modalStyles from '@/styles/admin/farmacia/modalMedicamento.module.css';
 import { ExternalLink, Trash, Undo } from 'lucide-react';
 import { buscarLotes, excluirLote, criarLote, Lote as LoteData } from '@/functions/lotesFunctions';
 import { buscarMedicamentos } from '@/functions/medicamentosFunctions';
-import { buscarDescartesMedicamentos, registrarDescarteMedicamento, excluirDescarteMedicamento, DescarteMedicamento, } from '@/functions/descartesMedicamentosFunctions';
+import { buscarDescartesMedicamentos, registrarDescarteMedicamento, excluirDescarteMedicamento, DescarteMedicamento as BaseDescarteMedicamento, } from '@/functions/descartesMedicamentosFunctions';
+
+interface DescarteMedicamento extends BaseDescarteMedicamento {
+  medicamentoId?: string;
+}
 import { uploadDocumentoMovimentacao } from '@/functions/movimentacoesMedicamentosFunctions';
 import { differenceInCalendarDays } from 'date-fns';
 import { formatDateSafe, parseDate } from '@/utils/dateUtils';
@@ -24,6 +28,7 @@ interface Medicamento {
 }
 
 interface LoteExpirado extends LoteData {
+  id: string;
   medicamentoNome: string;
   diasVencido: number;
   custo: number;
@@ -121,7 +126,6 @@ const ControleLotes = () => {
     const data: DescarteMedicamento = {
       medicamento: discardLote.medicamentoNome,
       medicamentoId: discardLote.medicamentoId || '',
-      loteId: discardLote.id,
       lote: discardLote.numero_lote,
       quantidade: discardQuantidade,
       metodo: discardMetodo,

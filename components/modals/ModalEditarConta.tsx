@@ -21,36 +21,65 @@ interface ModalProps {
 }
 
 export const ModalEditarConta: React.FC<ModalProps> = ({ isOpen, onClose, onSubmit, conta }) => {
+
+  // Função para formatar moeda (R$ 1.000,00)
+  function formatarMoeda(valor: string | number) {
+    if (typeof valor === 'number') {
+      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    const onlyDigits = valor.replace(/\D/g, '');
+    const number = Number(onlyDigits) / 100;
+    if (isNaN(number)) return '';
+    return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
   const [form, setForm] = React.useState({
     vencimento: conta?.vencimento ? conta.vencimento.split('/').reverse().join('-') : '',
     fornecedor: conta?.fornecedor || '',
     descricao: conta?.descricao || '',
-    valor: conta?.valor ? String(conta.valor) : '',
+    valor: conta?.valor !== undefined ? formatarMoeda(conta.valor) : '',
     status: conta?.status || 'Pendente',
   });
 
   React.useEffect(() => {
-    setForm({
-      vencimento: conta?.vencimento ? conta.vencimento.split('/').reverse().join('-') : '',
-      fornecedor: conta?.fornecedor || '',
-      descricao: conta?.descricao || '',
-      valor: conta?.valor ? String(conta.valor) : '',
-      status: conta?.status || 'Pendente',
-    });
-  }, [conta]);
+    if (!isOpen) {
+      setForm({
+        vencimento: '',
+        fornecedor: '',
+        descricao: '',
+        valor: '',
+        status: 'Pendente',
+      });
+    } else {
+      setForm({
+        vencimento: conta?.vencimento ? conta.vencimento.split('/').reverse().join('-') : '',
+        fornecedor: conta?.fornecedor || '',
+        descricao: conta?.descricao || '',
+        valor: conta?.valor !== undefined ? formatarMoeda(conta.valor) : '',
+        status: conta?.status || 'Pendente',
+      });
+    }
+  }, [isOpen, conta]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'valor') {
+      setForm({ ...form, valor: formatarMoeda(value) });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.vencimento || !form.fornecedor || !form.descricao || !form.valor) return;
+    // Extrai o valor numérico da string formatada
+    const valorNumerico = Number(form.valor.replace(/[^\d]/g, '')) / 100;
     onSubmit({
       vencimento: form.vencimento,
       fornecedor: form.fornecedor,
       descricao: form.descricao,
-      valor: Number(form.valor),
+      valor: valorNumerico,
       status: form.status as 'Pendente' | 'Pago',
     });
   };
@@ -76,7 +105,18 @@ export const ModalEditarConta: React.FC<ModalProps> = ({ isOpen, onClose, onSubm
           </label>
           <label className={styles.modalLabel}>
             Valor
-            <input type="number" name="valor" value={form.valor} onChange={handleChange} className={styles.modalInput} required min="0" step="0.01" />
+            <input
+              type="text"
+              name="valor"
+              value={form.valor}
+              onChange={handleChange}
+              className={styles.modalInput}
+              required
+              inputMode="numeric"
+              placeholder="R$ 0,00"
+              maxLength={20}
+              autoComplete="off"
+            />
           </label>
           <label className={styles.modalLabel}>
             Status

@@ -2,6 +2,7 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import despesasStyles from '@/styles/admin/financeiro/despesas.module.css';
 import React, { useState, useEffect } from 'react';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 
@@ -24,18 +25,32 @@ const ModalDespesa = ({ isOpen, onClose, onSubmit, despesa, isEdit }: {
   despesa?: Despesa;
   isEdit?: boolean;
 }) => {
+  // Função para formatar moeda (R$ 1.000,00)
+  function formatarMoeda(valor: string) {
+    const onlyDigits = valor.replace(/\D/g, '');
+    const number = Number(onlyDigits) / 100;
+    if (isNaN(number)) return '';
+    return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
   const [descricao, setDescricao] = useState(despesa?.descricao || '');
   const [categoria, setCategoria] = useState(despesa?.categoria || '');
   const [data, setData] = useState(despesa?.data ? despesa.data.split('/').reverse().join('-') : '');
-  const [valor, setValor] = useState(despesa?.valor || 0);
+  const [valor, setValor] = useState(despesa?.valor !== undefined ? formatarMoeda(String(despesa.valor)) : '');
   const [status, setStatus] = useState<Despesa['status']>(despesa?.status || 'Pendente');
 
   React.useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) {
+      setDescricao('');
+      setCategoria('');
+      setData('');
+      setValor('');
+      setStatus('Pendente');
+    } else {
       setDescricao(despesa?.descricao || '');
       setCategoria(despesa?.categoria || '');
       setData(despesa?.data ? despesa.data.split('/').reverse().join('-') : '');
-      setValor(despesa?.valor || 0);
+      setValor(despesa?.valor !== undefined ? formatarMoeda(String(despesa.valor)) : '');
       setStatus(despesa?.status || 'Pendente');
     }
   }, [isOpen, despesa]);
@@ -45,14 +60,29 @@ const ModalDespesa = ({ isOpen, onClose, onSubmit, despesa, isEdit }: {
     <div className={despesasStyles.modalOverlay}>
       <div className={despesasStyles.modalContent}>
         <div className={despesasStyles.modalTitle}>{isEdit ? 'Editar despesa' : 'Adicionar despesa'}</div>
-        <form className={despesasStyles.modalForm} onSubmit={e => {e.preventDefault(); onSubmit({ descricao, categoria, data, valor, status }); }}>
+        <form className={despesasStyles.modalForm} onSubmit={e => {
+          e.preventDefault();
+          if (valor === '' || Number(valor.replace(/[^\d]/g, '')) === 0) return;
+          // Extrai o valor numérico da string formatada
+          const valorNumerico = Number(valor.replace(/[^\d]/g, '')) / 100;
+          onSubmit({ descricao, categoria, data, valor: valorNumerico, status });
+        }}>
           <input type="text" placeholder="Descrição" value={descricao} onChange={e => setDescricao(e.target.value)} required />
           <select value={categoria} onChange={e => setCategoria(e.target.value)} required>
             <option value="">Categoria</option>
             {categorias.map(cat => <option key={cat} value={cat}>{cat}</option>)}
           </select>
           <input type="date" value={data} onChange={e => setData(e.target.value)} required />
-          <input type="number" min={0} step={0.01} placeholder="Valor" value={valor} onChange={e => setValor(Number(e.target.value))} required />
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="R$ 0,00"
+            value={valor}
+            onChange={e => setValor(formatarMoeda(e.target.value))}
+            required
+            maxLength={20}
+            autoComplete="off"
+          />
           <select value={status} onChange={e => setStatus(e.target.value as Despesa['status'])} required>
             {statusList.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
@@ -75,6 +105,8 @@ const Despesas = () => {
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('');
   const [filtroPeriodo, setFiltroPeriodo] = useState('');
+  const [modalState, setModalState] = useState<{ isOpen: boolean; onConfirm: () => void }>({ isOpen: false, onConfirm: () => {} });
+  const [despesaIdParaExcluir, setDespesaIdParaExcluir] = useState<string | null>(null);
 
   // Inicializa vazio, tudo será criado manualmente pelo usuário
   useEffect(() => {
@@ -154,12 +186,20 @@ const Despesas = () => {
   };
 
   const removerDespesa = async (id: string) => {
-    try {
-      await deleteDoc(doc(firestore, 'despesas', id));
-      setDespesas(prev => prev.filter(d => d.id !== id));
-    } catch (err) {
-      // erro ao remover
-    }
+    setDespesaIdParaExcluir(id);
+    setModalState({
+      isOpen: true,
+      onConfirm: async () => {
+        try {
+          await deleteDoc(doc(firestore, 'despesas', id));
+          setDespesas(prev => prev.filter(d => d.id !== id));
+        } catch (err) {
+          // erro ao remover
+        }
+        setModalState({ isOpen: false, onConfirm: () => {} });
+        setDespesaIdParaExcluir(null);
+      },
+    });
   };
 
   const despesasFiltradas = despesas.filter(d =>
@@ -169,6 +209,10 @@ const Despesas = () => {
     (filtroStatus ? d.status === filtroStatus : true) &&
     (filtroPeriodo ? d.data === filtroPeriodo.split('-').reverse().join('/') : true)
   );
+
+  const totalPago = despesas
+    .filter(d => d.status === 'Paga')
+    .reduce((acc, d) => acc + d.valor, 0);
 
   return (
     <ProtectedRoute>
@@ -199,6 +243,12 @@ const Despesas = () => {
             despesa={despesaEdit || undefined}
             isEdit
           />
+          <div className={despesasStyles.saldoBox}>
+            <span className={despesasStyles.saldoLabel}>Total pago</span>
+            <span className={despesasStyles.saldoValor + ' ' + despesasStyles.saldoNegativo}>
+              -{totalPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </span>
+          </div>
           <div className={despesasStyles.filtrosBox}>
             <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}>
               <option value="">Categoria</option>
@@ -276,6 +326,15 @@ const Despesas = () => {
           </table>
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={modalState.isOpen}
+        message="Você tem certeza que deseja excluir esta despesa?"
+        onConfirm={modalState.onConfirm}
+        onCancel={() => {
+          setModalState({ isOpen: false, onConfirm: () => {} });
+          setDespesaIdParaExcluir(null);
+        }}
+      />
     </ProtectedRoute>
   );
 };
