@@ -14,6 +14,7 @@ const SidebarAdmin = () => {
   const [cadastroOpen, setCadastroOpen] = useState(false);
   const [farmaciaOpen, setFarmaciaOpen] = useState(false);
   const [financeiroOpen, setFinanceiroOpen] = useState(false);
+  const [pacientesOpen, setPacientesOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -48,6 +49,10 @@ const SidebarAdmin = () => {
 
   const toggleFarmacia = () => {
     setFarmaciaOpen((prev) => !prev);
+  };
+
+  const togglePacientes = () => {
+    setPacientesOpen((prev) => !prev);
   };
 
   const toggleFinanceiro = () => {
@@ -132,12 +137,27 @@ const SidebarAdmin = () => {
               <Stethoscope className={styles.icon} color="#fff" style={{ marginTop: 0 }} />
               <span style={{ marginTop: 0 }}>Profissionais</span>
             </Link>
-            <Link href="/admin/pacientes" className={styles.navItem} style={{ marginTop: 0 }}>
+            <button type="button" onClick={togglePacientes} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
               <span className={styles.icon} style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
                 <Users className={styles.icon} style={{ marginTop: 0 }} />
               </span>
               <span style={{ marginTop: 0 }}>Pacientes</span>
-            </Link>
+            {pacientesOpen ? (
+                <ChevronDown className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+              ) : (
+                <ChevronRight className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+              )}
+            </button>
+            {pacientesOpen && (
+              <div className={styles.subNav} style={{ marginTop: 0 }}>
+                <Link href="/admin/pacientes/listapacientes" className={styles.subNavItem}>
+                  Lista de Pacientes
+                </Link>
+                <Link href="/admin/pacientes/paginapaciente" className={styles.subNavItem}>
+                  Pagina do paciente
+                </Link>
+              </div>
+            )}
             <button type="button" onClick={toggleFarmacia} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
               <Pill className={styles.icon} style={{ marginTop: 0 }} />
               <span style={{ marginTop: 0 }}>Farmácia</span>
