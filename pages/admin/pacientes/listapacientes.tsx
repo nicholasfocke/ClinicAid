@@ -4,10 +4,10 @@ import { collection, getDocs, arrayUnion } from 'firebase/firestore';
 import { auth, firestore } from '@/firebase/firebaseConfig';
 import { useRouter } from 'next/router';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
-import styles from '@/styles/admin/pacientes.module.css';
+import styles from '@/styles/admin/pacientes/pacientes.module.css';
 import { ExternalLink } from 'lucide-react';
 import StickyFooter from '@/components/StickyFooter';
-import detailsStyles from '@/styles/admin/pacienteDetails.module.css';
+import detailsStyles from '@/styles/admin/pacientes/pacienteDetails.module.css';
 import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { statusAgendamento } from '@/functions/agendamentosFunction';
 import { atualizarPaciente, excluirPaciente, uploadArquivoPaciente, uploadArquivoPacienteSecao, uploadArquivoTemp,
@@ -717,6 +717,7 @@ const Pacientes = () => {
               <th>TELEFONE</th>
               <th>CONVÊNIO</th>
               <th>NASCIMENTO</th>
+              <th>SEXO</th>
               <th></th>
             </tr>
           </thead>
@@ -729,6 +730,7 @@ const Pacientes = () => {
                 <td>{p.telefone || '-'}</td>
                 <td>{p.convenio || '-'}</td>
                 <td>{p.dataNascimento || '-'}</td>
+                <td>{p.sexo ? p.sexo.charAt(0).toUpperCase() + p.sexo.slice(1) : '-'}</td>
                 <td>
                   <button
                     className={styles.externalLink}
