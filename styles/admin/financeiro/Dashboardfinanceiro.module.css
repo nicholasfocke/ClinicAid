@@ -1,3 +1,11 @@
+.chartWrapperFull {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 350px;
+  margin: 0 auto;
+}
 .container {
   margin-left: 260px;
   padding: 2rem 3rem;

@@ -3,6 +3,7 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/financeiro/financeiro.module.css';
 import receberStyles from '@/styles/admin/financeiro/contas-a-receber.module.css';
 import React, { useState, useEffect } from 'react';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { ModalContaReceber } from '@/components/modals/ModalContaReceber';
@@ -19,6 +20,8 @@ interface ContaReceber {
 const ContasAReceber = () => {
   const [contas, setContas] = useState<ContaReceber[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalState, setModalState] = useState<{ isOpen: boolean; onConfirm: () => void }>({ isOpen: false, onConfirm: () => {} });
+  const [contaIdParaExcluir, setContaIdParaExcluir] = useState<string | null>(null);
   useEffect(() => {
     const fetchContas = async () => {
       setLoading(true);
@@ -109,12 +112,20 @@ const ContasAReceber = () => {
   };
 
   const removerConta = async (id: string) => {
-    try {
-      await deleteDoc(doc(firestore, 'contasAReceber', id));
-      setContas(prev => prev.filter(c => c.id !== id));
-    } catch (err) {
-      // erro ao remover
-    }
+    setContaIdParaExcluir(id);
+    setModalState({
+      isOpen: true,
+      onConfirm: async () => {
+        try {
+          await deleteDoc(doc(firestore, 'contasAReceber', id));
+          setContas(prev => prev.filter(c => c.id !== id));
+        } catch (err) {
+          // erro ao remover
+        }
+        setModalState({ isOpen: false, onConfirm: () => {} });
+        setContaIdParaExcluir(null);
+      },
+    });
   };
 
   const contasFiltradas = contas.filter(c =>
@@ -231,6 +242,15 @@ const ContasAReceber = () => {
           )}
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={modalState.isOpen}
+        message="Você tem certeza que deseja excluir esta conta a receber?"
+        onConfirm={modalState.onConfirm}
+        onCancel={() => {
+          setModalState({ isOpen: false, onConfirm: () => {} });
+          setContaIdParaExcluir(null);
+        }}
+      />
     </ProtectedRoute>
   );
 };

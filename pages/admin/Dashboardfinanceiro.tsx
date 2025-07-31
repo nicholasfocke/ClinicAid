@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { firestore } from '@/firebase/firebaseConfig';
 import { useRouter } from 'next/router';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/firebase/firebaseConfig';
@@ -39,55 +41,127 @@ const DashboardFinanceiro = () => {
     return () => unsubscribe();
   }, [router]);
 
-  const receitaMensal = [6000, 8500, 5000, 10000, 12000, 25000];
-  const despesasMensal = [4000, 6000, 3500, 6500, 7000, 18500];
-  const lucroMensal = receitaMensal.map((v, i) => v - despesasMensal[i]);
+  // Dados reais do Firestore
+  const [receitas, setReceitas] = useState<any[]>([]);
+  const [despesas, setDespesas] = useState<any[]>([]);
+  const [contasPagar, setContasPagar] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-const [meta, setMeta] = useState<number | null>(null);
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      // Contas a receber (receitas)
+      const receitasSnap = await getDocs(collection(firestore, 'contasAReceber'));
+      const receitasList = receitasSnap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      // Contas a pagar
+      const contasPagarSnap = await getDocs(collection(firestore, 'contasAPagar'));
+      const contasPagarList = contasPagarSnap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      // Despesas
+      const despesasSnap = await getDocs(collection(firestore, 'despesas'));
+      const despesasList = despesasSnap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      setReceitas(receitasList);
+      setContasPagar(contasPagarList);
+      setDespesas(despesasList);
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
 
+
+
+// Meta do mês: input controlado, se vazio usa receita
+const [metaInput, setMetaInput] = useState('');
+
+// Carrega meta salva
 useEffect(() => {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('metaMes');
     if (saved !== null) {
-      const value = Number(saved);
-      if (!Number.isNaN(value)) {
-        setMeta(value);
-      }
+      setMetaInput(saved);
     }
   }
 }, []);
 
+// Salva meta manual no localStorage
 useEffect(() => {
   if (typeof window !== 'undefined') {
-    if (meta !== null) {
-      localStorage.setItem('metaMes', String(meta));
+    if (metaInput !== '') {
+      localStorage.setItem('metaMes', metaInput);
     } else {
       localStorage.removeItem('metaMes');
     }
   }
-}, [meta]);
+}, [metaInput]);
 
-const totalReceita = receitaMensal.reduce((a, b) => a + b, 0);
-const totalDespesas = despesasMensal.reduce((a, b) => a + b, 0);
+
+
+// Receita: soma de contas a receber (status Recebido OU Pendente)
+const totalReceita = receitas.reduce((acc, r) => acc + (typeof r.valor === 'number' ? r.valor : 0), 0);
+// Despesas: soma de contas a pagar + despesas
+const totalDespesas = contasPagar.reduce((acc, d) => acc + (typeof d.valor === 'number' ? d.valor : 0), 0)
+  + despesas.reduce((acc, d) => acc + (typeof d.valor === 'number' ? d.valor : 0), 0);
 const totalSaido = totalReceita - totalDespesas;
 
-const porcentagem = meta ? (totalReceita / meta) * 100 : 0;
+const meta = metaInput === '' ? totalReceita : Number(metaInput);
+const porcentagem = meta > 0 ? (totalReceita / meta) * 100 : 0;
+
 
 const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar');
 const [dataType, setDataType] = useState<'both' | 'Receita' | 'Despesas'>('both');
 
+// Agrupamento por mês/ano para gráfico (exemplo: MM/YYYY)
+function agruparPorMesAno(lista: any[], campoData: string) {
+  const agrupado: { [mesAno: string]: number } = {};
+  lista.forEach(item => {
+    let dataStr = item[campoData];
+    if (!dataStr) return;
+    // Aceita formatos dd/mm/yyyy ou yyyy-mm-dd
+    let partes = dataStr.includes('/') ? dataStr.split('/') : dataStr.split('-').reverse();
+    let mesAno = `${partes[1]}/${partes[2]}`;
+    agrupado[mesAno] = (agrupado[mesAno] || 0) + (typeof item.valor === 'number' ? item.valor : 0);
+  });
+  return agrupado;
+}
+
+const receitasPorMes = agruparPorMesAno(receitas, 'vencimento');
+const contasPagarPorMes = agruparPorMesAno(contasPagar, 'vencimento');
+const despesasPorMes = agruparPorMesAno(despesas, 'data');
+
+// Meses presentes nos dados
+const meses = Array.from(new Set([
+  ...Object.keys(receitasPorMes),
+  ...Object.keys(contasPagarPorMes),
+  ...Object.keys(despesasPorMes),
+])).sort((a, b) => {
+  // Ordena por ano/mês
+  const [ma, aa] = a.split('/').map(Number);
+  const [mb, ab] = b.split('/').map(Number);
+  return aa !== ab ? aa - ab : ma - mb;
+});
+
+const receitaMensal = meses.map(m => receitasPorMes[m] || 0);
+const despesasMensal = meses.map(m => (contasPagarPorMes[m] || 0) + (despesasPorMes[m] || 0));
+const lucroMensal = meses.map((_, i) => receitaMensal[i] - despesasMensal[i]);
+
+
   const baseChartData = {
-    labels: ['15/04', '23/04', '25/04', '05/04', '15/04', '31/04'],
+    labels: meses,
     datasets: [
       {
         label: 'Receita',
         data: receitaMensal,
         backgroundColor: '#3b82f6',
+        borderColor: '#3b82f6',
+        fill: false,
+        tension: 0.4,
       },
       {
         label: 'Despesas',
         data: despesasMensal,
         backgroundColor: '#f97316',
+        borderColor: '#f97316',
+        fill: false,
+        tension: 0.4,
       },
     ],
   };
@@ -124,15 +198,45 @@ const [dataType, setDataType] = useState<'both' | 'Receita' | 'Despesas'>('both'
         position: 'bottom' as const,
       },
     },
+    scales: {
+    y: {
+      beginAtZero: true,
+      max: 100000 // Altere para o valor máximo desejado
+    }
+  }
   };
 
+
+  // Transações recentes: últimas 10 de receitas, contas a pagar e despesas
   const transacoesRecentes = [
-    { data: '05/04/2024', descricao: 'Pagamento de consulta', categoria: 'Receita', valor: 150 },
-    { data: '03/04/2024', descricao: 'Compra de suprimentos', categoria: 'Despesas', valor: -250 },
-    { data: '29/03/2024', descricao: 'Pagamento de aluguel', categoria: 'Despesas', valor: -4000 },
-    { data: '28/03/2024', descricao: 'Consulta de retorno', categoria: 'Receita', valor: 250 },
-    { data: '26/03/2024', descricao: 'Pagamento laboratório', categoria: 'Despesas', valor: -600 },
-  ];
+    ...receitas.map(r => ({
+      data: r.vencimento || '',
+      descricao: r.descricao || r.cliente || '',
+      categoria: 'Receita',
+      valor: typeof r.valor === 'number' ? r.valor : 0,
+    })),
+    ...contasPagar.map(d => ({
+      data: d.vencimento || '',
+      descricao: d.descricao || d.fornecedor || '',
+      categoria: 'Conta a Pagar',
+      valor: typeof d.valor === 'number' ? -d.valor : 0,
+    })),
+    ...despesas.map(d => ({
+      data: d.data || '',
+      descricao: d.descricao || '',
+      categoria: 'Despesa',
+      valor: typeof d.valor === 'number' ? -d.valor : 0,
+    })),
+  ]
+    .sort((a, b) => {
+      // Ordena por data (mais recente primeiro)
+      const [da, ma, aa] = a.data.includes('/') ? a.data.split('/').map(Number) : [0, 0, 0];
+      const [db, mb, ab] = b.data.includes('/') ? b.data.split('/').map(Number) : [0, 0, 0];
+      const dateA = new Date(aa, ma - 1, da).getTime();
+      const dateB = new Date(ab, mb - 1, db).getTime();
+      return dateB - dateA;
+    })
+    .slice(0, 10);
 
   return (
     <div className={styles.container}>
@@ -153,26 +257,26 @@ const [dataType, setDataType] = useState<'both' | 'Receita' | 'Despesas'>('both'
             <TrendingUp color="#22c55e" size={18} />
             <span>Receita</span>
           </div>
-          <strong>{totalReceita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
+          <strong>{loading ? '...' : totalReceita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
         </div>
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <TrendingDown color="#ef4444" size={18} />
             <span>Despesas</span>
           </div>
-          <strong>{totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
+          <strong>{loading ? '...' : totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
         </div>
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <DollarSign color="#3b82f6" size={18} />
-            <span>Saído</span>
+            <span>Saldo</span>
           </div>
-          <strong>{totalSaido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
+          <strong>{loading ? '...' : totalSaido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
         </div>
       </div>
 
       <div className={styles.chartSection}>
-        <h3>Receita e Despesas - Últimos 30 Dias</h3>
+        <h3>Receita e Despesas - Últimos Meses</h3>
         <div className={styles.chartTypeButtons}>
           <button
             className={`${styles.chartTypeButton} ${
@@ -227,83 +331,75 @@ const [dataType, setDataType] = useState<'both' | 'Receita' | 'Despesas'>('both'
         </div>
         {chartType === 'bar' && <Bar data={chartData} options={chartOptions} />}
         {chartType === 'line' && <Line data={chartData} options={chartOptions} />}
-       {chartType === 'pie' && (
-        <div className={styles.chartWrapper}>
-          <Pie data={pieChartData} />
-        </div>
-      )}
-      </div>
-      <div className={styles.chartSection}>
-      <h3>Evolução financeira</h3>
-      <Line
-        data={{
-          labels: ['15/04', '23/04', '25/04', '05/04', '15/04', '31/04'],
-          datasets: [
-            {
-              label: 'Receita Bruta',
-              data: receitaMensal,
-              borderColor: '#3b82f6',
-              backgroundColor: '#3b82f6',
-              fill: false,
-              tension: 0.4,
-            },
-            {
-              label: 'Despesas',
-              data: despesasMensal,
-              borderColor: '#f97316',
-              backgroundColor: '#f97316',
-              fill: false,
-              tension: 0.4,
-            },
-            {
-              label: 'Lucro Líquido',
-              data: lucroMensal,
-              borderColor: '#22c55e',
-              backgroundColor: '#22c55e',
-              fill: false,
-              tension: 0.4,
-            },
-          ],
-        }}
-        options={{
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'bottom',
-            },
-          },
-        }}
-      />
-    </div>
-      <div className={styles.metaMes}>
-      <h3>Meta do mês:</h3>
-      <div className={styles.metaWrapper}>
-        <input
-          type="number"
-          className={styles.metaInput}
-          placeholder="Defina a meta"
-          min={0}
-          value={meta ?? ''}
-          onChange={(e) =>
-            setMeta(e.target.value === '' ? null : Number(e.target.value))
-          }
-        />
-        <span>
-          {meta !== null ? `R$ ${meta.toLocaleString('pt-BR')}` : 'Sem meta'}
-        </span>
-      </div>
-      <div className={styles.progressoTexto}>
-          {meta !== null && (
-          <>Realizado: R$ {totalReceita.toLocaleString('pt-BR')} ({porcentagem.toFixed(0)}%)</>
+        {chartType === 'pie' && (
+          <div className={styles.chartWrapper}>
+            <Pie data={pieChartData} />
+          </div>
         )}
       </div>
-      <div className={styles.progressBar}>
-        <div
-          className={styles.progressBarInner}
-          style={{ width: meta !== null ? `${Math.min(porcentagem, 100)}%` : '0%' }}
-        />
+      <div className={styles.chartSection}>
+        <h3>Evolução financeira</h3>
+        <div className={styles.chartWrapperFull}>
+          <Line
+            data={{
+              labels: meses,
+              datasets: [
+                {
+                  label: 'Receita Bruta',
+                  data: receitaMensal,
+                  borderColor: '#3b82f6',
+                  backgroundColor: '#3b82f6',
+                  fill: false,
+                  tension: 0.4,
+                },
+                {
+                  label: 'Despesas',
+                  data: despesasMensal,
+                  borderColor: '#f97316',
+                  backgroundColor: '#f97316',
+                  fill: false,
+                  tension: 0.4,
+                },
+                {
+                  label: 'Lucro Líquido',
+                  data: lucroMensal,
+                  borderColor: '#22c55e',
+                  backgroundColor: '#22c55e',
+                  fill: false,
+                  tension: 0.4,
+                },
+              ],
+            }}
+            options={chartOptions}
+          />
+        </div>
       </div>
-    </div>
+      <div className={styles.metaMes}>
+        <h3>Meta do mês:</h3>
+        <div className={styles.metaWrapper}>
+          <input
+            type="number"
+            className={styles.metaInput}
+            placeholder="Defina a meta ou deixe em branco para usar o faturamento"
+            min={0}
+            value={metaInput}
+            onChange={e => setMetaInput(e.target.value)}
+          />
+          <span>
+            {`R$ ${meta.toLocaleString('pt-BR')}`}
+            {metaInput === '' && <span style={{ color: '#888', marginLeft: 8 }}>(usando faturamento)</span>}
+          </span>
+        </div>
+        <div className={styles.progressoTexto}>
+          <>Realizado: R$ {totalReceita.toLocaleString('pt-BR')} ({porcentagem.toFixed(0)}%)</>
+        </div>
+        <div className={styles.progressBar}>
+          <div
+            className={styles.progressBarInner}
+            style={{ width: meta > 0 ? `${Math.min(porcentagem, 100)}%` : '0%' }}
+          />
+        </div>
+      </div>
       <div className={styles.transacoes}>
         <h3>Transações Recentes</h3>
         <table>
