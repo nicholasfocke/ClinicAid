@@ -29,12 +29,14 @@ interface Agendamento {
   usuarioId: string;
   convenio?: string;
   procedimento?: string;
+  especialidade?: string;
 }
 
 interface Profissional {
   id: string;
   nome: string;
   empresaId: string;
+  especialidade?: string;
 }
 
 const Agendamentos = () => {
@@ -111,6 +113,8 @@ const Agendamentos = () => {
       querySnapshot.forEach((doc) => {
         const agendamentoData = doc.data();
         if (!agendamentoData.data || !agendamentoData.hora) return;
+        const profData = profissionais.find(p => p.nome === agendamentoData.profissional);
+        const especialidade = profData?.especialidade || '';
         fetchedAgendamentos.push({
           id: doc.id,
           data: agendamentoData.data,
@@ -121,7 +125,8 @@ const Agendamentos = () => {
           detalhes: agendamentoData.detalhes || '',
           usuarioId: agendamentoData.usuarioId || '',
           convenio: agendamentoData.convenio || '',
-          procedimento: agendamentoData.procedimento || '',
+          procedimento: agendamentoData.procedimento || especialidade,
+          especialidade,
         });
       });
       setAgendamentos(fetchedAgendamentos);
@@ -151,7 +156,7 @@ const Agendamentos = () => {
 
   useEffect(() => {
     fetchAgendamentosSemana();
-  }, [user, currentWeekStart, selectedProfissional]);
+  }, [user, currentWeekStart, selectedProfissional, profissionais]);
 
   useEffect(() => {
     const fetchProfissionais = async () => {
@@ -161,6 +166,7 @@ const Agendamentos = () => {
         id: doc.id,
         nome: doc.data().nome,
         empresaId: doc.data().empresaId,
+        especialidade: doc.data().especialidade || '',
       }));
       setProfissionais(profs);
     };
@@ -776,7 +782,7 @@ const Agendamentos = () => {
           )
           .map(ag => ({
             ...ag,
-            procedimento: ag.procedimento ?? '',
+            procedimento: ag.procedimento ?? ag.especialidade ?? '',
           }))}
       />
 

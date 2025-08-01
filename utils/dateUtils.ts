@@ -4,6 +4,8 @@ export const parseDate = (dateStr: string): Date | null => {
   if (!dateStr) return null;
   let d = parse(dateStr, 'yyyy-MM-dd', new Date());
   if (!isNaN(d.getTime())) return d;
+  d = parse(dateStr, 'dd/MM/yyyy', new Date());
+  if (!isNaN(d.getTime())) return d;
   d = parseISO(dateStr);
   if (!isNaN(d.getTime())) return d;
   d = new Date(dateStr);

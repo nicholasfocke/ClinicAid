@@ -6,7 +6,9 @@ import { auth } from '@/firebase/firebaseConfig';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/pacientes/paginapaciente.module.css';
 import { buscarPacientesComDetalhes, PacienteDetails, buscarPacientePorId, } from '@/functions/pacientesFunctions';
-import { User, Calendar, Phone, FileText } from 'lucide-react'
+import { User, Calendar, Phone, FileText, Stethoscope } from 'lucide-react'
+import { format as formatDateFns, parse as parseDateFns } from 'date-fns'
+import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
 
 type Tab =
   | 'resumo'
@@ -23,7 +25,17 @@ const PaginaPaciente = () => {
   const [query, setQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedPaciente, setSelectedPaciente] = useState<any | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('resumo');
+
+  const statusClassMap: Record<string, string> = {
+    agendado: styles.statusAgendado,
+    confirmado: styles.statusConfirmado,
+    cancelado: styles.statusCancelado,
+    'concluído': styles.statusConcluido,
+    pendente: styles.statusPendente,
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, currentUser => {
@@ -58,6 +70,16 @@ const PaginaPaciente = () => {
     } catch (err) {
       console.error('Erro ao buscar paciente', err);
     }
+  };
+  
+  const openDetails = (ag: any) => {
+    setSelectedAppointment(ag);
+    setDetailsOpen(true);
+  };
+
+  const closeDetails = () => {
+    setSelectedAppointment(null);
+    setDetailsOpen(false);
   };
 
   if (!user) return <p>Carregando...</p>;
@@ -241,7 +263,7 @@ const PaginaPaciente = () => {
                       <ul className={styles.infoList}>
                         <li><strong>Nome Completo:</strong> {selectedPaciente.nome}</li>
                         <li><strong>Sexo:</strong> {selectedPaciente.sexo}</li>
-                        <li><strong>Idade:</strong> {selectedPaciente.idade || '-'} anos</li>
+                        <li><strong>Idade:</strong> {selectedPaciente.idade} anos</li>
                         <li><strong>Data de Nascimento:</strong> {selectedPaciente.dataNascimento || "Não informado"}</li>
                         <li><strong>Telefone:</strong> {selectedPaciente.telefone || "Não informado"}</li>
                         <li><strong>Email:</strong> {selectedPaciente.email || "Não informado"}</li>
@@ -282,11 +304,43 @@ const PaginaPaciente = () => {
             {activeTab === 'agendamentos' && (
               <div>
                 {selectedPaciente.agendamentos && selectedPaciente.agendamentos.length > 0 ? (
-                  <ul>
-                    {selectedPaciente.agendamentos.map((a: any, idx: number) => (
-                      <li key={idx}>{a.data} - {a.status}</li>
-                    ))}
-                  </ul>
+                  [...selectedPaciente.agendamentos]
+                    .sort((a: any, b: any) => {
+                      const da = a.data ? (a.data.includes('-') ? parseDateFns(a.data, 'yyyy-MM-dd', new Date()) : parseDateFns(a.data, 'dd/MM/yyyy', new Date())) : new Date(0);
+                      const db = b.data ? (b.data.includes('-') ? parseDateFns(b.data, 'yyyy-MM-dd', new Date()) : parseDateFns(b.data, 'dd/MM/yyyy', new Date())) : new Date(0);
+                      if (da.getTime() !== db.getTime()) return da.getTime() - db.getTime();
+                      if (a.hora && b.hora) {
+                        return a.hora.localeCompare(b.hora);
+                      }
+                      return 0;
+                    })
+                    .map((a: any, idx: number) => (
+                      <div key={idx} className={styles.agendamentoCard}>
+                        <div className={styles.agendamentoHeader}>
+                          <span>
+                            {(() => {
+                              try {
+                                const parsed = a.data.includes('-')
+                                  ? parseDateFns(a.data, 'yyyy-MM-dd', new Date())
+                                  : parseDateFns(a.data, 'dd/MM/yyyy', new Date());
+                                return `${formatDateFns(parsed, 'dd/MM/yyyy')} · ${a.hora || ''}`.trim();
+                              } catch {
+                                return `${a.data} ${a.hora || ''}`.trim();
+                              }
+                            })()}{' '}
+                            <span className={`${styles.statusBadge} ${statusClassMap[a.status] || styles.statusAgendado}`}>{a.status}</span>
+                          </span>
+                        </div>
+                        <div className={styles.agendamentoInfo}>
+                          <p><User size={19} strokeWidth={3} /> {a.profissional}</p>
+                          {a.especialidade && <p><Stethoscope size={19} strokeWidth={3} /> Especialidade: {a.especialidade}</p>}
+                          {a.procedimento && <p><FileText size={19} strokeWidth={3} /> Procedimento: {a.procedimento}</p>}
+                        </div>
+                        <button className={styles.detailsButton} type="button" onClick={() => openDetails(a)}>
+                          Ver detalhes
+                        </button>
+                      </div>
+                    ))
                 ) : (
                   <p>Nenhum agendamento.</p>
                 )}
@@ -324,6 +378,12 @@ const PaginaPaciente = () => {
           </div>
         )}
       </div>
+      <AppointmentDetailsModal
+        appointment={selectedAppointment}
+        isOpen={detailsOpen}
+        onClose={closeDetails}
+        readOnly
+      />
     </ProtectedRoute>
   );
 }

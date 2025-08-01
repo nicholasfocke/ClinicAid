@@ -314,3 +314,88 @@
   width: 1px;
   background-color: #e5e7eb;
 }
+
+/* === Agendamentos === */
+.agendamentoCard {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.agendamentoHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.agendamentoInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #34363c;
+  margin-bottom: 0.75rem;
+  font-weight: 550;
+}
+
+.agendamentoInfo p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detailsButton {
+  align-self: flex-end;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.detailsButton:hover {
+  background: #16285f;
+}
+
+.statusBadge {
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  padding: 2px 8px;
+  display: inline-block;
+}
+
+.statusAgendado {
+  background: #dbeafe;
+  color: #3b82f6;
+}
+
+.statusConfirmado {
+  background: #d1fae5;
+  color: #22c55e;
+}
+
+.statusCancelado {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.statusConcluido {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.statusPendente {
+  background: #fef3c7;
+  color: #d97706;
+}
