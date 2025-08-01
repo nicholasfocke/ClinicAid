@@ -1,23 +1,405 @@
+/* Container geral da página */
 .container {
   margin-left: 260px;
-  padding: 2rem 3rem;
-  max-width: calc(100% - 260px - 3rem);
-  min-height: 80vh;
-  background-color: #f3f4f6;
+  padding: 2rem;
+  background: #f9fafb;   /* cinza muito claro */
+  min-height: 90vh;
+}
+
+/* Top bar (título + botão) */
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
 }
 
 .title {
-  font-size: 2.25rem;
-  font-weight: 800;
+  margin: 0;
+  font-size: 2rem;
   color: #111827;
-  margin: 18px 0 0 0;
-  letter-spacing: -1px;
-  text-align: left;
 }
 
-.subtitlePacientes {
-  font-size: 1rem;
-  font-weight: 400;
+.searchButton {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 8px;
+}
+.searchButton:hover {
+  background-color: #16285f;
+}
+
+/* Card que engloba abas + conteúdo */
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Barra de tabs: linha contínua cinza */
+.tabBar {
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Cada botão de tab */
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 0.75rem 0;
+  background: none;
+  border: none;
+  color: #374151;
+  position: relative;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+/* Linha e texto ao passar o mouse */
+
+.tab:hover {
+  color: #3b82f6;
+}
+.tab:hover::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #3b82f6;
+}
+
+/* Aba ativa */
+.activeTab {
+  color: #3b82f6;
+}
+.activeTab::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #3b82f6;
+}
+
+/* Conteúdo interno do card */
+.tabContent {
+  padding: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 1.55rem;      
+  font-weight: 600;
+  line-height: 1;
+  color: #303190;  
+}
+
+/* Lista de itens com divisores suaves */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.listItem {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+.listItem:last-child {
+  border-bottom: none;
+}
+
+/* Cabeçalho do Resumo */
+.resumoHeader {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Estado vazio para abas sem conteúdo */
+.emptyState {
+  text-align: center;
+  color: #9ca3af;
+  padding: 2rem 0;
+  font-style: italic;
+}
+
+/* Breadcrumbs */
+.breadcrumbWrapper {
+  margin-bottom: 1rem;
+}
+.breadcrumb {
   color: #6b7280;
-  margin: 0.1rem 0 2rem 0;
+}
+.breadcrumbActive {
+  color: #111827;
+  font-weight: 600;
+}
+
+/* Legenda quando não há paciente selecionado */
+.subtitlePacientes {
+  color: #6b7280;
+  text-align: center;
+  margin-top: 3rem;
+}
+
+/* Modal de busca */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modalBox {
+  background: #fff;
+  border-radius: 8px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
+}
+.searchInput {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+.patientList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.patientItem {
+  padding: 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid #e5e7eb;
+}
+.patientItem:hover {
+  background: #f3f4f6;
+}
+
+/* === Resumo – Cabeçalho (foto + dados) === */
+.resumoHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.resumoHeader .avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.resumoInfo {
+  align-items: center;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.resumoInfo h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #3b82f6;
+}
+.resumoInfo p {
+  margin: 0.25rem 0;
+  color: #4b5563;
+}
+.resumoSections {
+  display: flex;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.resumoSection {
+  flex: 1;
+}
+
+.basicCard {
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.whiteCard {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  flex: 1;
+  min-height: 280px;
+}
+
+/* container geral de histórico, se quiser dois ao lado do outro, use grid ou flex-wrap */
+.historyGrid {
+  display: grid;
+  flex-wrap: wrap; 
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 2.7rem 1.5rem;
+}
+
+/* cada item (valor + legenda) */
+.historyItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* alinha ao início, não ao centro */
+  gap: 0.25rem;
+}
+
+/* legenda (baixo do número) */
+.historyLabel {
+  font-size: 0.875rem;     /* texto menor */
+  font-weight: 400;
+  color: #6b6b6b;          /* tom de cinza */
+  text-transform: lowercase; /* se quiser tudo minúsculo */
+}
+
+/* container principal: coluna */
+.basicInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+/* linha de topo: avatar + nome */
+.basicInfoHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* avatar */
+.basicInfoHeader .avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* nome ao lado do avatar */
+.basicInfoHeader h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* bloco de detalhes fica abaixo, em coluna */
+.basicInfoDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-left: 100px;
+}
+
+/* cada linha de detalhe com ícone + texto */
+.basicInfoDetails p {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+/* ícones num tom neutro */
+.basicInfoDetails p svg {
+  flex-shrink: 0;
+  color: #6b7280;
+}
+
+/* === Listas com divisores suaves === */
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.listItem {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+.listItem:last-child {
+  border-bottom: none;
+}
+/* Status colorido (opcional) */
+.status-realizado { color: #10B981; }
+.status-cancelado { color: #EF4444; }
+
+/* === Estado vazio específico para Resumo === */
+.emptyState {
+  text-align: center;
+  color: #9ca3af;
+  padding: 2rem 0;
+  font-style: italic;
+}
+
+/* === Aba Informacoes === */
+.infoTab {
+  margin-top: 2rem;
+}
+
+.infoList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.infoList li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.infoList li:last-child {
+  border-bottom: none;
+}
+
+/* layout para a aba de Informações */
+.infoLayout {
+  display: flex;
+  gap: 24px;
+}
+
+.basicInfoSection,
+.addressSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.divider {
+  width: 1px;
+  background-color: #e5e7eb;
 }

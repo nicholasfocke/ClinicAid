@@ -45,6 +45,7 @@ interface Lote {
   validade: string;
   medicamentoId?: string;
   custo_unitario: number;
+  status?: string;
 }
 
 const Movimentacoes = () => {
@@ -88,7 +89,7 @@ const Movimentacoes = () => {
         {formatDateSafe(l.validade, 'dd/MM/yyyy')}
         <span
           className={tableStyles.statusCircle}
-          style={{ background: getStatusColor(l.status) }}
+          style={{ background: getStatusColor(l.status || '') }}
           title={l.status}
         ></span>
       </>

@@ -24,6 +24,7 @@ interface Medicamento {
 }
 
 interface LoteExpirado extends LoteData {
+  id: string;
   medicamentoNome: string;
   diasVencido: number;
   custo: number;
