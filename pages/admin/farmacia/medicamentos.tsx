@@ -537,14 +537,17 @@ const Medicamentos = () => {
   };
 
   const deleteSelected = async () => {
-    const confirm = window.confirm(
-      "Deseja excluir os medicamentos selecionados?",
-    );
-    if (!confirm) return;
-    for (const id of selectedIds) {
-      await excluirMedicamento(id);
-    }
-    setMedicamentos((prev) => prev.filter((m) => !selectedIds.includes(m.id)));
+    const confirmAction = async () => {
+      for (const id of selectedIds) {
+        await excluirMedicamento(id);
+      }
+      setMedicamentos((prev) => prev.filter((m) => !selectedIds.includes(m.id)));
+      setModalState({ isOpen: false, onConfirm: () => {} });
+    };
+    setModalState({
+      isOpen: true,
+      onConfirm: confirmAction,
+    });
   };
 
   const openLoteModal = (medId: string) => {
@@ -680,8 +683,6 @@ const Medicamentos = () => {
     const data: DescarteMedicamento = {
       medicamento:
       medicamentos.find((m) => m.id === discardMedId)?.nome_comercial || '',
-      medicamentoId: discardMedId,
-      loteId: discardLote.id,
       lote: discardLote.numero_lote,
       quantidade: discardQuantidade,
       metodo: discardMetodo,
@@ -1581,7 +1582,7 @@ const Medicamentos = () => {
                 <div className={detailsStyles.buttons}>
                   <button
                     className={detailsStyles.buttonExcluir}
-                      onClick={() => {
+                    onClick={() => {
                       setModalState({
                         isOpen: true,
                         onConfirm: async () => {

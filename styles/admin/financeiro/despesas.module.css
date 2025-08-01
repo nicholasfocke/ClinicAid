@@ -1,3 +1,21 @@
+.saldoBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.saldoLabel {
+  font-size: 1.7rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+.saldoValor {
+  font-size: 2.0rem;
+  font-weight: 700;
+}
+.saldoNegativo {
+  color: #e53935;
+}
 .acoesTd {
   display: flex;
   gap: 16px;
