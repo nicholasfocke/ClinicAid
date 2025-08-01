@@ -97,9 +97,6 @@
 }
 
 /* Conteúdo interno do card */
-.tabContent {
-  padding: 1.5rem;
-}
 
 .sectionTitle {
   font-size: 1.55rem;      
@@ -122,13 +119,6 @@
   border-bottom: none;
 }
 
-/* Cabeçalho do Resumo */
-.resumoHeader {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-}
 .avatar {
   width: 96px;
   height: 96px;
@@ -136,24 +126,13 @@
   object-fit: cover;
 }
 
+
 /* Estado vazio para abas sem conteúdo */
 .emptyState {
   text-align: center;
   color: #9ca3af;
   padding: 2rem 0;
   font-style: italic;
-}
-
-/* Breadcrumbs */
-.breadcrumbWrapper {
-  margin-bottom: 1rem;
-}
-.breadcrumb {
-  color: #6b7280;
-}
-.breadcrumbActive {
-  color: #111827;
-  font-weight: 600;
 }
 
 /* Legenda quando não há paciente selecionado */
@@ -205,37 +184,6 @@
   background: #f3f4f6;
 }
 
-/* === Resumo – Cabeçalho (foto + dados) === */
-.resumoHeader {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-.resumoHeader .avatar {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.resumoInfo {
-  align-items: center;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.resumoInfo h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #3b82f6;
-}
-.resumoInfo p {
-  margin: 0.25rem 0;
-  color: #4b5563;
-}
 .resumoSections {
   display: flex;
   gap: 2rem;
@@ -246,11 +194,6 @@
   flex: 1;
 }
 
-.basicCard {
-  background: #f3f4f6;
-  border-radius: 8px;
-  padding: 1rem;
-}
 
 .whiteCard {
   background: #fff;
@@ -300,13 +243,6 @@
   gap: 1rem;
 }
 
-/* avatar */
-.basicInfoHeader .avatar {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  object-fit: cover;
-}
 
 /* nome ao lado do avatar */
 .basicInfoHeader h2 {
@@ -338,31 +274,6 @@
 .basicInfoDetails p svg {
   flex-shrink: 0;
   color: #6b7280;
-}
-
-/* === Listas com divisores suaves === */
-.list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.listItem {
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #e5e7eb;
-}
-.listItem:last-child {
-  border-bottom: none;
-}
-/* Status colorido (opcional) */
-.status-realizado { color: #10B981; }
-.status-cancelado { color: #EF4444; }
-
-/* === Estado vazio específico para Resumo === */
-.emptyState {
-  text-align: center;
-  color: #9ca3af;
-  padding: 2rem 0;
-  font-style: italic;
 }
 
 /* === Aba Informacoes === */
@@ -402,4 +313,89 @@
 .divider {
   width: 1px;
   background-color: #e5e7eb;
+}
+
+/* === Agendamentos === */
+.agendamentoCard {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.agendamentoHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.agendamentoInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #34363c;
+  margin-bottom: 0.75rem;
+  font-weight: 550;
+}
+
+.agendamentoInfo p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detailsButton {
+  align-self: flex-end;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.detailsButton:hover {
+  background: #16285f;
+}
+
+.statusBadge {
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  padding: 2px 8px;
+  display: inline-block;
+}
+
+.statusAgendado {
+  background: #dbeafe;
+  color: #3b82f6;
+}
+
+.statusConfirmado {
+  background: #d1fae5;
+  color: #22c55e;
+}
+
+.statusCancelado {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.statusConcluido {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.statusPendente {
+  background: #fef3c7;
+  color: #d97706;
 }

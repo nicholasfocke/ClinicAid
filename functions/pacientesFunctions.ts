@@ -163,12 +163,28 @@ export const buscarPacientePorId = async (id: string): Promise<any | null> => {
   if (!snap.exists()) return null;
   const data = snap.data() as any;
   let idade: number | undefined;
-  if (data.dataNascimento) {
-    const birth = parseDate(data.dataNascimento);
+  if(data.dataNascimento) {
+    let birth: Date | undefined = undefined;
+    if(typeof(data.dataNascimento as any).toDate === 'function') {
+      birth = (data.dataNascimento as any).toDate();
+    }
+    else if(data.dataNascimento instanceof Date) {
+      birth = data.dataNascimento;
+    }
+    else {
+      birth = parseDate(data.dataNascimento as string) || undefined;
+    }
+
     if (birth) {
       idade = differenceInYears(new Date(), birth);
     }
-  }
+  }  
+  // if (data.dataNascimento) {
+  //   const birth = parseDate(data.dataNascimento);
+  //   if (birth) {
+  //     idade = differenceInYears(new Date(), birth);
+  //   }
+  // }
   const numAgendamentos = Array.isArray(data.agendamentos)
     ? data.agendamentos.length
     : 0;
