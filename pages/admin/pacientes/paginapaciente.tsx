@@ -241,7 +241,7 @@ const PaginaPaciente = () => {
                       <ul className={styles.infoList}>
                         <li><strong>Nome Completo:</strong> {selectedPaciente.nome}</li>
                         <li><strong>Sexo:</strong> {selectedPaciente.sexo}</li>
-                        <li><strong>Idade:</strong> {selectedPaciente.idade} anos</li>
+                        <li><strong>Idade:</strong> {selectedPaciente.idade || '-'} anos</li>
                         <li><strong>Data de Nascimento:</strong> {selectedPaciente.dataNascimento || "Não informado"}</li>
                         <li><strong>Telefone:</strong> {selectedPaciente.telefone || "Não informado"}</li>
                         <li><strong>Email:</strong> {selectedPaciente.email || "Não informado"}</li>

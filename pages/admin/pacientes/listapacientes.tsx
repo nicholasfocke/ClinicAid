@@ -822,10 +822,10 @@ const Pacientes = () => {
                   onChange={handleNewChange}
                 >
                   <option value="">Selecione o sexo</option>
-                  <option value="masculino">Masculino</option>
-                  <option value="feminino">Feminino</option>
-                  <option value="outro">Outro</option>
-                  <option value="prefiro não informar">Prefiro não informar</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Feminino">Feminino</option>
+                  <option value="Outro">Outro</option>
+                  <option value="Prefiro não informar">Prefiro não informar</option>
                 </select>
                 <label className={modalStyles.label}>Foto</label>
                 <input type="file" accept="image/*" onChange={handleFotoChange} />
