@@ -1,18 +1,331 @@
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
+import { auth } from '@/firebase/firebaseConfig';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/pacientes/paginapaciente.module.css';
+import { buscarPacientesComDetalhes, PacienteDetails, buscarPacientePorId, } from '@/functions/pacientesFunctions';
+import { User, Calendar, Phone, FileText } from 'lucide-react'
 
-export default function PaginaPaciente() {
+type Tab =
+  | 'resumo'
+  | 'info'
+  | 'prontuario'
+  | 'conversas'
+  | 'documentos'
+  | 'agendamentos';
+
+const PaginaPaciente = () => {
+  const router = useRouter();
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [pacientes, setPacientes] = useState<PacienteDetails[]>([]);
+  const [query, setQuery] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [selectedPaciente, setSelectedPaciente] = useState<any | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('resumo');
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, currentUser => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        router.push('/auth/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const docs = await buscarPacientesComDetalhes();
+        const sorted = docs.sort((a, b) => a.nome.localeCompare(b.nome));
+        setPacientes(sorted);
+      } catch (err) {
+        console.error('Erro ao buscar pacientes', err);
+      }
+    })();
+  }, [user]);
+
+  const selectPaciente = async (id: string) => {
+    try {
+      const doc = await buscarPacientePorId(id);
+      setSelectedPaciente(doc);
+      setActiveTab('resumo');
+      setShowModal(false);
+    } catch (err) {
+      console.error('Erro ao buscar paciente', err);
+    }
+  };
+
+  if (!user) return <p>Carregando...</p>;
+
   return (
     <ProtectedRoute>
       <div className={styles.container}>
         <div className={breadcrumbStyles.breadcrumbWrapper}>
           <span className={breadcrumbStyles.breadcrumb}>Menu Principal &gt; </span>
-          <span className={breadcrumbStyles.breadcrumbActive}>Pagina do paciente</span>
+          <span className={breadcrumbStyles.breadcrumbActive}>Página do paciente</span>
         </div>
-        <h1 className={styles.title}>Pagina do paciente</h1>
-        <div className={styles.subtitlePacientes}>Gerencie informações sobre os pacientes.</div>
+        <div className={styles.topBar}>
+          <h1 className={styles.title}>Página do paciente</h1>
+          <button className={styles.searchButton} onClick={() => setShowModal(true)}>
+            Buscar paciente
+          </button>
+        </div>
+        {selectedPaciente ? (
+          <>
+            <div className={styles.tabBar}>
+              <button
+                className={`${styles.tab} ${activeTab === 'resumo' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('resumo')}
+              >
+                Resumo
+              </button>
+              <button
+                className={`${styles.tab} ${activeTab === 'info' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('info')}
+              >
+                Informações
+              </button>
+              <button
+                className={`${styles.tab} ${activeTab === 'prontuario' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('prontuario')}
+              >
+                Prontuário
+              </button>
+              <button
+                className={`${styles.tab} ${activeTab === 'conversas' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('conversas')}
+              >
+                Conversas IA
+              </button>
+              <button
+                className={`${styles.tab} ${activeTab === 'documentos' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('documentos')}
+              >
+                Documentos
+              </button>
+              <button
+                className={`${styles.tab} ${activeTab === 'agendamentos' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('agendamentos')}
+              >
+                Agendamentos
+              </button>
+            </div>
+
+            {activeTab === 'resumo' && (
+              <div className={styles.card}>
+                <div className={styles.resumoSections}>
+                  <div className={`${styles.resumoSection}`}>
+
+                      <div className={styles.resumoInner}>
+
+                      {/* === Bloco básico ajustado === */}
+                      <div className={styles.basicInfo}>
+                        <div className={styles.basicInfoHeader}>
+                          <img
+                            src={selectedPaciente.foto || '/avatar.png'}
+                            alt="Avatar"
+                            className={styles.avatar}
+                          />
+                          <h2>{selectedPaciente.nome}</h2>
+                        </div>
+
+                        <div className={styles.basicInfoDetails}>
+                          {/* Sexo */}
+                          <p>
+                            <User size={19} strokeWidth={3} />
+                            <span>{selectedPaciente.sexo || '–'}</span>
+                          </p>
+
+                          {/* Idade */}
+                          <p>
+                            <Calendar size={19} strokeWidth={3} />
+                            <span>
+                              {selectedPaciente.idade != null
+                                ? `${selectedPaciente.idade} anos`
+                                : '– anos'}
+                            </span>
+                          </p>
+
+                          {/* Telefone */}
+                          <p>
+                            <Phone size={19} strokeWidth={3} />
+                            <span>{selectedPaciente.telefone || '–'}</span>
+                          </p>
+
+                          {/* CPF */}
+                          <p>
+                            <FileText size={19} strokeWidth={3} />
+                            <span>{selectedPaciente.cpf || '–'}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* === Coluna direita: cards Histórico + Observações === */}
+                      <div className={styles.cardsContainer}>
+                        {/* ...seus whiteCards aqui... */}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={`${styles.resumoSection} ${styles.whiteCard}`}>
+                    <h3 className={styles.sectionTitle}>Histórico</h3>
+                    <div className={styles.historyGrid}>
+                      {/* Agendamentos */}
+                      <div className={styles.historyItem}>
+                        <span className={styles.sectionTitle}>
+                          {selectedPaciente.numAgendamentos ?? 0}
+                        </span>
+                        <span className={styles.historyLabel}>
+                          agendamentos
+                        </span>
+                      </div>
+
+                      {/* Cancelamentos */}
+                      <div className={styles.historyItem}>
+                        <span className={styles.sectionTitle}>
+                          {selectedPaciente.numCancelamentos ?? 0}
+                        </span>
+                        <span className={styles.historyLabel}>
+                          cancelamentos
+                        </span>
+                      </div>
+
+                      {/* Receita */}
+                      <div className={styles.historyItem}>
+                        <span className={styles.sectionTitle}>
+                          R$ {selectedPaciente.receita?.toLocaleString('pt-BR') ?? '0,00'}
+                        </span>
+                        <span className={styles.historyLabel}>
+                          em receita
+                        </span>
+                      </div>
+
+                      {/* Convênio */}
+                      <div className={styles.historyItem}>
+                        <span className={styles.sectionTitle}>
+                          {selectedPaciente.convenio || '–'}
+                        </span>
+                        <span className={styles.historyLabel}>
+                          convênio
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={`${styles.resumoSection} ${styles.whiteCard}`}>
+                    <h3 className={styles.sectionTitle}>Observações</h3>
+                    {selectedPaciente.observacoes?.length ? (
+                      <ul className={styles.list}>
+                        {selectedPaciente.observacoes.map((obs: string, i: number) => (
+                          <li key={i} className={styles.listItem}>{obs}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className={styles.emptyState}>Sem observações registradas.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+              {activeTab === "info" && (
+                <div className={`${styles.infoTab} ${styles.whiteCard}`}>
+                  <div className={styles.infoLayout}>
+                    <div className={styles.basicInfoSection}>
+                      <h3 className={styles.sectionTitle}>Informações Básicas</h3>
+                      <ul className={styles.infoList}>
+                        <li><strong>Nome Completo:</strong> {selectedPaciente.nome}</li>
+                        <li><strong>Sexo:</strong> {selectedPaciente.sexo}</li>
+                        <li><strong>Idade:</strong> {selectedPaciente.idade} anos</li>
+                        <li><strong>Data de Nascimento:</strong> {selectedPaciente.dataNascimento || "Não informado"}</li>
+                        <li><strong>Telefone:</strong> {selectedPaciente.telefone || "Não informado"}</li>
+                        <li><strong>Email:</strong> {selectedPaciente.email || "Não informado"}</li>
+                        <li><strong>Convênio:</strong> {selectedPaciente.convenio || "Não informado"}</li>
+                      </ul>
+                    </div>
+                    <div className={styles.divider}></div>
+                    <div className={styles.addressSection}>
+                      <h3 className={styles.sectionTitle}>Endereço</h3>
+                      <ul className={styles.infoList}>
+                        <li><strong>CEP:</strong> {selectedPaciente.endereco?.cep || "Não informado"}</li>
+                        <li><strong>Logradouro:</strong> {selectedPaciente.endereco?.logradouro || "Não informado"}</li>
+                        <li><strong>Número:</strong> {selectedPaciente.endereco?.numero || "Não informado"}</li>
+                        <li><strong>Complemento:</strong> {selectedPaciente.endereco?.complemento || "Não informado"}</li>
+                        <li><strong>Bairro:</strong> {selectedPaciente.endereco?.bairro || "Não informado"}</li>
+                        <li><strong>Estado:</strong> {selectedPaciente.endereco?.estado || "Não informado"}</li>
+                        <li><strong>Cidade:</strong> {selectedPaciente.endereco?.cidade || "Não informado"}</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            {activeTab === 'prontuario' && (
+              <p style={{ textAlign: 'center' }}>Nenhuma evolução cadastrada.</p>
+            )}
+
+            {activeTab === 'conversas' && (
+              <p style={{ textAlign: 'center' }}>Nenhuma conversa registrada.</p>
+            )}
+
+            {activeTab === 'documentos' && (
+              <div>
+                <button className={styles.searchButton}>Adicionar documento</button>
+              </div>
+            )}
+
+            {activeTab === 'agendamentos' && (
+              <div>
+                {selectedPaciente.agendamentos && selectedPaciente.agendamentos.length > 0 ? (
+                  <ul>
+                    {selectedPaciente.agendamentos.map((a: any, idx: number) => (
+                      <li key={idx}>{a.data} - {a.status}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>Nenhum agendamento.</p>
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          <p className={styles.subtitlePacientes}>Nenhum paciente selecionado.</p>
+        )}
+
+        {showModal && (
+          <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
+            <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
+              <input
+                type="text"
+                placeholder="Buscar paciente"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                className={styles.searchInput}
+              />
+              <ul className={styles.patientList}>
+                {pacientes
+                  .filter(p => p.nome.toLowerCase().includes(query.toLowerCase()))
+                  .map(p => (
+                    <li
+                      key={p.id}
+                      className={styles.patientItem}
+                      onClick={() => selectPaciente(p.id)}
+                    >
+                      {p.nome} {p.cpf ? `- ${p.cpf}` : ''}
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   );
 }
+
+export default PaginaPaciente;

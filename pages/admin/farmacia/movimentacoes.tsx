@@ -89,7 +89,7 @@ const Movimentacoes = () => {
         {formatDateSafe(l.validade, 'dd/MM/yyyy')}
         <span
           className={tableStyles.statusCircle}
-          style={{ background: getStatusColor(l.status ?? '') }}
+          style={{ background: getStatusColor(l.status || '') }}
           title={l.status}
         ></span>
       </>

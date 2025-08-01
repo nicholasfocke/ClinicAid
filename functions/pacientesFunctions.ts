@@ -1,6 +1,8 @@
-import { doc, updateDoc, deleteDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, arrayUnion, collection, getDocs, addDoc, getDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { firestore } from '@/firebase/firebaseConfig';
+import { differenceInYears } from 'date-fns';
+import { parseDate } from '@/utils/dateUtils';
 
 export interface PacienteArquivo {
   nome: string;
@@ -102,12 +104,24 @@ export interface PacienteDetails {
   convenio?: string;
   foto?: string;
   endereco?: EnderecoPaciente;
+  idade?: number;
+  numAgendamentos?: number;
 }
 
 export const buscarPacientesComDetalhes = async (): Promise<PacienteDetails[]> => {
   const snap = await getDocs(collection(firestore, 'pacientes'));
   return snap.docs.map(doc => {
     const data = doc.data();
+    let idade: number | undefined;
+    if (data.dataNascimento) {
+      const birth = parseDate(data.dataNascimento);
+      if (birth) {
+        idade = differenceInYears(new Date(), birth);
+      }
+    }
+    const numAgendamentos = Array.isArray(data.agendamentos)
+      ? data.agendamentos.length
+      : 0;
     return {
       id: doc.id,
       nome: data.nome || '',
@@ -119,6 +133,8 @@ export const buscarPacientesComDetalhes = async (): Promise<PacienteDetails[]> =
       convenio: data.convenio || '',
       foto: data.foto || '',
       endereco: data.endereco || undefined,
+      idade,
+      numAgendamentos,
     };
   });
 };
@@ -139,4 +155,22 @@ export interface CriarPacienteData {
 export const criarPaciente = async (data: CriarPacienteData) => {
   const docRef = await addDoc(collection(firestore, 'pacientes'), data);
   return docRef.id;
+};
+
+export const buscarPacientePorId = async (id: string): Promise<any | null> => {
+  const ref = doc(firestore, 'pacientes', id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  const data = snap.data() as any;
+  let idade: number | undefined;
+  if (data.dataNascimento) {
+    const birth = parseDate(data.dataNascimento);
+    if (birth) {
+      idade = differenceInYears(new Date(), birth);
+    }
+  }
+  const numAgendamentos = Array.isArray(data.agendamentos)
+    ? data.agendamentos.length
+    : 0;
+  return { id: snap.id, ...data, idade, numAgendamentos };
 };
