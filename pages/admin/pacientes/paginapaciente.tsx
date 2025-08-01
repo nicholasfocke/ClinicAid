@@ -6,6 +6,7 @@ import { auth } from '@/firebase/firebaseConfig';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/pacientes/paginapaciente.module.css';
 import { buscarPacientesComDetalhes, PacienteDetails, buscarPacientePorId, } from '@/functions/pacientesFunctions';
+import { buscarMedicos } from '@/functions/medicosFunctions';
 import { User, Calendar, Phone, FileText, Stethoscope } from 'lucide-react'
 import { format as formatDateFns, parse as parseDateFns } from 'date-fns'
 import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
@@ -28,6 +29,7 @@ const PaginaPaciente = () => {
   const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('resumo');
+  const [medicos, setMedicos] = useState<{ id: string; nome: string; especialidade: string }[]>([]);
 
   const statusClassMap: Record<string, string> = {
     agendado: styles.statusAgendado,
@@ -57,6 +59,18 @@ const PaginaPaciente = () => {
         setPacientes(sorted);
       } catch (err) {
         console.error('Erro ao buscar pacientes', err);
+      }
+    })();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const lista = await buscarMedicos();
+        setMedicos(lista);
+      } catch (err) {
+        console.error('Erro ao buscar médicos', err);
       }
     })();
   }, [user]);
@@ -333,7 +347,12 @@ const PaginaPaciente = () => {
                         </div>
                         <div className={styles.agendamentoInfo}>
                           <p><User size={19} strokeWidth={3} /> {a.profissional}</p>
-                          {a.especialidade && <p><Stethoscope size={19} strokeWidth={3} /> Especialidade: {a.especialidade}</p>}
+                          {(() => {
+                            const esp = a.especialidade || medicos.find(m => m.id === a.profissional || m.nome === a.profissional)?.especialidade;
+                            return esp ? (
+                              <p><Stethoscope size={19} strokeWidth={3} /> Especialidade: {esp}</p>
+                            ) : null;
+                          })()}
                           {a.procedimento && <p><FileText size={19} strokeWidth={3} /> Procedimento: {a.procedimento}</p>}
                         </div>
                         <button className={styles.detailsButton} type="button" onClick={() => openDetails(a)}>
