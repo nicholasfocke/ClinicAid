@@ -12,6 +12,7 @@ import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage'
 import { format as formatDateFns, parse as parseDateFns } from 'date-fns'
 import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
+import { doc } from 'firebase/firestore';
 
 type Tab =
   | 'resumo'
@@ -34,6 +35,7 @@ const PaginaPaciente = () => {
   const [medicos, setMedicos] = useState<{ id: string; nome: string; especialidade: string }[]>([]);
 
   const [showAddDoc, setShowAddDoc] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<any | null>(null);
   const [docTitle, setDocTitle] = useState('');
   const [docDesc, setDocDesc] = useState('');
   const [docFile, setDocFile] = useState<File | null>(null);
@@ -107,26 +109,90 @@ const PaginaPaciente = () => {
     setDetailsOpen(false);
   };
 
-  const handleAddDocumento = async () => {
-    if (!selectedPaciente || !docFile || !docTitle) return;
+  const handleSaveDocumento = async () => {
+    if (!selectedPaciente || !docTitle) return;
     setUploadingDoc(true);
     try {
-      const { uploadDocumentoPaciente } = await import('@/functions/pacientesFunctions');
-      const docObj = await uploadDocumentoPaciente(selectedPaciente.id, docFile, docTitle, docDesc);
-      const updated = {
-        ...selectedPaciente,
-        documentos: [...(selectedPaciente.documentos || []), docObj],
-      } as any;
-      setSelectedPaciente(updated);
-      setPacientes(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+      if (editingDoc) {
+        // edição de documento existente
+        const updatedDocMeta = { ...editingDoc, titulo: docTitle, descricao: docDesc };
+
+        if (docFile) {
+          // trocar o arquivo: deleta o antigo e faz upload do novo
+          const { uploadDocumentoPaciente } = await import('@/functions/pacientesFunctions');
+
+          if (editingDoc.path) {
+            const storage = getStorage();
+            const fileRef = storageRef(storage, editingDoc.path);
+            await deleteObject(fileRef).catch(() => {
+              console.warn('Falha ao deletar o arquivo antigo (talvez não existia).');
+            });
+          }
+
+          const newDocObj = await uploadDocumentoPaciente(
+            selectedPaciente.id,
+            docFile,
+            docTitle,
+            docDesc
+          );
+
+          const novos = (selectedPaciente.documentos || []).map((d: any) =>
+            d.url === editingDoc.url ? newDocObj : d
+          );
+          await atualizarPaciente(selectedPaciente.id, { documentos: novos });
+          const updatedPaciente = { ...selectedPaciente, documentos: novos } as any;
+          setSelectedPaciente(updatedPaciente);
+          setPacientes(prev => prev.map(p => (p.id === updatedPaciente.id ? updatedPaciente : p)));
+        } else {
+          // só atualiza metadados (sem trocar arquivo)
+          const novos = (selectedPaciente.documentos || []).map((d: any) =>
+            d.url === editingDoc.url ? updatedDocMeta : d
+          );
+          await atualizarPaciente(selectedPaciente.id, { documentos: novos });
+          const updatedPaciente = { ...selectedPaciente, documentos: novos } as any;
+          setSelectedPaciente(updatedPaciente);
+          setPacientes(prev => prev.map(p => (p.id === updatedPaciente.id ? updatedPaciente : p)));
+        }
+      } else {
+        // criação nova exige arquivo
+        if (!docFile) {
+          alert('Por favor, escolha um arquivo antes de salvar.');
+          return;
+        }
+        if(!docTitle) {
+          alert('Por favor, insira um título para o documento.'); 
+          return;
+        }
+        const { uploadDocumentoPaciente } = await import('@/functions/pacientesFunctions');
+        const docObj = await uploadDocumentoPaciente(
+          selectedPaciente.id,
+          docFile,
+          docTitle,
+          docDesc
+        );
+        const updated = {
+          ...selectedPaciente,
+          documentos: [...(selectedPaciente.documentos || []), docObj],
+        } as any;
+        setSelectedPaciente(updated);
+        setPacientes(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+      }
+
+      // resetar estado de modal
       setShowAddDoc(false);
       setDocTitle('');
       setDocDesc('');
       setDocFile(null);
+      setEditingDoc(null);
+    } catch (err: any) {
+      console.error('Erro ao salvar documento:', err);
+      const message = err?.message || 'Erro desconhecido ao salvar o documento.';
+      alert(message);
     } finally {
       setUploadingDoc(false);
     }
   };
+
 
   const handleDeleteDocumento = async (docItem: any) => {
     if (!selectedPaciente) return;
@@ -146,6 +212,14 @@ const PaginaPaciente = () => {
     } catch {
       alert('Erro ao excluir documento.');
     }
+  };
+
+  const handleEditDocumento = (doc: any) => {
+    setDocTitle(doc.titulo || '');
+    setDocDesc(doc.descricao || '');
+    setDocFile(null); // Não é possível editar o arquivo diretamente
+    setEditingDoc(doc);
+    setShowAddDoc(true);
   };
 
   if (!user) return <p>Carregando...</p>;
@@ -402,7 +476,7 @@ const PaginaPaciente = () => {
                           <button
                             className={styles.searchButton}
                             type="button"
-                            onClick={handleAddDocumento}
+                            onClick={handleSaveDocumento  }
                             disabled={uploadingDoc}
                           >
                             {uploadingDoc ? 'Enviando...' : 'Salvar'}
@@ -420,6 +494,14 @@ const PaginaPaciente = () => {
                           <div className={styles.documentHeader}>
                             <h3 className={styles.sectionTitle}>{d.titulo}</h3>
                             <div className={styles.documentActions}>
+                              <button
+                                type="button"
+                                onClick={() => { handleEditDocumento(d); }}
+                                className={styles.editButton}
+                                title="Editar documento"
+                              >
+                                <PenLine size={18} />
+                              </button>
                               <a
                                 href={d.url}
                                 target="_blank"
@@ -429,13 +511,6 @@ const PaginaPaciente = () => {
                               >
                                 <Download size={22} />
                               </a>
-                              <button
-                                type="button"
-                                className={styles.editButton}
-                                title="Editar documento"
-                              >
-                                <PenLine size={18} />
-                              </button>
                               <button
                                 type="button"
                                 onClick={() => {
