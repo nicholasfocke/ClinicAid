@@ -5,9 +5,10 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { auth } from '@/firebase/firebaseConfig';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/pacientes/paginapaciente.module.css';
-import { buscarPacientesComDetalhes, PacienteDetails, buscarPacientePorId, } from '@/functions/pacientesFunctions';
+import { buscarPacientesComDetalhes, PacienteDetails, buscarPacientePorId, atualizarPaciente } from '@/functions/pacientesFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
-import { User, Calendar, Phone, FileText, Stethoscope } from 'lucide-react'
+import { User, Calendar, Phone, FileText, Stethoscope, Download, Trash } from 'lucide-react'
+import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage'
 import { format as formatDateFns, parse as parseDateFns } from 'date-fns'
 import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
 
@@ -30,6 +31,12 @@ const PaginaPaciente = () => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('resumo');
   const [medicos, setMedicos] = useState<{ id: string; nome: string; especialidade: string }[]>([]);
+
+  const [showAddDoc, setShowAddDoc] = useState(false);
+  const [docTitle, setDocTitle] = useState('');
+  const [docDesc, setDocDesc] = useState('');
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   const statusClassMap: Record<string, string> = {
     agendado: styles.statusAgendado,
@@ -94,6 +101,46 @@ const PaginaPaciente = () => {
   const closeDetails = () => {
     setSelectedAppointment(null);
     setDetailsOpen(false);
+  };
+
+  const handleAddDocumento = async () => {
+    if (!selectedPaciente || !docFile || !docTitle) return;
+    setUploadingDoc(true);
+    try {
+      const { uploadDocumentoPaciente } = await import('@/functions/pacientesFunctions');
+      const docObj = await uploadDocumentoPaciente(selectedPaciente.id, docFile, docTitle, docDesc);
+      const updated = {
+        ...selectedPaciente,
+        documentos: [...(selectedPaciente.documentos || []), docObj],
+      } as any;
+      setSelectedPaciente(updated);
+      setPacientes(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+      setShowAddDoc(false);
+      setDocTitle('');
+      setDocDesc('');
+      setDocFile(null);
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
+
+  const handleDeleteDocumento = async (docItem: any) => {
+    if (!selectedPaciente) return;
+    if (!confirm('Deseja excluir este documento?')) return;
+    try {
+      if (docItem.path) {
+        const storage = getStorage();
+        const fileRef = storageRef(storage, docItem.path);
+        await deleteObject(fileRef);
+      }
+      const novos = (selectedPaciente.documentos || []).filter((d: any) => d.url !== docItem.url);
+      await atualizarPaciente(selectedPaciente.id, { documentos: novos });
+      const updated = { ...selectedPaciente, documentos: novos } as any;
+      setSelectedPaciente(updated);
+      setPacientes(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+    } catch {
+      alert('Erro ao excluir documento.');
+    }
   };
 
   if (!user) return <p>Carregando...</p>;
@@ -311,7 +358,93 @@ const PaginaPaciente = () => {
 
             {activeTab === 'documentos' && (
               <div>
-                <button className={styles.searchButton}>Adicionar documento</button>
+                <button
+                  className={`${styles.searchButton} ${styles.addDocButton}`}
+                  type="button"
+                  onClick={() => setShowAddDoc(true)}
+                >
+                  Adicionar documento
+                </button>
+                {showAddDoc && (
+                  <div className={styles.modalOverlay} onClick={() => setShowAddDoc(false)}>
+                    <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
+                      <h2 className={styles.sectionTitle}>Novo Documento</h2>
+                      <div className={styles.documentForm}>
+                        <input
+                          type="text"
+                          placeholder="Título do documento"
+                          value={docTitle}
+                          onChange={e => setDocTitle(e.target.value)}
+                        />
+                        <textarea
+                          placeholder="Descrição"
+                          value={docDesc}
+                          onChange={e => setDocDesc(e.target.value)}
+                          className={styles.textArea}
+                        />
+                        <input
+                          type="file"
+                          onChange={e => setDocFile(e.target.files ? e.target.files[0] : null)}
+                        />
+                        <div className={styles.addDocActions}>
+                          <button
+                            type="button"
+                            className={styles.btnCancelar}
+                            onClick={() => setShowAddDoc(false)}
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            className={styles.searchButton}
+                            type="button"
+                            onClick={handleAddDocumento}
+                            disabled={uploadingDoc}
+                          >
+                            {uploadingDoc ? 'Enviando...' : 'Salvar'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div className={styles.whiteCard} style={{ marginTop: 16 }}>
+                  {selectedPaciente.documentos && selectedPaciente.documentos.length > 0 ? (
+                    <div>
+                      {selectedPaciente.documentos.map((d: any, idx: number) => (
+                        <div key={idx} className={styles.documentCard}>
+                          <div className={styles.documentHeader}>
+                            <h3 className={styles.sectionTitle}>{d.titulo}</h3>
+                            <div className={styles.documentActions}>
+                              <a
+                                href={d.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={styles.downloadLink}
+                                title="Baixar documento"
+                              >
+                                <Download size={22} />
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteDocumento(d)}
+                                className={styles.trashButton}
+                                title="Remover documento"
+                              >
+                                <Trash size={22} />
+                              </button>
+                            </div>
+                          </div>
+                          {d.descricao && <p className={styles.documentDesc}>{d.descricao}</p>}
+                          <p className={styles.documentDate}>
+                            {d.dataEnvio ? formatDateFns(d.dataEnvio.toDate(), 'dd/MM/yyyy') : ''}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>Nenhum documento enviado.</p>
+                  )}
+                </div>
               </div>
             )}
 

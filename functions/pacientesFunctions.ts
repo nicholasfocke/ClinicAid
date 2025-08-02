@@ -1,4 +1,4 @@
-import { doc, updateDoc, deleteDoc, arrayUnion, collection, getDocs, addDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, arrayUnion, collection, getDocs, addDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { firestore } from '@/firebase/firebaseConfig';
 import { differenceInYears } from 'date-fns';
@@ -7,6 +7,15 @@ import { parseDate } from '@/utils/dateUtils';
 export interface PacienteArquivo {
   nome: string;
   url: string;
+  path: string;
+}
+
+export interface PacienteDocumento {
+  titulo: string;
+  descricao: string;
+  url: string;
+  dataEnvio: any;
+  tipo: string;
   path: string;
 }
 
@@ -63,6 +72,31 @@ export const uploadArquivoTemp = async (
 
 export const uploadArquivoPaciente = async (id: string, file: File) => {
   return uploadArquivoPacienteSecao(id, file, 'arquivos');
+};
+
+export const uploadDocumentoPaciente = async (
+  id: string,
+  file: File,
+  titulo: string,
+  descricao: string
+) => {
+  const storage = getStorage();
+  const uniqueName = `${Date.now()}_${file.name}`;
+  const storageRef = ref(storage, `paciente_files/${id}/documentos/${uniqueName}`);
+  await uploadBytes(storageRef, file);
+  const url = await getDownloadURL(storageRef);
+  const documento: PacienteDocumento = {
+    titulo,
+    descricao,
+    url,
+    dataEnvio: Timestamp.now(),
+    tipo: file.type || '',
+    path: storageRef.fullPath
+  };
+  await updateDoc(doc(firestore, 'pacientes', id), {
+    documentos: arrayUnion(documento)
+  });
+  return documento;
 };
 
 export interface EvolucaoClinica {
@@ -163,28 +197,12 @@ export const buscarPacientePorId = async (id: string): Promise<any | null> => {
   if (!snap.exists()) return null;
   const data = snap.data() as any;
   let idade: number | undefined;
-  if(data.dataNascimento) {
-    let birth: Date | undefined = undefined;
-    if(typeof(data.dataNascimento as any).toDate === 'function') {
-      birth = (data.dataNascimento as any).toDate();
-    }
-    else if(data.dataNascimento instanceof Date) {
-      birth = data.dataNascimento;
-    }
-    else {
-      birth = parseDate(data.dataNascimento as string) || undefined;
-    }
-
+  if (data.dataNascimento) {
+    const birth = parseDate(data.dataNascimento);
     if (birth) {
       idade = differenceInYears(new Date(), birth);
     }
-  }  
-  // if (data.dataNascimento) {
-  //   const birth = parseDate(data.dataNascimento);
-  //   if (birth) {
-  //     idade = differenceInYears(new Date(), birth);
-  //   }
-  // }
+  }
   const numAgendamentos = Array.isArray(data.agendamentos)
     ? data.agendamentos.length
     : 0;

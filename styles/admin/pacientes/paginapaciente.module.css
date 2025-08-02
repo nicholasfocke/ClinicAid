@@ -36,6 +36,10 @@
   background-color: #16285f;
 }
 
+.addDocButton {
+  margin-top: 1rem;
+}
+
 /* Card que engloba abas + conteúdo */
 .card {
   background: #fff;
@@ -398,4 +402,89 @@
 .statusPendente {
   background: #fef3c7;
   color: #d97706;
+}
+
+/* === Documentos === */
+.documentForm {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.documentForm input[type='text'],
+.documentForm input[type='file'] {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+.downloadLink {
+  color: #2563eb;
+}
+
+.documentCard {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.documentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.documentActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trashButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #dc2626;
+}
+
+.documentDesc {
+  margin: 0.25rem 0;
+  color: #4b5563;
+}
+
+.documentDate {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.addDocActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.btnCancelar {
+  background: #e5e7eb;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnCancelar:hover {
+  background: #d1d5db;
+}
+
+.textArea {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  min-height: 80px;
 }
