@@ -74,12 +74,14 @@ export const uploadArquivoPaciente = async (id: string, file: File) => {
   return uploadArquivoPacienteSecao(id, file, 'arquivos');
 };
 
-export const uploadDocumentoPaciente = async (
-  id: string,
-  file: File,
-  titulo: string,
-  descricao: string
-) => {
+export const uploadDocumentoPaciente = async ( id: string, file: File, titulo: string, descricao: string ) => {
+  // if (!file) {
+  //   throw new Error('Nenhum arquivo fornecido para upload de documento.');
+  // }
+  // if (!file.name) {
+  //   throw new Error('Arquivo inválido: nome não disponível.');
+  // }
+
   const storage = getStorage();
   const uniqueName = `${Date.now()}_${file.name}`;
   const storageRef = ref(storage, `paciente_files/${id}/documentos/${uniqueName}`);
