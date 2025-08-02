@@ -452,6 +452,13 @@
   color: #dc2626;
 }
 
+.editButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #2563eb;
+}
+
 .documentDesc {
   margin: 0.25rem 0;
   color: #4b5563;

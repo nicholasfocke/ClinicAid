@@ -7,10 +7,11 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/pacientes/paginapaciente.module.css';
 import { buscarPacientesComDetalhes, PacienteDetails, buscarPacientePorId, atualizarPaciente } from '@/functions/pacientesFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
-import { User, Calendar, Phone, FileText, Stethoscope, Download, Trash } from 'lucide-react'
+import { User, Calendar, Phone, FileText, Stethoscope, Download, Trash, PenLine } from 'lucide-react'
 import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage'
 import { format as formatDateFns, parse as parseDateFns } from 'date-fns'
 import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 type Tab =
   | 'resumo'
@@ -37,6 +38,9 @@ const PaginaPaciente = () => {
   const [docDesc, setDocDesc] = useState('');
   const [docFile, setDocFile] = useState<File | null>(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [docToDelete, setDocToDelete] = useState<any | null>(null);
 
   const statusClassMap: Record<string, string> = {
     agendado: styles.statusAgendado,
@@ -126,7 +130,6 @@ const PaginaPaciente = () => {
 
   const handleDeleteDocumento = async (docItem: any) => {
     if (!selectedPaciente) return;
-    if (!confirm('Deseja excluir este documento?')) return;
     try {
       if (docItem.path) {
         const storage = getStorage();
@@ -138,6 +141,8 @@ const PaginaPaciente = () => {
       const updated = { ...selectedPaciente, documentos: novos } as any;
       setSelectedPaciente(updated);
       setPacientes(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+      setIsDeleteModalOpen(false);
+      setDocToDelete(null);
     } catch {
       alert('Erro ao excluir documento.');
     }
@@ -426,7 +431,17 @@ const PaginaPaciente = () => {
                               </a>
                               <button
                                 type="button"
-                                onClick={() => handleDeleteDocumento(d)}
+                                className={styles.editButton}
+                                title="Editar documento"
+                              >
+                                <PenLine size={18} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDocToDelete(d);
+                                  setIsDeleteModalOpen(true);
+                                }}
                                 className={styles.trashButton}
                                 title="Remover documento"
                               >
@@ -535,6 +550,17 @@ const PaginaPaciente = () => {
         isOpen={detailsOpen}
         onClose={closeDetails}
         readOnly
+      />
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        message="Você tem certeza que deseja excluir este documento?"
+        onConfirm={() => {
+          if (docToDelete) handleDeleteDocumento(docToDelete);
+        }}
+        onCancel={() => {
+          setIsDeleteModalOpen(false);
+          setDocToDelete(null);
+        }}
       />
     </ProtectedRoute>
   );
