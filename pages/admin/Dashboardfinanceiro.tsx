@@ -400,6 +400,118 @@ const lucroMensal = meses.map((_, i) => receitaMensal[i] - despesasMensal[i]);
           />
         </div>
       </div>
+
+      {/* Forecast Section */}
+      <div className={styles.chartSection}>
+        <h3>Gráfico de Projeção de Receita e Despesa (Forecast)</h3>
+        <p style={{ color: '#666', marginBottom: 12, fontSize: 15 }}>
+          Previsão baseada na média dos últimos 3 a 6 meses (ou menos, se houver poucos dados).
+        </p>
+        {
+          (() => {
+            // Pega os últimos 6 meses com dados
+            const n = Math.min(6, meses.length);
+            const ultimosMeses = meses.slice(-n);
+            const receitaUltimos = receitaMensal.slice(-n);
+            const despesaUltimos = despesasMensal.slice(-n);
+            // Média dos últimos 3 meses (ou menos)
+            const n3 = Math.min(3, receitaUltimos.length);
+            const mediaReceita = n3 > 0 ? (receitaUltimos.slice(-n3).reduce((a, b) => a + b, 0) / n3) : 0;
+            const mediaDespesa = n3 > 0 ? (despesaUltimos.slice(-n3).reduce((a, b) => a + b, 0) / n3) : 0;
+            // Projeção para os próximos 3 meses
+            const projLabels = [
+              ...ultimosMeses,
+              ...Array.from({ length: 3 }, (_, i) => {
+                // Gera próximo mês/ano
+                const [m, a] = ultimosMeses.length > 0 ? ultimosMeses[ultimosMeses.length - 1].split('/').map(Number) : [1, new Date().getFullYear()];
+                const next = new Date(a, m - 1 + i + 1, 1);
+                return `${String(next.getMonth() + 1).padStart(2, '0')}/${next.getFullYear()}`;
+              })
+            ];
+            // Dados reais e previstos separados
+            const realReceita = [...receitaUltimos];
+            const prevReceita = Array(3).fill(mediaReceita);
+            const realDespesa = [...despesaUltimos];
+            const prevDespesa = Array(3).fill(mediaDespesa);
+            return (
+              <div className={styles.chartWrapperFull}>
+                <Line
+                  data={{
+                    labels: projLabels,
+                    datasets: [
+                      {
+                        label: 'Receita (real)',
+                        data: [...realReceita, ...Array(3).fill(null)],
+                        borderColor: '#3b82f6',
+                        backgroundColor: '#3b82f6',
+                        fill: false,
+                        borderDash: undefined,
+                        pointRadius: realReceita.map(() => 3).concat([0, 0, 0]),
+                        pointBackgroundColor: realReceita.map(() => '#3b82f6').concat(['transparent', 'transparent', 'transparent']),
+                        tension: 0.4,
+                        spanGaps: true,
+                      },
+                      {
+                        label: 'Receita (previsão)',
+                        data: [...Array(realReceita.length).fill(null), ...prevReceita],
+                        borderColor: '#60a5fa',
+                        backgroundColor: '#60a5fa',
+                        fill: false,
+                        borderDash: [6, 6],
+                        pointRadius: [0, 0, 0, ...prevReceita.map(() => 5)],
+                        pointBackgroundColor: [
+                          ...Array(realReceita.length).fill('transparent'),
+                          ...prevReceita.map(() => '#60a5fa')
+                        ],
+                        tension: 0.4,
+                        spanGaps: true,
+                      },
+                      {
+                        label: 'Despesa (real)',
+                        data: [...realDespesa, ...Array(3).fill(null)],
+                        borderColor: '#f97316',
+                        backgroundColor: '#f97316',
+                        fill: false,
+                        borderDash: undefined,
+                        pointRadius: realDespesa.map(() => 3).concat([0, 0, 0]),
+                        pointBackgroundColor: realDespesa.map(() => '#f97316').concat(['transparent', 'transparent', 'transparent']),
+                        tension: 0.4,
+                        spanGaps: true,
+                      },
+                      {
+                        label: 'Despesa (previsão)',
+                        data: [...Array(realDespesa.length).fill(null), ...prevDespesa],
+                        borderColor: '#fdba74',
+                        backgroundColor: '#fdba74',
+                        fill: false,
+                        borderDash: [6, 6],
+                        pointRadius: [0, 0, 0, ...prevDespesa.map(() => 5)],
+                        pointBackgroundColor: [
+                          ...Array(realDespesa.length).fill('transparent'),
+                          ...prevDespesa.map(() => '#fdba74')
+                        ],
+                        tension: 0.4,
+                        spanGaps: true,
+                      },
+                    ],
+                  }}
+                  options={{
+                    ...chartOptions,
+                    plugins: {
+                      ...chartOptions.plugins,
+                      legend: { position: 'bottom' },
+                    },
+                    scales: {
+                      ...chartOptions.scales,
+                      y: { ...chartOptions.scales.y, beginAtZero: true },
+                    },
+                  }}
+                />
+              </div>
+            );
+          })()
+        }
+      </div>
       <div className={styles.transacoes}>
         <h3>Transações Recentes</h3>
         <table>

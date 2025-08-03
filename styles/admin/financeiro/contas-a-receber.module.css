@@ -1,3 +1,17 @@
+.selectStatusExtrato {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 1rem;
+  background: #f8fafc;
+  min-width: 130px;
+  transition: border 0.2s, box-shadow 0.2s;
+  color: #222;
+}
+.selectStatusExtrato:focus {
+  border: 1.5px solid #2563eb;
+  box-shadow: 0 0 0 2px #2563eb22;
+}
 .acoesTd {
   display: flex;
   gap: 16px;
@@ -244,16 +258,88 @@
   color: #389e0d;
   font-weight: 600;
 }
+
 .pesquisaBox {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
+
 .pesquisaInput {
   padding: 10px 16px;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
   font-size: 1rem;
   background: #f8fafc;
-  min-width: 260px;
+  min-width: 220px;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.pesquisaInput:focus {
+  border: 1.5px solid #2563eb;
+  box-shadow: 0 0 0 2px #2563eb22;
+}
+
+/* Filtro extrato: select mês/ano e inputs de data */
+.selectMesExtrato {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 1rem;
+  background: #f8fafc;
+  min-width: 150px;
+  margin-left: 8px;
+  transition: border 0.2s, box-shadow 0.2s;
+  color: #222;
+}
+.selectMesExtrato:focus {
+  border: 1.5px solid #2563eb;
+  box-shadow: 0 0 0 2px #2563eb22;
+}
+
+.inputPeriodoExtrato {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 1rem;
+  background: #f8fafc;
+  min-width: 140px;
+  transition: border 0.2s, box-shadow 0.2s;
+  color: #222;
+}
+.inputPeriodoExtrato:focus {
+  border: 1.5px solid #2563eb;
+  box-shadow: 0 0 0 2px #2563eb22;
+}
+
+/* Botões de alternância do filtro (Mês/Ano e Período) */
+.filtroToggleBtn {
+  background: #f3f6fa;
+  color: #2563eb;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 0;
+  margin-right: 0;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+  outline: none;
+}
+.filtroToggleBtn:hover {
+  background: #e8f0fe;
+  border-color: #2563eb;
+  color: #1741a0;
+}
+.filtroToggleBtn:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px #2563eb22;
+}
+.filtroToggleBtn[style*='bold'] {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
 }
