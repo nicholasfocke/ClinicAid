@@ -20,6 +20,7 @@ interface Appointment {
   usuarioId: string;
   convenio?: string;
   procedimento?: string;
+  especialidade?: string;
   status: string;
 }
 
@@ -35,9 +36,10 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onComplete?: (id: string) => void;
+  readOnly?: boolean;
 }
 
-const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: Props) => {
+const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, readOnly = false }: Props) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
   const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
@@ -188,6 +190,7 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
     procedimentos.find(p => p.id === appointment.procedimento)?.nome ||
     procedimentos.find(p => p.nome === appointment.procedimento)?.nome ||
     appointment.procedimento ||
+    appointment.especialidade ||
     '-';
   const profissionalNome =
     medicos.find(m => m.id === appointment.profissional)?.nome ||
@@ -235,6 +238,7 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
             {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
           </span>
         </p>
+        {!readOnly && (
         <div className={styles.statusButtonsRow}>
           <button
             disabled={statusLoading || appointment.status === statusAgendamento.AGENDADO}
@@ -277,26 +281,31 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete }: P
             Pendente
           </button>
         </div>
-        <div className={styles.actionsRow}>
-          <button
-            className={styles.deleteButton}
-            onClick={() => setShowConfirmDelete(true)}
-            disabled={deleteLoading}
-            type="button"
-          >
-            {deleteLoading ? 'Excluindo...' : 'Excluir'}
-          </button>
-        </div>
-        {showConfirmDelete && (
-          <ConfirmationModal
-            isOpen={showConfirmDelete}
-            message="Tem certeza que deseja excluir este agendamento? Esta ação não poderá ser desfeita."
-            onConfirm={handleDelete}
-            onCancel={() => setShowConfirmDelete(false)}
-          />
         )}
-        {statusError && <p className={styles.statusError}>{statusError}</p>}
-        {deleteError && <p className={styles.statusError}>{deleteError}</p>}
+        {!readOnly && (
+          <>
+            <div className={styles.actionsRow}>
+              <button
+                className={styles.deleteButton}
+                onClick={() => setShowConfirmDelete(true)}
+                disabled={deleteLoading}
+                type="button"
+              >
+                {deleteLoading ? 'Excluindo...' : 'Excluir'}
+              </button>
+            </div>
+            {showConfirmDelete && (
+              <ConfirmationModal
+                isOpen={showConfirmDelete}
+                message="Tem certeza que deseja excluir este agendamento? Esta ação não poderá ser desfeita."
+                onConfirm={handleDelete}
+                onCancel={() => setShowConfirmDelete(false)}
+              />
+            )}
+            {statusError && <p className={styles.statusError}>{statusError}</p>}
+            {deleteError && <p className={styles.statusError}>{deleteError}</p>}
+          </>
+        )}
       </div>
     </div>
   );

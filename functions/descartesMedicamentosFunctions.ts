@@ -4,6 +4,8 @@ import { Lote } from './lotesFunctions';
 
 export interface DescarteMedicamento {
   medicamento: string;
+  medicamentoId?: string;
+  loteId?: string;
   lote: string;
   quantidade: number;
   metodo: string;
