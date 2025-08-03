@@ -104,7 +104,11 @@ const Despesas = () => {
   const [search, setSearch] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('');
-  const [filtroPeriodo, setFiltroPeriodo] = useState('');
+  // Filtro extrato: modo, mês/ano, período
+  const [filtroModo, setFiltroModo] = useState<'mes' | 'periodo'>('mes');
+  const [mesSelecionado, setMesSelecionado] = useState('');
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
   const [modalState, setModalState] = useState<{ isOpen: boolean; onConfirm: () => void }>({ isOpen: false, onConfirm: () => {} });
   const [despesaIdParaExcluir, setDespesaIdParaExcluir] = useState<string | null>(null);
 
@@ -202,13 +206,56 @@ const Despesas = () => {
     });
   };
 
-  const despesasFiltradas = despesas.filter(d =>
-    (d.descricao.toLowerCase().includes(search.toLowerCase()) ||
-     d.categoria.toLowerCase().includes(search.toLowerCase())) &&
-    (filtroCategoria ? d.categoria === filtroCategoria : true) &&
-    (filtroStatus ? d.status === filtroStatus : true) &&
-    (filtroPeriodo ? d.data === filtroPeriodo.split('-').reverse().join('/') : true)
-  );
+  // Extrai meses/anos únicos das datas das despesas
+  const mesesDisponiveis = Array.from(
+    new Set(
+      despesas.map(d => {
+        let v = d.data;
+        if (!v) return '';
+        let partes = v.includes('/') ? v.split('/') : v.split('-').reverse();
+        return `${partes[1]}/${partes[2]}`;
+      })
+    )
+  ).filter(Boolean).sort((a, b) => {
+    const [ma, aa] = a.split('/').map(Number);
+    const [mb, ab] = b.split('/').map(Number);
+    return aa !== ab ? aa - ab : ma - mb;
+  });
+
+  const despesasFiltradas = despesas.filter(d => {
+    const matchSearch =
+      d.descricao.toLowerCase().includes(search.toLowerCase()) ||
+      d.categoria.toLowerCase().includes(search.toLowerCase());
+    const matchCategoria = filtroCategoria ? d.categoria === filtroCategoria : true;
+    const matchStatus = filtroStatus ? d.status === filtroStatus : true;
+
+    let matchPeriodo = true;
+    if (filtroModo === 'mes') {
+      if (mesSelecionado) {
+        let v = d.data;
+        if (!v) return false;
+        let partes = v.includes('/') ? v.split('/') : v.split('-').reverse();
+        const mesAno = `${partes[1]}/${partes[2]}`;
+        matchPeriodo = mesAno === mesSelecionado;
+      }
+    } else {
+      // Filtro por período
+      if (dataInicio || dataFim) {
+        let v = d.data;
+        if (!v) return false;
+        let partes = v.includes('/') ? v.split('/') : v.split('-').reverse();
+        const dataPadrao = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+        if (dataInicio && dataFim) {
+          matchPeriodo = dataPadrao >= dataInicio && dataPadrao <= dataFim;
+        } else if (dataInicio) {
+          matchPeriodo = dataPadrao >= dataInicio;
+        } else if (dataFim) {
+          matchPeriodo = dataPadrao <= dataFim;
+        }
+      }
+    }
+    return matchSearch && matchCategoria && matchStatus && matchPeriodo;
+  });
 
   const totalPago = despesas
     .filter(d => d.status === 'Paga')
@@ -250,24 +297,90 @@ const Despesas = () => {
             </span>
           </div>
           <div className={despesasStyles.filtrosBox}>
-            <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}>
-              <option value="">Categoria</option>
-              {categorias.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-            </select>
-            <input type="month" value={filtroPeriodo} onChange={e => setFiltroPeriodo(e.target.value)} />
-            <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}>
+            <input
+              type="text"
+              className={despesasStyles.pesquisaInput}
+              placeholder="Pesquisar..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ marginRight: 8 }}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button
+                type="button"
+                className={despesasStyles.filtroToggleBtn}
+                style={{ fontWeight: filtroModo === 'mes' ? 'bold' : 'normal' }}
+                onClick={() => setFiltroModo('mes')}
+              >
+                Mês/Ano
+              </button>
+              <button
+                type="button"
+                className={despesasStyles.filtroToggleBtn}
+                style={{ fontWeight: filtroModo === 'periodo' ? 'bold' : 'normal' }}
+                onClick={() => setFiltroModo('periodo')}
+              >
+                Período
+              </button>
+              {filtroModo === 'mes' && (
+                <select
+                  className={despesasStyles.selectMesExtrato}
+                  value={mesSelecionado}
+                  onChange={e => setMesSelecionado(e.target.value)}
+                  style={{ minWidth: 120, marginLeft: 8 }}
+                >
+                  <option value="">Todos os meses</option>
+                  {mesesDisponiveis.map(mes => (
+                    <option key={mes} value={mes}>{mes}</option>
+                  ))}
+                </select>
+              )}
+              {filtroModo === 'periodo' && (
+                <>
+                  <select
+                    className={despesasStyles.selectMesExtrato}
+                    value={mesSelecionado}
+                    disabled
+                    style={{ minWidth: 120, marginLeft: 8, background: '#f8fafc', color: '#888', cursor: 'not-allowed' }}
+                  >
+                    <option value="">Todos os meses</option>
+                  </select>
+                  <input
+                    type="date"
+                    className={despesasStyles.inputPeriodoExtrato}
+                    value={dataInicio}
+                    onChange={e => setDataInicio(e.target.value)}
+                    style={{ marginLeft: 8 }}
+                  />
+                  <span style={{ margin: '0 4px' }}>até</span>
+                  <input
+                    type="date"
+                    className={despesasStyles.inputPeriodoExtrato}
+                    value={dataFim}
+                    onChange={e => setDataFim(e.target.value)}
+                  />
+                </>
+              )}
+            </div>
+            <select
+              className={despesasStyles.selectStatusExtrato}
+              value={filtroStatus}
+              onChange={e => setFiltroStatus(e.target.value)}
+              style={{ marginLeft: 8 }}
+            >
               <option value="">Status</option>
               {statusList.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-            <div className={despesasStyles.pesquisaBox}>
-              <input
-                type="text"
-                className={despesasStyles.pesquisaInput}
-                placeholder="Pesquisar..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-            </div>
+            <select
+              className={despesasStyles.selectCategoriaExtrato}
+              value={filtroCategoria}
+              onChange={e => setFiltroCategoria(e.target.value)}
+              style={{ marginLeft: 8 }}
+            >
+              <option value="">Categoria</option>
+              {categorias.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+            </select>
+            {/* Removido select duplicado de mês */}
           </div>
           <table className={despesasStyles.tabelaDespesas}>
             <thead>

@@ -61,6 +61,61 @@ const ContasAPagar = () => {
     fetchContas();
   }, []);
 
+
+  const [search, setSearch] = useState('');
+  const [mesSelecionado, setMesSelecionado] = useState('');
+  const [filtroModo, setFiltroModo] = useState<'mes' | 'periodo'>('mes');
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
+
+  // Extrai meses/anos únicos dos vencimentos
+  const mesesDisponiveis = Array.from(
+    new Set(
+      contas.map(c => {
+        let v = c.vencimento;
+        if (!v) return '';
+        let partes = v.includes('/') ? v.split('/') : v.split('-').reverse();
+        return `${partes[1]}/${partes[2]}`;
+      })
+    )
+  ).filter(Boolean).sort((a, b) => {
+    const [ma, aa] = a.split('/').map(Number);
+    const [mb, ab] = b.split('/').map(Number);
+    return aa !== ab ? aa - ab : ma - mb;
+  });
+
+  const [filtroStatus, setFiltroStatus] = useState<'Pendente' | 'Pago' | ''>('');
+
+  const contasFiltradas = contas.filter(c => {
+    const matchSearch =
+      c.descricao.toLowerCase().includes(search.toLowerCase()) ||
+      c.fornecedor.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = filtroStatus ? c.status === filtroStatus : true;
+
+    if (filtroModo === 'mes') {
+      if (!mesSelecionado) return matchSearch && matchStatus;
+      let v = c.vencimento;
+      if (!v) return false;
+      let partes = v.includes('/') ? v.split('/') : v.split('-').reverse();
+      const mesAno = `${partes[1]}/${partes[2]}`;
+      return matchSearch && matchStatus && mesAno === mesSelecionado;
+    } else {
+      if (!dataInicio && !dataFim) return matchSearch && matchStatus;
+      let v = c.vencimento;
+      if (!v) return false;
+      let partes = v.includes('/') ? v.split('/') : v.split('-').reverse();
+      const dataPadrao = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+      if (dataInicio && dataFim) {
+        return matchSearch && matchStatus && dataPadrao >= dataInicio && dataPadrao <= dataFim;
+      } else if (dataInicio) {
+        return matchSearch && matchStatus && dataPadrao >= dataInicio;
+      } else if (dataFim) {
+        return matchSearch && matchStatus && dataPadrao <= dataFim;
+      }
+      return matchSearch && matchStatus;
+    }
+  });
+
   const saldoPago = contas
     .filter(c => c.status === 'Pago')
     .reduce((acc, c) => acc + c.valor, 0);
@@ -178,6 +233,73 @@ const ContasAPagar = () => {
               -{saldoPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </span>
           </div>
+          <div className={contasStyles.pesquisaBox}>
+            <input
+              type="text"
+              className={contasStyles.pesquisaInput}
+              placeholder="Pesquisar..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 12 }}>
+              <button
+                type="button"
+                className={contasStyles.filtroToggleBtn}
+                style={{ fontWeight: filtroModo === 'mes' ? 'bold' : 'normal' }}
+                onClick={() => setFiltroModo('mes')}
+              >
+                Mês/Ano
+              </button>
+              <button
+                type="button"
+                className={contasStyles.filtroToggleBtn}
+                style={{ fontWeight: filtroModo === 'periodo' ? 'bold' : 'normal' }}
+                onClick={() => setFiltroModo('periodo')}
+              >
+                Período
+              </button>
+            </div>
+            <select
+              className={contasStyles.selectStatusExtrato}
+              value={filtroStatus}
+              onChange={e => setFiltroStatus(e.target.value as 'Pendente' | 'Pago' | '')}
+              style={{ marginLeft: 12 }}
+            >
+              <option value="">Status</option>
+              <option value="Pendente">Pendente</option>
+              <option value="Pago">Paga</option>
+            </select>
+            {filtroModo === 'mes' ? (
+              <select
+                className={contasStyles.selectMesExtrato}
+                value={mesSelecionado}
+                onChange={e => setMesSelecionado(e.target.value)}
+                style={{ marginLeft: 12 }}
+              >
+                <option value="">Todos os meses</option>
+                {mesesDisponiveis.map(mes => (
+                  <option key={mes} value={mes}>{mes}</option>
+                ))}
+              </select>
+            ) : (
+              <>
+                <input
+                  type="date"
+                  className={contasStyles.inputPeriodoExtrato}
+                  value={dataInicio}
+                  onChange={e => setDataInicio(e.target.value)}
+                  style={{ marginLeft: 12 }}
+                />
+                <span style={{ margin: '0 4px' }}>até</span>
+                <input
+                  type="date"
+                  className={contasStyles.inputPeriodoExtrato}
+                  value={dataFim}
+                  onChange={e => setDataFim(e.target.value)}
+                />
+              </>
+            )}
+          </div>
           {loading ? (
             <div style={{textAlign: 'center', padding: '24px'}}>Carregando...</div>
           ) : (
@@ -193,7 +315,7 @@ const ContasAPagar = () => {
                 </tr>
               </thead>
               <tbody>
-                {contas.map(conta => (
+                {contasFiltradas.map(conta => (
                   <tr key={conta.id}>
                     <td>{conta.vencimento}</td>
                     <td>{conta.fornecedor}</td>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ConfirmationModal from './ConfirmationModal';
 import styles from '@/styles/admin/agendamentos/appointmentDetails.module.css';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
@@ -47,6 +48,7 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
   const [statusError, setStatusError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -281,19 +283,29 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
         </div>
         )}
         {!readOnly && (
-        <div className={styles.actionsRow}>
-          <button
-            className={styles.deleteButton}
-            onClick={handleDelete}
-            disabled={deleteLoading}
-            type="button"
-          >
-            {deleteLoading ? 'Excluindo...' : 'Excluir'}
-          </button>
-        </div>
+          <>
+            <div className={styles.actionsRow}>
+              <button
+                className={styles.deleteButton}
+                onClick={() => setShowConfirmDelete(true)}
+                disabled={deleteLoading}
+                type="button"
+              >
+                {deleteLoading ? 'Excluindo...' : 'Excluir'}
+              </button>
+            </div>
+            {showConfirmDelete && (
+              <ConfirmationModal
+                isOpen={showConfirmDelete}
+                message="Tem certeza que deseja excluir este agendamento? Esta ação não poderá ser desfeita."
+                onConfirm={handleDelete}
+                onCancel={() => setShowConfirmDelete(false)}
+              />
+            )}
+            {statusError && <p className={styles.statusError}>{statusError}</p>}
+            {deleteError && <p className={styles.statusError}>{deleteError}</p>}
+          </>
         )}
-        {statusError && <p className={styles.statusError}>{statusError}</p>}
-        {deleteError && <p className={styles.statusError}>{deleteError}</p>}
       </div>
     </div>
   );
