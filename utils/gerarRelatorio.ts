@@ -35,7 +35,7 @@ export const gerarRelatorioPDF = async ({
   dados,
   nomeArquivo = 'relatorio.pdf',
 }: RelatorioOptions) => {
-  const logoBase64 = await carregarImagemComoBase64('/images/ClinicAidLogo.png');
+  const logoBase64 = await carregarImagemComoBase64('/images/logo nova clinicaid azul fonte.png');
 
   const docDefinition = {
     pageSize: 'A4',
