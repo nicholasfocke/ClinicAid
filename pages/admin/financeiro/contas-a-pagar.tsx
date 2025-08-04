@@ -9,6 +9,7 @@ import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { ModalAdicionarConta } from '@/components/modals/ModalAdicionarConta';
+import { gerarRelatorioPDF } from '@/utils/gerarRelatorio';
 
 function formatarMoeda(valor: string) {
   // Remove tudo que não for dígito
@@ -120,6 +121,42 @@ const ContasAPagar = () => {
     .filter(c => c.status === 'Pago')
     .reduce((acc, c) => acc + c.valor, 0);
 
+  const baixarExtrato = async () => {
+    const contasExtrato = contas.filter(c => {
+      if (c.status !== 'Pago') return false;
+      let v = c.vencimento;
+      if (!v) return false;
+      let partes = v.includes('/') ? v.split('/') : v.split('-').reverse();
+      if (filtroModo === 'mes') {
+        if (!mesSelecionado) return true;
+        const mesAno = `${partes[1]}/${partes[2]}`;
+        return mesAno === mesSelecionado;
+      } else {
+        const dataPadrao = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+        if (dataInicio && dataFim) return dataPadrao >= dataInicio && dataPadrao <= dataFim;
+        if (dataInicio) return dataPadrao >= dataInicio;
+        if (dataFim) return dataPadrao <= dataFim;
+        return true;
+      }
+    });
+
+    if (contasExtrato.length === 0) return;
+
+    const dados = contasExtrato.map(c => [
+      c.vencimento,
+      c.fornecedor,
+      c.descricao,
+      c.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+    ]);
+
+    await gerarRelatorioPDF({
+      titulo: 'Extrato de Contas Pagas',
+      colunas: ['Vencimento', 'Fornecedor', 'Descrição', 'Valor'],
+      dados,
+      nomeArquivo: 'extrato_contas_pagas.pdf',
+    });
+  };
+
   const removerConta = async (id: string) => {
     setContaIdParaExcluir(id);
     setModalState({
@@ -213,9 +250,14 @@ const ContasAPagar = () => {
           Visualize as suas contas pendentes e gerencie as contas a pagar da sua clínica
         </div>
         <div className={contasStyles.containerContasPagar}>
-          <button className={contasStyles.btnAdicionar} onClick={() => setModalOpen(true)}>
-            Adicionar conta a pagar
-          </button>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <button className={contasStyles.btnAdicionar} onClick={() => setModalOpen(true)}>
+              Adicionar conta a pagar
+            </button>
+            <button className={contasStyles.btnExtrato} onClick={baixarExtrato}>
+              Baixar extrato
+            </button>
+          </div>
           <ModalAdicionarConta
             isOpen={modalOpen}
             onClose={() => setModalOpen(false)}
