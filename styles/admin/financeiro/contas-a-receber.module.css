@@ -103,7 +103,7 @@
   justify-content: flex-end;
   margin-top: 8px;
 }
-.btnRemoverReceber, .btnAdicionarReceber, .btnEditarReceber {
+.btnRemoverReceber, .btnAdicionarReceber, .btnEditarReceber, .btnExtratoReceber {
   min-width: 120px;
   height: 40px;
   font-size: 1rem;
@@ -134,6 +134,13 @@
 }
 .btnEditarReceber:hover {
   background: #1e40af;
+}
+.btnExtratoReceber {
+  background: #16a34a;
+  color: #fff;
+}
+.btnExtratoReceber:hover {
+  background: #15803d;
 }
 .containerContasReceber {
   background: #fff;

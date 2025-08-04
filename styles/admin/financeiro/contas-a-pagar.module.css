@@ -204,7 +204,7 @@
   justify-content: flex-end;
   margin-top: 8px;
 }
-.btnRemover, .btnAdicionar {
+.btnRemover, .btnAdicionar, .btnExtrato {
   min-width: 120px;
   height: 40px;
   font-size: 1rem;
@@ -228,6 +228,13 @@
 }
 .btnAdicionar:hover {
   background: #1e40af;
+}
+.btnExtrato {
+  background: #16a34a;
+  color: #fff;
+}
+.btnExtrato:hover {
+  background: #15803d;
 }
 .containerContasPagar {
   background: #fff;

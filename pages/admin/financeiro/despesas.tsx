@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
+import { gerarRelatorioPDF } from '@/utils/gerarRelatorio';
 
 interface Despesa {
   id: string;
@@ -261,6 +262,42 @@ const Despesas = () => {
     .filter(d => d.status === 'Paga')
     .reduce((acc, d) => acc + d.valor, 0);
 
+  const baixarExtrato = async () => {
+    const despesasExtrato = despesas.filter(d => {
+      if (d.status !== 'Paga') return false;
+      let v = d.data;
+      if (!v) return false;
+      let partes = v.includes('/') ? v.split('/') : v.split('-').reverse();
+      if (filtroModo === 'mes') {
+        if (!mesSelecionado) return true;
+        const mesAno = `${partes[1]}/${partes[2]}`;
+        return mesAno === mesSelecionado;
+      } else {
+        const dataPadrao = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+        if (dataInicio && dataFim) return dataPadrao >= dataInicio && dataPadrao <= dataFim;
+        if (dataInicio) return dataPadrao >= dataInicio;
+        if (dataFim) return dataPadrao <= dataFim;
+        return true;
+      }
+    });
+
+    if (despesasExtrato.length === 0) return;
+
+    const dados = despesasExtrato.map(d => [
+      d.data,
+      d.categoria,
+      d.descricao,
+      d.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+    ]);
+
+    await gerarRelatorioPDF({
+      titulo: 'Extrato de Despesas Pagas',
+      colunas: ['Data', 'Categoria', 'Descrição', 'Valor'],
+      dados,
+      nomeArquivo: 'extrato_despesas_pagas.pdf',
+    });
+  };
+
   return (
     <ProtectedRoute>
       <div>
@@ -275,9 +312,14 @@ const Despesas = () => {
           <div className={despesasStyles.subtitleDespesas}>Visualize e gerencie as despesas da sua clínica</div>
         </div>
         <div className={despesasStyles.containerDespesasGeral}>
-          <button className={despesasStyles.btnAdicionarDespesa} onClick={() => setModalOpen(true)}>
-            + Adicionar despesa
-          </button>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <button className={despesasStyles.btnAdicionarDespesa} onClick={() => setModalOpen(true)}>
+              + Adicionar despesa
+            </button>
+            <button className={despesasStyles.btnExtratoDespesa} onClick={baixarExtrato}>
+              Baixar extrato
+            </button>
+          </div>
           <ModalDespesa
             isOpen={modalOpen}
             onClose={() => setModalOpen(false)}

@@ -95,11 +95,58 @@ useEffect(() => {
 
 
 
+// Filtros globais (padrão: 'todos')
+const [filtroReceita, setFiltroReceita] = useState('todos');
+const [filtroContaPagar, setFiltroContaPagar] = useState('todos');
+const [filtroDespesa, setFiltroDespesa] = useState('todos');
+
+
+// Funções de filtro com opção 'Nenhum' para ocultar todos
+const receitasFiltradas = filtroReceita === 'nenhum' ? [] : receitas.filter(r => {
+  if (!filtroReceita || filtroReceita === 'todos') return true;
+  const desc = (r.descricao || '').toLowerCase();
+  const cli = (r.cliente || '').toLowerCase();
+  return desc === filtroReceita || cli === filtroReceita;
+});
+const contasPagarFiltradas = filtroContaPagar === 'nenhum' ? [] : contasPagar.filter(d => {
+  if (!filtroContaPagar || filtroContaPagar === 'todos') return true;
+  const forn = (d.fornecedor || '').toLowerCase();
+  const desc = (d.descricao || '').toLowerCase();
+  return forn === filtroContaPagar || desc === filtroContaPagar;
+});
+const despesasFiltradas = filtroDespesa === 'nenhum' ? [] : despesas.filter(d => {
+  if (!filtroDespesa || filtroDespesa === 'todos') return true;
+  const cat = (d.categoria || '').toLowerCase();
+  return cat === filtroDespesa;
+});
+
+// Opções dos filtros (únicos) com 'Nenhum' e 'Todos'
+const opcoesReceita = ['nenhum', 'todos', ...Array.from(new Set(receitas.map(r => (r.descricao || r.cliente || '').toLowerCase()).filter(Boolean)))];
+const opcoesContaPagar = ['nenhum', 'todos', ...Array.from(new Set(contasPagar.map(d => (d.fornecedor || d.descricao || '').toLowerCase()).filter(Boolean)))];
+const opcoesDespesa = ['nenhum', 'todos', ...Array.from(new Set(despesas.map(d => (d.categoria || '').toLowerCase()).filter(Boolean)))];
+
+
+
 // Receita: soma de contas a receber (status Recebido OU Pendente)
-const totalReceita = receitas.reduce((acc, r) => acc + (typeof r.valor === 'number' ? r.valor : 0), 0);
-// Despesas: soma de contas a pagar + despesas
-const totalDespesas = contasPagar.reduce((acc, d) => acc + (typeof d.valor === 'number' ? d.valor : 0), 0)
-  + despesas.reduce((acc, d) => acc + (typeof d.valor === 'number' ? d.valor : 0), 0);
+const totalReceita = receitasFiltradas.reduce((acc, r) => acc + (typeof r.valor === 'number' ? r.valor : 0), 0);
+
+// Despesas: soma de contas a pagar agrupadas por fornecedor + despesas agrupadas por categoria
+// Para o gráfico, queremos mostrar cada fornecedor (contas a pagar) e cada categoria (despesas)
+const despesasPorFornecedor = contasPagarFiltradas.reduce((acc, d) => {
+  const key = (d.fornecedor || 'Outro').toLowerCase();
+  acc[key] = (acc[key] || 0) + (typeof d.valor === 'number' ? d.valor : 0);
+  return acc;
+}, {} as Record<string, number>);
+const despesasPorCategoria = despesasFiltradas.reduce((acc, d) => {
+  const key = (d.categoria || 'Outro').toLowerCase();
+  acc[key] = (acc[key] || 0) + (typeof d.valor === 'number' ? d.valor : 0);
+  return acc;
+}, {} as Record<string, number>);
+// Soma total para saldo
+const totalDespesas = ([
+  ...Object.values<number>(despesasPorFornecedor),
+  ...Object.values<number>(despesasPorCategoria)
+].reduce((a, b) => a + b, 0));
 const totalSaido = totalReceita - totalDespesas;
 
 const meta = metaInput === '' ? totalReceita : Number(metaInput);
@@ -109,23 +156,26 @@ const porcentagem = meta > 0 ? (totalReceita / meta) * 100 : 0;
 const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar');
 const [dataType, setDataType] = useState<'both' | 'Receita' | 'Despesas'>('both');
 
+
 // Agrupamento por mês/ano para gráfico (exemplo: MM/YYYY)
-function agruparPorMesAno(lista: any[], campoData: string) {
-  const agrupado: { [mesAno: string]: number } = {};
+function agruparPorMesAno(lista: any[], campoData: string, agrupador: (item: any) => string) {
+  const agrupado: { [mesAno: string]: Record<string, number> } = {};
   lista.forEach(item => {
     let dataStr = item[campoData];
     if (!dataStr) return;
-    // Aceita formatos dd/mm/yyyy ou yyyy-mm-dd
     let partes = dataStr.includes('/') ? dataStr.split('/') : dataStr.split('-').reverse();
     let mesAno = `${partes[1]}/${partes[2]}`;
-    agrupado[mesAno] = (agrupado[mesAno] || 0) + (typeof item.valor === 'number' ? item.valor : 0);
+    const key = agrupador(item);
+    if (!agrupado[mesAno]) agrupado[mesAno] = {};
+    agrupado[mesAno][key] = (agrupado[mesAno][key] || 0) + (typeof item.valor === 'number' ? item.valor : 0);
   });
   return agrupado;
 }
 
-const receitasPorMes = agruparPorMesAno(receitas, 'vencimento');
-const contasPagarPorMes = agruparPorMesAno(contasPagar, 'vencimento');
-const despesasPorMes = agruparPorMesAno(despesas, 'data');
+const receitasPorMes = agruparPorMesAno(receitasFiltradas, 'vencimento', r => 'Receita');
+const contasPagarPorMes = agruparPorMesAno(contasPagarFiltradas, 'vencimento', d => (d.fornecedor || 'Outro').toLowerCase());
+const despesasPorMes = agruparPorMesAno(despesasFiltradas, 'data', d => (d.categoria || 'Outro').toLowerCase());
+
 
 // Meses presentes nos dados
 const meses = Array.from(new Set([
@@ -139,8 +189,13 @@ const meses = Array.from(new Set([
   return aa !== ab ? aa - ab : ma - mb;
 });
 
-const receitaMensal = meses.map(m => receitasPorMes[m] || 0);
-const despesasMensal = meses.map(m => (contasPagarPorMes[m] || 0) + (despesasPorMes[m] || 0));
+const receitaMensal = meses.map(m => (receitasPorMes[m]?.['Receita'] || 0));
+// Despesas mensal: soma de todos fornecedores e categorias
+const despesasMensal = meses.map(m => {
+  const fornecedores = contasPagarPorMes[m] ? Object.values(contasPagarPorMes[m]) : [];
+  const categorias = despesasPorMes[m] ? Object.values(despesasPorMes[m]) : [];
+  return fornecedores.reduce((a, b) => a + b, 0) + categorias.reduce((a, b) => a + b, 0);
+});
 const lucroMensal = meses.map((_, i) => receitaMensal[i] - despesasMensal[i]);
 
 
@@ -209,19 +264,19 @@ const lucroMensal = meses.map((_, i) => receitaMensal[i] - despesasMensal[i]);
 
   // Transações recentes: últimas 10 de receitas, contas a pagar e despesas
   const transacoesRecentes = [
-    ...receitas.map(r => ({
+    ...receitasFiltradas.map(r => ({
       data: r.vencimento || '',
       descricao: r.descricao || r.cliente || '',
       categoria: 'Receita',
       valor: typeof r.valor === 'number' ? r.valor : 0,
     })),
-    ...contasPagar.map(d => ({
+    ...contasPagarFiltradas.map(d => ({
       data: d.vencimento || '',
       descricao: d.descricao || d.fornecedor || '',
       categoria: 'Conta a Pagar',
       valor: typeof d.valor === 'number' ? -d.valor : 0,
     })),
-    ...despesas.map(d => ({
+    ...despesasFiltradas.map(d => ({
       data: d.data || '',
       descricao: d.descricao || '',
       categoria: 'Despesa',
@@ -275,6 +330,49 @@ const lucroMensal = meses.map((_, i) => receitaMensal[i] - despesasMensal[i]);
         </div>
       </div>
 
+      {/* Filtros movidos para logo abaixo dos cards */}
+      <div className={styles.filtrosDashboard}>
+        <div>
+          <label>Tipo de Receita:</label>
+          <select
+            value={filtroReceita}
+            onChange={e => setFiltroReceita(e.target.value)}
+          >
+            {opcoesReceita.map((op, i) => (
+              <option key={op + i} value={op}>
+                {op === 'nenhum' ? 'Nenhum' : op === 'todos' ? 'Todos' : op.charAt(0).toUpperCase() + op.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label>Tipo de Conta a Pagar:</label>
+          <select
+            value={filtroContaPagar}
+            onChange={e => setFiltroContaPagar(e.target.value)}
+          >
+            {opcoesContaPagar.map((op, i) => (
+              <option key={op + i} value={op}>
+                {op === 'nenhum' ? 'Nenhum' : op === 'todos' ? 'Todos' : op.charAt(0).toUpperCase() + op.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label>Categoria da Despesa:</label>
+          <select
+            value={filtroDespesa}
+            onChange={e => setFiltroDespesa(e.target.value)}
+          >
+            {opcoesDespesa.map((op, i) => (
+              <option key={op + i} value={op}>
+                {op === 'nenhum' ? 'Nenhum' : op === 'todos' ? 'Todos' : op.charAt(0).toUpperCase() + op.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className={styles.chartSection}>
         <h3>Receita e Despesas - Últimos Meses</h3>
         <div className={styles.chartTypeButtons}>
@@ -301,32 +399,6 @@ const lucroMensal = meses.map((_, i) => receitaMensal[i] - despesasMensal[i]);
             onClick={() => setChartType('pie')}
           >
             Pizza
-          </button>
-        </div>
-        <div className={styles.dataTypeButtons}>
-          <button
-            className={`${styles.dataTypeButton} ${
-              dataType === 'both' ? styles.activeDataType : ''
-            }`}
-            onClick={() => setDataType('both')}
-          >
-            Ambos
-          </button>
-          <button
-            className={`${styles.dataTypeButton} ${
-              dataType === 'Receita' ? styles.activeDataType : ''
-            }`}
-            onClick={() => setDataType('Receita')}
-          >
-            Receita
-          </button>
-          <button
-            className={`${styles.dataTypeButton} ${
-              dataType === 'Despesas' ? styles.activeDataType : ''
-            }`}
-            onClick={() => setDataType('Despesas')}
-          >
-            Despesa
           </button>
         </div>
         {chartType === 'bar' && <Bar data={chartData} options={chartOptions} />}

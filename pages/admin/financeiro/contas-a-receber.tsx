@@ -7,6 +7,7 @@ import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { ModalContaReceber } from '@/components/modals/ModalContaReceber';
+import { gerarRelatorioPDF } from '@/utils/gerarRelatorio';
 
 interface ContaReceber {
   id: string;
@@ -189,6 +190,42 @@ const ContasAReceber = () => {
     .filter(c => c.status === 'Recebido')
     .reduce((acc, c) => acc + c.valor, 0);
 
+  const baixarExtrato = async () => {
+    const contasExtrato = contas.filter(c => {
+      if (c.status !== 'Recebido') return false;
+      let v = c.vencimento;
+      if (!v) return false;
+      let partes = v.includes('/') ? v.split('/') : v.split('-').reverse();
+      if (filtroModo === 'mes') {
+        if (!mesSelecionado) return true;
+        const mesAno = `${partes[1]}/${partes[2]}`;
+        return mesAno === mesSelecionado;
+      } else {
+        const dataPadrao = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+        if (dataInicio && dataFim) return dataPadrao >= dataInicio && dataPadrao <= dataFim;
+        if (dataInicio) return dataPadrao >= dataInicio;
+        if (dataFim) return dataPadrao <= dataFim;
+        return true;
+      }
+    });
+
+    if (contasExtrato.length === 0) return;
+
+    const dados = contasExtrato.map(c => [
+      c.vencimento,
+      c.cliente,
+      c.descricao,
+      c.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+    ]);
+
+    await gerarRelatorioPDF({
+      titulo: 'Extrato de Contas Recebidas',
+      colunas: ['Vencimento', 'Cliente', 'Descrição', 'Valor'],
+      dados,
+      nomeArquivo: 'extrato_contas_recebidas.pdf',
+    });
+  };
+
   return (
     <ProtectedRoute>
       <div className={styles.container}>
@@ -203,9 +240,14 @@ const ContasAReceber = () => {
           Gerencie os pagamentos pendentes que a a sua clínica deve receber
         </div>
         <div className={receberStyles.containerContasReceber}>
-          <button className={receberStyles.btnAdicionarReceber} onClick={() => setModalOpen(true)}>
-            Adicionar conta a receber
-          </button>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <button className={receberStyles.btnAdicionarReceber} onClick={() => setModalOpen(true)}>
+              Adicionar conta a receber
+            </button>
+            <button className={receberStyles.btnExtratoReceber} onClick={baixarExtrato}>
+              Baixar extrato
+            </button>
+          </div>
           <ModalContaReceber
             isOpen={modalOpen}
             onClose={() => setModalOpen(false)}
