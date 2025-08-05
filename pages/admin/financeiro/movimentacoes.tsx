@@ -107,7 +107,7 @@ const MovimentacoesFinanceiras = () => {
                 <tr>
                   <th>DATA</th>
                   <th>TIPO</th>
-                  <th>CLIENTE / FORNECEDOR</th>
+                  <th>CLIENTE/FORNECEDOR</th>
                   <th>DESCRIÇÃO</th>
                   <th>VALOR</th>
                   <th>FORMA PAGAMENTO</th>
