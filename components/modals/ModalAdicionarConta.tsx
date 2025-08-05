@@ -9,6 +9,7 @@ interface ModalProps {
     fornecedor: string;
     descricao: string;
     valor: number;
+    formaPagamento?: 'Pix' | 'Boleto bancário' | 'Cartão' | 'Transferência' | '';
   }) => void;
 }
 
@@ -17,7 +18,8 @@ export const ModalAdicionarConta: React.FC<ModalProps> = ({ isOpen, onClose, onS
     vencimento: '',
     fornecedor: '',
     descricao: '',
-    valor: ''
+    valor: '',
+    formaPagamento: '',
   });
 
   // Função para formatar moeda (R$ 1.000,00)
@@ -29,10 +31,9 @@ export const ModalAdicionarConta: React.FC<ModalProps> = ({ isOpen, onClose, onS
   }
 
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     if (name === 'valor') {
-      // Permite digitação e formata como moeda
       setForm({ ...form, valor: formatarMoeda(value) });
     } else {
       setForm({ ...form, [name]: value });
@@ -49,17 +50,17 @@ export const ModalAdicionarConta: React.FC<ModalProps> = ({ isOpen, onClose, onS
       vencimento: form.vencimento,
       fornecedor: form.fornecedor,
       descricao: form.descricao,
-      valor: valorNumerico
+      valor: valorNumerico,
+      formaPagamento: form.formaPagamento as 'Pix' | 'Boleto bancário' | 'Cartão' | 'Transferência' | '',
     });
-    setForm({ vencimento: '', fornecedor: '', descricao: '', valor: '' });
+    setForm({ vencimento: '', fornecedor: '', descricao: '', valor: '', formaPagamento: '' });
   };
 
   // Limpa o formulário sempre que o modal for fechado (ao cancelar ou sair)
   React.useEffect(() => {
     if (!isOpen) {
-      setForm({ vencimento: '', fornecedor: '', descricao: '', valor: '' });
+      setForm({ vencimento: '', fornecedor: '', descricao: '', valor: '', formaPagamento: '' });
     }
-    // Não limpa ao abrir, apenas ao fechar
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -95,6 +96,22 @@ export const ModalAdicionarConta: React.FC<ModalProps> = ({ isOpen, onClose, onS
               maxLength={20}
               autoComplete="off"
             />
+          </label>
+          <label className={styles.modalLabel}>
+            Forma de Pagamento
+            <select
+              name="formaPagamento"
+              value={form.formaPagamento}
+              onChange={handleChange}
+              className={styles.modalInput}
+              required
+            >
+              <option value="">Selecione</option>
+              <option value="Pix">Pix</option>
+              <option value="Boleto bancário">Boleto bancário</option>
+              <option value="Cartão">Cartão</option>
+              <option value="Transferência">Transferência</option>
+            </select>
           </label>
           <div className={styles.modalActions}>
             <button type="button" className={styles.btnRemover} onClick={onClose}>Cancelar</button>

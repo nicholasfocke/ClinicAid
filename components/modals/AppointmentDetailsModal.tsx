@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import ConfirmationModal from './ConfirmationModal';
 import styles from '@/styles/admin/agendamentos/appointmentDetails.module.css';
-import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc, addDoc, collection } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
@@ -49,6 +49,9 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentValue, setPaymentValue] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -267,7 +270,7 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
           <button
             disabled={statusLoading || appointment.status === statusAgendamento.CONCLUIDO}
             className={`${styles.statusButton} ${appointment.status === statusAgendamento.CONCLUIDO ? styles.statusButtonActive : ''}`}
-            onClick={() => handleStatusChange(statusAgendamento.CONCLUIDO)}
+            onClick={() => setShowPaymentModal(true)}
             type="button"
           >
             Concluído
@@ -281,6 +284,83 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
             Pendente
           </button>
         </div>
+        )}
+        {showPaymentModal && (
+          <div className={styles.paymentOverlay}>
+            <div className={styles.paymentModal}>
+              <h4 className={styles.paymentTitle}>Registrar pagamento</h4>
+              <label className={styles.paymentLabel}>
+                Valor
+                <input
+                  type="text"
+                  value={paymentValue}
+                  onChange={e => {
+                    const onlyDigits = e.target.value.replace(/\D/g, '');
+                    const number = Number(onlyDigits) / 100;
+                    setPaymentValue(
+                      isNaN(number)
+                        ? ''
+                        : number.toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          })
+                    );
+                  }}
+                  className={styles.paymentInput}
+                  placeholder="R$ 0,00"
+                />
+              </label>
+              <label className={styles.paymentLabel}>
+                Forma de pagamento
+                <select
+                  value={paymentMethod}
+                  onChange={e => setPaymentMethod(e.target.value)}
+                  className={styles.paymentSelect}
+                >
+                  <option value="">Selecione</option>
+                  <option value="Pix">Pix</option>
+                  <option value="Cartão">Cartão</option>
+                  <option value="Boleto">Boleto</option>
+                  <option value="Transferência">Transferência</option>
+                </select>
+              </label>
+              <div className={styles.paymentActions}>
+                <button
+                  type="button"
+                  className={styles.cancelButton}
+                  onClick={() => setShowPaymentModal(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className={styles.saveButton}
+                  onClick={async () => {
+                    if (!paymentValue || !paymentMethod || !appointment) return;
+                    try {
+                      const valorNumerico = Number(paymentValue.replace(/[^\d]/g, '')) / 100;
+                      await addDoc(collection(firestore, 'contasAReceber'), {
+                        vencimento: formatDateFns(new Date(), 'dd/MM/yyyy'),
+                        cliente: appointment.nomePaciente,
+                        descricao: 'Agendamento concluído',
+                        valor: valorNumerico,
+                        status: 'Recebido',
+                        formaPagamento: paymentMethod,
+                      });
+                      await handleStatusChange(statusAgendamento.CONCLUIDO);
+                      setShowPaymentModal(false);
+                      setPaymentValue('');
+                      setPaymentMethod('');
+                    } catch {
+                      // erro ao salvar
+                    }
+                  }}
+                >
+                  Salvar
+                </button>
+              </div>
+            </div>
+          </div>
         )}
         {!readOnly && (
           <>

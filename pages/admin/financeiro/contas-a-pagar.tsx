@@ -28,6 +28,7 @@ interface ContaPagar {
   descricao: string;
   valor: number;
   status: 'Pendente' | 'Pago';
+  formaPagamento?: 'Pix' | 'Boleto bancário' | 'Cartão' | 'Transferência' | '';
 }
 
 const ContasAPagar = () => {
@@ -174,7 +175,7 @@ const ContasAPagar = () => {
     });
   };
 
-  const adicionarConta = async (data: { vencimento: string; fornecedor: string; descricao: string; valor: number; status?: 'Pendente' | 'Pago' }) => {
+  const adicionarConta = async (data: { vencimento: string; fornecedor: string; descricao: string; valor: number; status?: 'Pendente' | 'Pago'; formaPagamento?: 'Pix' | 'Boleto bancário' | 'Cartão' | 'Transferência' | '' }) => {
     try {
       const docRef = await addDoc(collection(firestore, 'contasAPagar'), {
         vencimento: data.vencimento.split('-').reverse().join('/'),
@@ -182,6 +183,7 @@ const ContasAPagar = () => {
         descricao: data.descricao,
         valor: data.valor,
         status: data.status || 'Pendente',
+        formaPagamento: data.formaPagamento || '',
       });
       setContas(prev => [
         ...prev,
@@ -192,6 +194,7 @@ const ContasAPagar = () => {
           descricao: data.descricao,
           valor: data.valor,
           status: data.status || 'Pendente',
+          formaPagamento: data.formaPagamento || '',
         },
       ]);
     } catch (err) {
@@ -205,7 +208,7 @@ const ContasAPagar = () => {
     setModalEditOpen(true);
   };
 
-  const editarConta = async (data: { vencimento: string; fornecedor: string; descricao: string; valor: number; status?: 'Pendente' | 'Pago' }) => {
+  const editarConta = async (data: { vencimento: string; fornecedor: string; descricao: string; valor: number; status?: 'Pendente' | 'Pago'; formaPagamento?: 'Pix' | 'Boleto bancário' | 'Cartão' | 'Transferência' | '' }) => {
     if (!contaEdit) return;
     try {
       await import('firebase/firestore').then(({ updateDoc }) =>
@@ -215,6 +218,7 @@ const ContasAPagar = () => {
           descricao: data.descricao,
           valor: data.valor,
           status: data.status || 'Pendente',
+          formaPagamento: data.formaPagamento || '',
         })
       );
       setContas(prev => prev.map(c =>
@@ -226,6 +230,7 @@ const ContasAPagar = () => {
               descricao: data.descricao,
               valor: data.valor,
               status: data.status || 'Pendente',
+              formaPagamento: data.formaPagamento || '',
             }
           : c
       ));
@@ -352,6 +357,7 @@ const ContasAPagar = () => {
                   <th>FORNECEDOR</th>
                   <th>DESCRIÇÃO</th>
                   <th>VALOR</th>
+                  <th>FORMA DE PAGAMENTO</th>
                   <th>STATUS</th>
                   <th>AÇÕES</th>
                 </tr>
@@ -363,6 +369,7 @@ const ContasAPagar = () => {
                     <td>{conta.fornecedor}</td>
                     <td>{conta.descricao}</td>
                     <td>{conta.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td>{conta.formaPagamento || '-'}</td>
                     <td>
                       <span className={conta.status === 'Pendente' ? contasStyles.statusPendente : contasStyles.statusPago}>
                         {conta.status}
