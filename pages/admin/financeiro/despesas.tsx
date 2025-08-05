@@ -14,6 +14,7 @@ interface Despesa {
   data: string;
   valor: number;
   status: 'Pendente' | 'Paga';
+  formaPagamento?: 'Pix' | 'Boleto bancário' | 'Cartão' | 'Transferência' | '';
 }
 
 const categorias = ['Compras', 'Infraestrutura', 'Serviços', 'Outros'];
@@ -37,8 +38,9 @@ const ModalDespesa = ({ isOpen, onClose, onSubmit, despesa, isEdit }: {
   const [descricao, setDescricao] = useState(despesa?.descricao || '');
   const [categoria, setCategoria] = useState(despesa?.categoria || '');
   const [data, setData] = useState(despesa?.data ? despesa.data.split('/').reverse().join('-') : '');
-  const [valor, setValor] = useState(despesa?.valor !== undefined ? formatarMoeda(String(despesa.valor)) : '');
+  const [valor, setValor] = useState(despesa?.valor !== undefined ? formatarMoeda(Number(despesa.valor).toFixed(2)) : '');
   const [status, setStatus] = useState<Despesa['status']>(despesa?.status || 'Pendente');
+  const [formaPagamento, setFormaPagamento] = useState<Despesa['formaPagamento']>(despesa?.formaPagamento || '');
 
   React.useEffect(() => {
     if (!isOpen) {
@@ -47,12 +49,18 @@ const ModalDespesa = ({ isOpen, onClose, onSubmit, despesa, isEdit }: {
       setData('');
       setValor('');
       setStatus('Pendente');
+      setFormaPagamento('');
     } else {
       setDescricao(despesa?.descricao || '');
       setCategoria(despesa?.categoria || '');
       setData(despesa?.data ? despesa.data.split('/').reverse().join('-') : '');
-      setValor(despesa?.valor !== undefined ? formatarMoeda(String(despesa.valor)) : '');
+      setValor(
+        despesa?.valor !== undefined && !isNaN(Number(despesa.valor))
+          ? formatarMoeda(Number(despesa.valor).toFixed(2))
+          : ''
+      );
       setStatus(despesa?.status || 'Pendente');
+      setFormaPagamento(despesa?.formaPagamento || '');
     }
   }, [isOpen, despesa]);
 
@@ -66,7 +74,7 @@ const ModalDespesa = ({ isOpen, onClose, onSubmit, despesa, isEdit }: {
           if (valor === '' || Number(valor.replace(/[^\d]/g, '')) === 0) return;
           // Extrai o valor numérico da string formatada
           const valorNumerico = Number(valor.replace(/[^\d]/g, '')) / 100;
-          onSubmit({ descricao, categoria, data, valor: valorNumerico, status });
+          onSubmit({ descricao, categoria, data, valor: valorNumerico, status, formaPagamento });
         }}>
           <input type="text" placeholder="Descrição" value={descricao} onChange={e => setDescricao(e.target.value)} required />
           <select value={categoria} onChange={e => setCategoria(e.target.value)} required>
@@ -86,6 +94,13 @@ const ModalDespesa = ({ isOpen, onClose, onSubmit, despesa, isEdit }: {
           />
           <select value={status} onChange={e => setStatus(e.target.value as Despesa['status'])} required>
             {statusList.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={formaPagamento} onChange={e => setFormaPagamento(e.target.value as Despesa['formaPagamento'])} required>
+            <option value="">Forma de Pagamento</option>
+            <option value="Pix">Pix</option>
+            <option value="Boleto bancário">Boleto bancário</option>
+            <option value="Cartão">Cartão</option>
+            <option value="Transferência">Transferência</option>
           </select>
           <div className={despesasStyles.modalActions}>
             <button type="button" className={despesasStyles.modalBtnCancelar} onClick={onClose}>Cancelar</button>
@@ -143,6 +158,7 @@ const Despesas = () => {
         data: data.data.split('-').reverse().join('/'),
         valor: data.valor,
         status: data.status,
+        formaPagamento: data.formaPagamento || '',
       });
       setDespesas(prev => [
         ...prev,
@@ -153,6 +169,7 @@ const Despesas = () => {
           data: data.data.split('-').reverse().join('/'),
           valor: data.valor,
           status: data.status,
+          formaPagamento: data.formaPagamento || '',
         },
       ]);
     } catch (err) {
@@ -176,11 +193,12 @@ const Despesas = () => {
           data: data.data.split('-').reverse().join('/'),
           valor: data.valor,
           status: data.status,
+          formaPagamento: data.formaPagamento || '',
         })
       );
       setDespesas(prev => prev.map(d =>
         d.id === despesaEdit.id
-          ? { ...d, ...data, data: data.data.split('-').reverse().join('/') }
+          ? { ...d, ...data, data: data.data.split('-').reverse().join('/'), formaPagamento: data.formaPagamento || '' }
           : d
       ));
     } catch (err) {
@@ -431,6 +449,7 @@ const Despesas = () => {
                 <th>CATEGORIA</th>
                 <th>DESCRIÇÃO</th>
                 <th>VALOR</th>
+                <th>FORMA DE PAGAMENTO</th>
                 <th>STATUS</th>
                 <th>AÇÕES</th>
               </tr>
@@ -442,6 +461,7 @@ const Despesas = () => {
                   <td>{despesa.categoria}</td>
                   <td>{despesa.descricao}</td>
                   <td>{despesa.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                  <td>{despesa.formaPagamento || '-'}</td>
                   <td>
                     <span className={despesa.status === 'Pendente' ? despesasStyles.statusPendente : despesasStyles.statusPaga}>
                       {despesa.status}

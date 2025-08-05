@@ -10,6 +10,7 @@ interface ModalProps {
     cliente: string;
     vencimento: string;
     status: 'Pendente' | 'Recebido';
+    formaPagamento?: 'Pix' | 'Boleto bancário' | 'Cartão' | 'Transferência' | '';
   }) => void;
   conta?: {
     descricao: string;
@@ -17,6 +18,7 @@ interface ModalProps {
     cliente: string;
     vencimento: string;
     status: 'Pendente' | 'Recebido';
+    formaPagamento?: 'Pix' | 'Boleto bancário' | 'Cartão' | 'Transferência' | '';
   };
   isEdit?: boolean;
 }
@@ -28,6 +30,7 @@ export const ModalContaReceber: React.FC<ModalProps> = ({ isOpen, onClose, onSub
     cliente: conta?.cliente || '',
     vencimento: conta?.vencimento ? conta.vencimento.split('/').reverse().join('-') : '',
     status: conta?.status || 'Pendente',
+    formaPagamento: conta?.formaPagamento || '',
   });
 
   // Função para formatar moeda (R$ 1.000,00)
@@ -54,6 +57,7 @@ export const ModalContaReceber: React.FC<ModalProps> = ({ isOpen, onClose, onSub
         cliente: '',
         vencimento: '',
         status: 'Pendente',
+        formaPagamento: '',
       });
     } else {
       setForm({
@@ -62,6 +66,7 @@ export const ModalContaReceber: React.FC<ModalProps> = ({ isOpen, onClose, onSub
         cliente: conta?.cliente || '',
         vencimento: conta?.vencimento ? conta.vencimento.split('/').reverse().join('-') : '',
         status: conta?.status || 'Pendente',
+        formaPagamento: conta?.formaPagamento || '',
       });
     }
   }, [isOpen, conta, isEdit]);
@@ -86,6 +91,7 @@ export const ModalContaReceber: React.FC<ModalProps> = ({ isOpen, onClose, onSub
       cliente: form.cliente,
       vencimento: form.vencimento,
       status: form.status as 'Pendente' | 'Recebido',
+      formaPagamento: form.formaPagamento as 'Pix' | 'Boleto bancário' | 'Cartão' | 'Transferência' | '',
     });
   };
 
@@ -122,6 +128,22 @@ export const ModalContaReceber: React.FC<ModalProps> = ({ isOpen, onClose, onSub
               maxLength={20}
               autoComplete="off"
             />
+          </label>
+          <label className={styles.modalLabel}>
+            Forma de Pagamento
+            <select
+              name="formaPagamento"
+              value={form.formaPagamento}
+              onChange={handleChange}
+              className={styles.modalInput}
+              required
+            >
+              <option value="">Selecione</option>
+              <option value="Pix">Pix</option>
+              <option value="Boleto bancário">Boleto bancário</option>
+              <option value="Cartão">Cartão</option>
+              <option value="Transferência">Transferência</option>
+            </select>
           </label>
           {isEdit && (
             <label className={styles.modalLabel}>

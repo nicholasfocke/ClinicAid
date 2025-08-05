@@ -16,6 +16,7 @@ interface ContaReceber {
   cliente: string;
   vencimento: string;
   status: 'Pendente' | 'Recebido';
+  formaPagamento?: 'Pix' | 'Boleto bancário' | 'Cartão' | 'Transferência' | '';
 }
 
 const ContasAReceber = () => {
@@ -29,14 +30,15 @@ const ContasAReceber = () => {
       try {
         const contasRef = collection(firestore, 'contasAReceber');
         const snapshot = await getDocs(contasRef);
-        const contasList: ContaReceber[] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          vencimento: doc.data().vencimento,
-          cliente: doc.data().cliente,
-          descricao: doc.data().descricao,
-          valor: doc.data().valor,
-          status: doc.data().status,
-        }));
+      const contasList: ContaReceber[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        vencimento: doc.data().vencimento,
+        cliente: doc.data().cliente,
+        descricao: doc.data().descricao,
+        valor: doc.data().valor,
+        status: doc.data().status,
+        formaPagamento: doc.data().formaPagamento || '',
+      }));
         setContas(contasList);
       } catch (err) {
         setContas([]);
@@ -80,6 +82,7 @@ const ContasAReceber = () => {
         descricao: data.descricao,
         valor: data.valor,
         status: data.status,
+        formaPagamento: data.formaPagamento || '',
       });
       setContas(prev => [
         ...prev,
@@ -90,6 +93,7 @@ const ContasAReceber = () => {
           descricao: data.descricao,
           valor: data.valor,
           status: data.status,
+          formaPagamento: data.formaPagamento || '',
         },
       ]);
     } catch (err) {
@@ -113,6 +117,7 @@ const ContasAReceber = () => {
           descricao: data.descricao,
           valor: data.valor,
           status: data.status,
+          formaPagamento: data.formaPagamento || '',
         })
       );
       setContas(prev => prev.map(c =>
@@ -124,6 +129,7 @@ const ContasAReceber = () => {
               descricao: data.descricao,
               valor: data.valor,
               status: data.status,
+              formaPagamento: data.formaPagamento || '',
             }
           : c
       ));
@@ -339,26 +345,28 @@ const ContasAReceber = () => {
             <table className={receberStyles.tabelaContasReceber}>
               <thead>
                 <tr>
-                  <th>VENCIMENTO</th>
-                  <th>CLIENTE</th>
-                  <th>DESCRIÇÃO</th>
-                  <th>VALOR</th>
-                  <th>STATUS</th>
-                  <th>AÇÕES</th>
+          <th>VENCIMENTO</th>
+          <th>CLIENTE</th>
+          <th>DESCRIÇÃO</th>
+          <th>VALOR</th>
+          <th>FORMA PAGAMENTO</th>
+          <th>STATUS</th>
+          <th>AÇÕES</th>
                 </tr>
               </thead>
               <tbody>
                 {contasFiltradas.map(conta => (
                   <tr key={conta.id}>
-                    <td>{conta.vencimento}</td>
-                    <td>{conta.cliente}</td>
-                    <td>{conta.descricao}</td>
-                    <td>{conta.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td>
-                      <span className={conta.status === 'Pendente' ? receberStyles.statusPendente : receberStyles.statusRecebido}>
-                        {conta.status}
-                      </span>
-                    </td>
+                <td>{conta.vencimento}</td>
+                <td>{conta.cliente}</td>
+                <td>{conta.descricao}</td>
+                <td>{conta.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                <td>{conta.formaPagamento || '-'}</td>
+                <td>
+                  <span className={conta.status === 'Pendente' ? receberStyles.statusPendente : receberStyles.statusRecebido}>
+                    {conta.status}
+                  </span>
+                </td>
                     <td className={receberStyles.acoesTd}>
                       <button
                         className={receberStyles.iconBtn + ' ' + receberStyles.iconEdit}
