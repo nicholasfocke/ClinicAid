@@ -1,3 +1,115 @@
+/* Filtros e pesquisa */
+.filtrosBox {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pesquisaInput {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 1rem;
+  background: #f8fafc;
+  min-width: 220px;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.pesquisaInput:focus {
+  border: 1.5px solid #2563eb;
+  box-shadow: 0 0 0 2px #2563eb22;
+}
+
+.filtroToggleBtn {
+  background: #f3f6fa;
+  color: #2563eb;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 0;
+  margin-right: 0;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+  outline: none;
+}
+.filtroToggleBtn:hover {
+  background: #e8f0fe;
+  border-color: #2563eb;
+  color: #1741a0;
+}
+.filtroToggleBtn:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px #2563eb22;
+}
+.filtroToggleBtnAtivo {
+  background: #2563eb;
+  color: #fff;
+  border: 1.5px solid #2563eb;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 0;
+  margin-right: 0;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+  outline: none;
+}
+
+.selectMesExtrato {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 1rem;
+  background: #f8fafc;
+  min-width: 150px;
+  margin-left: 8px;
+  transition: border 0.2s, box-shadow 0.2s;
+  color: #222;
+}
+.selectMesExtrato:focus {
+  border: 1.5px solid #2563eb;
+  box-shadow: 0 0 0 2px #2563eb22;
+}
+
+.inputPeriodoExtrato {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 1rem;
+  background: #f8fafc;
+  min-width: 140px;
+  transition: border 0.2s, box-shadow 0.2s;
+  color: #222;
+}
+.inputPeriodoExtrato:focus {
+  border: 1.5px solid #2563eb;
+  box-shadow: 0 0 0 2px #2563eb22;
+}
+
+.ateLabel {
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.selectStatusExtrato {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 1rem;
+  background: #f8fafc;
+  min-width: 160px;
+  transition: border 0.2s, box-shadow 0.2s;
+  color: #222;
+  font-weight: 600;
+}
+.selectStatusExtrato:focus {
+  border: 1.5px solid #2563eb;
+  box-shadow: 0 0 0 2px #2563eb22;
+}
 .container {
   margin-left: 260px;
   padding: 2rem 3rem;
