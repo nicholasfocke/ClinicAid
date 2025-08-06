@@ -104,20 +104,43 @@ const MovimentacoesFinanceiras = () => {
     if (periodoFiltro === 'mes' && mesSelecionado !== 'Todos') {
       // mesSelecionado está no formato MM/AAAA
       const [mesFiltro, anoFiltro] = mesSelecionado.split('/');
-      let [dia, mes, ano] = mov.data.includes('/') ? mov.data.split('/') : mov.data.split('-').reverse();
+      let mes, ano;
       if (mov.data.includes('-')) {
-        ano = mov.data.split('-')[0];
-        mes = mov.data.split('-')[1];
+        // yyyy-mm-dd
+        const parts = mov.data.split('-');
+        ano = parts[0];
+        mes = parts[1];
+      } else {
+        // dd/mm/yyyy
+        const parts = mov.data.split('/');
+        mes = parts[1];
+        ano = parts[2];
       }
       periodoOk = mes === mesFiltro && ano === anoFiltro;
     } else if (periodoFiltro === 'periodo' && dataInicio && dataFim) {
-      // Converter datas para Date
-      const [di, mi, ai] = dataInicio.split('-');
-      const [df, mf, af] = dataFim.split('-');
-      const dataMov = mov.data.includes('-') ? new Date(mov.data) : new Date(mov.data.split('/').reverse().join('-'));
-      const dataIni = new Date(`${ai}-${mi}-${di}`);
-      const dataFi = new Date(`${af}-${mf}-${df}`);
-      periodoOk = dataMov >= dataIni && dataMov <= dataFi;
+      // Converter datas para Date, aceitando tanto yyyy-mm-dd quanto dd/mm/yyyy
+      const parseData = (data: string) => {
+        if (!data) return null;
+        if (data.includes('-')) {
+          // yyyy-mm-dd
+          return new Date(data + 'T00:00:00');
+        } else if (data.includes('/')) {
+          // dd/mm/yyyy
+          const [dia, mes, ano] = data.split('/');
+          return new Date(`${ano}-${mes}-${dia}T00:00:00`);
+        }
+        return null;
+      };
+      const dataMov = parseData(mov.data);
+      const dataIni = parseData(dataInicio);
+      const dataFi = parseData(dataFim);
+      if (dataMov && dataIni && dataFi) {
+        // Considera o dia inteiro de dataFim
+        dataFi.setHours(23,59,59,999);
+        periodoOk = dataMov >= dataIni && dataMov <= dataFi;
+      } else {
+        periodoOk = false;
+      }
     }
 
     return pesquisaOk && tipoOk && periodoOk;
@@ -186,20 +209,30 @@ const MovimentacoesFinanceiras = () => {
               {Array.from(new Set(
                 movimentacoes
                   .map(m => {
-                    const parts = m.data.includes('-') ? m.data.split('-') : m.data.split('/').reverse();
-                    const mes = m.data.includes('-') ? parts[1] : parts[1];
-                    const ano = m.data.includes('-') ? parts[0] : parts[2];
-                    return `${mes.padStart(2, '0')}/${ano}`;
+                    // Extrai mês e ano, ignora dia
+                    let mes, ano;
+                    if (m.data.includes('-')) {
+                      // yyyy-mm-dd
+                      const parts = m.data.split('-');
+                      ano = parts[0];
+                      mes = parts[1];
+                    } else {
+                      // dd/mm/yyyy
+                      const parts = m.data.split('/');
+                      mes = parts[1];
+                      ano = parts[2];
+                    }
+                    return mes && ano ? `${mes.padStart(2, '0')}/${ano}` : undefined;
                   })
               ))
-                .filter(Boolean)
+                .filter((v): v is string => Boolean(v))
                 .sort((a, b) => {
                   // Ordena por ano/mês
                   const [ma, aa] = a.split('/').map(Number);
                   const [mb, ab] = b.split('/').map(Number);
                   return ab !== aa ? ab - aa : mb - ma;
                 })
-                .map(mesAno => (
+                .map((mesAno: string) => (
                   <option key={mesAno} value={mesAno}>{mesAno}</option>
                 ))}
             </select>
