@@ -107,6 +107,10 @@
   font-size: 16px;
   transition: background-color 0.3s;
   font-family: 'Inter', sans-serif;
+  gap: 10px;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
 }
 
 .farmaciaButton {
@@ -123,7 +127,11 @@
 }
 
 .chevronIcon {
-  margin-left: 20px; /* altera a distancia daquela seta do lado de cadastros */ 
+  margin-left: auto; /* garante que a seta fique à direita */
+  color: #fff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
 }
 
 .subNav {
