@@ -19,7 +19,9 @@
   margin-bottom: 0.4rem;
 }
 
-.filtrosDashboard select {
+
+.filtrosDashboard select,
+.filtrosDashboard input[type="text"] {
   padding: 0.5rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -29,6 +31,12 @@
   color: #1f2937;
   margin-left: 0;
   margin-bottom: 0.2rem;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.filtrosDashboard input[type="text"]:focus {
+  border: 1.5px solid #2563eb;
 }
 
 .filtrosDashboard > div {

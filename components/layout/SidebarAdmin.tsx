@@ -15,6 +15,7 @@ const SidebarAdmin = () => {
   const [farmaciaOpen, setFarmaciaOpen] = useState(false);
   const [financeiroOpen, setFinanceiroOpen] = useState(false);
   const [pacientesOpen, setPacientesOpen] = useState(false);
+  const [colaboradoresOpen, setColaboradoresOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -57,6 +58,10 @@ const SidebarAdmin = () => {
 
   const toggleFinanceiro = () => {
     setFinanceiroOpen((prev) => !prev);
+  };
+
+  const toggleColaboradores = () => {
+    setColaboradoresOpen((prev) => !prev);
   };
 
   if (!isAuthenticated || !isAdmin) {
@@ -133,10 +138,31 @@ const SidebarAdmin = () => {
               <Bot className={styles.icon} color="#fff" style={{ marginTop: 0 }} />
               <span style={{ marginTop: 0 }}>Assistente IA</span>
             </Link>
-            <Link href="/admin/profissionais" className={styles.navItem} style={{ marginTop: 0 }}>
+            {/* Colaboradores dropdown */}
+            <button
+              type="button"
+              onClick={toggleColaboradores}
+              className={`${styles.navItem} ${styles.cadastroButton}`}
+              style={{ marginTop: 0 }}
+            >
               <Stethoscope className={styles.icon} color="#fff" style={{ marginTop: 0 }} />
-              <span style={{ marginTop: 0 }}>Profissionais</span>
-            </Link>
+              <span style={{ marginTop: 0 }}>Colaboradores</span>
+              {colaboradoresOpen ? (
+                <ChevronDown className={styles.chevronIcon} size={16} color="#fff" style={{ marginTop: 0 }} />
+              ) : (
+                <ChevronRight className={styles.chevronIcon} size={16} color="#fff" style={{ marginTop: 0 }} />
+              )}
+            </button>
+            {colaboradoresOpen && (
+              <div className={styles.subNav} style={{ marginTop: 0 }}>
+                <Link href="/admin/profissionais" className={styles.subNavItem}>
+                  Profissionais
+                </Link>
+                <Link href="/admin/funcionarios" className={styles.subNavItem}>
+                  Funcionários
+                </Link>
+              </div>
+            )}
             <button type="button" onClick={togglePacientes} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
               <span className={styles.icon} style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
                 <Users className={styles.icon} style={{ marginTop: 0 }} />

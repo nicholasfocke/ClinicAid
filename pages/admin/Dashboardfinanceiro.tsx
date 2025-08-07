@@ -101,6 +101,50 @@ const [filtroContaPagar, setFiltroContaPagar] = useState('todos');
 const [filtroDespesa, setFiltroDespesa] = useState('todos');
 
 
+// Filtro de período
+const [periodo, setPeriodo] = useState<'mensal' | 'trimestral' | 'anual' | 'personalizado'>('anual');
+const [dataInicio, setDataInicio] = useState('');
+const [dataFim, setDataFim] = useState('');
+
+// Máscara para DD/MM/AAAA
+function aplicarMascaraData(valor: string) {
+  let v = valor.replace(/\D/g, '');
+  if (v.length > 8) v = v.slice(0, 8);
+  if (v.length > 4) v = v.replace(/(\d{2})(\d{2})(\d{0,4})/, '$1/$2/$3');
+  else if (v.length > 2) v = v.replace(/(\d{2})(\d{0,2})/, '$1/$2');
+  return v;
+}
+
+// Função para filtrar meses conforme o período
+function filtrarMesesPorPeriodo(meses: string[]) {
+  if (periodo === 'personalizado' && dataInicio.length === 10 && dataFim.length === 10) {
+    // datas no formato DD/MM/AAAA
+    const [di, mi, ai] = dataInicio.split('/').map(Number);
+    const [df, mf, af] = dataFim.split('/').map(Number);
+    const dataIni = new Date(ai, mi - 1, di);
+    const dataFinal = new Date(af, mf - 1, df);
+    return meses.filter(m => {
+      // m = MM/YYYY
+      const [mm, aa] = m.split('/').map(Number);
+      // Considera o mês inteiro
+      const dataMesIni = new Date(aa, mm - 1, 1);
+      const dataMesFim = new Date(aa, mm, 0, 23, 59, 59, 999);
+      return dataMesFim >= dataIni && dataMesIni <= dataFinal;
+    });
+  }
+  if (periodo === 'mensal') {
+    return meses.slice(-1);
+  }
+  if (periodo === 'trimestral') {
+    return meses.slice(-3);
+  }
+  if (periodo === 'anual') {
+    return meses.slice(-12);
+  }
+  return meses;
+}
+
+
 // Funções de filtro com opção 'Nenhum' para ocultar todos
 const receitasFiltradas = filtroReceita === 'nenhum' ? [] : receitas.filter(r => {
   if (!filtroReceita || filtroReceita === 'todos') return true;
@@ -177,8 +221,9 @@ const contasPagarPorMes = agruparPorMesAno(contasPagarFiltradas, 'vencimento', d
 const despesasPorMes = agruparPorMesAno(despesasFiltradas, 'data', d => (d.categoria || 'Outro').toLowerCase());
 
 
+
 // Meses presentes nos dados
-const meses = Array.from(new Set([
+const todosMeses = Array.from(new Set([
   ...Object.keys(receitasPorMes),
   ...Object.keys(contasPagarPorMes),
   ...Object.keys(despesasPorMes),
@@ -189,6 +234,7 @@ const meses = Array.from(new Set([
   return aa !== ab ? aa - ab : ma - mb;
 });
 
+const meses = filtrarMesesPorPeriodo(todosMeses);
 const receitaMensal = meses.map(m => (receitasPorMes[m]?.['Receita'] || 0));
 // Despesas mensal: soma de todos fornecedores e categorias
 const despesasMensal = meses.map(m => {
@@ -332,6 +378,45 @@ const lucroMensal = meses.map((_, i) => receitaMensal[i] - despesasMensal[i]);
 
       {/* Filtros movidos para logo abaixo dos cards */}
       <div className={styles.filtrosDashboard}>
+        <div>
+          <label>Período:</label>
+          <select value={periodo} onChange={e => setPeriodo(e.target.value as any)}>
+            <option value="mensal">Mensal</option>
+            <option value="trimestral">Trimestral</option>
+            <option value="anual">Anual</option>
+            <option value="personalizado">Personalizado</option>
+          </select>
+        </div>
+        {periodo === 'personalizado' && (
+          <>
+            <div>
+              <label>Início (DD/MM/AAAA):</label>
+              <input
+                type="text"
+                placeholder="DD/MM/AAAA"
+                value={dataInicio}
+                onChange={e => setDataInicio(aplicarMascaraData(e.target.value))}
+                maxLength={10}
+                style={{ width: 130 }}
+                inputMode="numeric"
+                pattern="\d{2}/\d{2}/\d{4}"
+              />
+            </div>
+            <div>
+              <label>Fim (DD/MM/AAAA):</label>
+              <input
+                type="text"
+                placeholder="DD/MM/AAAA"
+                value={dataFim}
+                onChange={e => setDataFim(aplicarMascaraData(e.target.value))}
+                maxLength={10}
+                style={{ width: 130 }}
+                inputMode="numeric"
+                pattern="\d{2}/\d{2}/\d{4}"
+              />
+            </div>
+          </>
+        )}
         <div>
           <label>Tipo de Receita:</label>
           <select
