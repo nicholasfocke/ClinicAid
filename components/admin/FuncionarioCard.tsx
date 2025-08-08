@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { getStorage, ref, deleteObject } from 'firebase/storage';
 import styles from '@/styles/admin/medico/medicos.module.css';
+import { uploadImage } from '@/utils/uploadImage';
 
 export interface Funcionario {
   id: string;
@@ -74,20 +75,15 @@ const FuncionarioCard = ({ funcionario, onDelete, onUpdate }: FuncionarioCardPro
       let fotoPerfilPath = formData.fotoPerfilPath || '';
       // Upload da nova foto se houver arquivo novo
       if (fotoFile) {
-        // Remove foto antiga se existir
-        if (formData.fotoPerfilPath) {
-          try {
-            const storage = getStorage();
-            const storageRef = ref(storage, formData.fotoPerfilPath);
-            await deleteObject(storageRef);
-          } catch (err) {}
-        }
-        const storage = getStorage();
         const uniqueName = `${formData.cpf?.replace(/\D/g, '') || 'funcionario'}_${Date.now()}`;
-        const storageRef = ref(storage, `funcionario_photos/${uniqueName}`);
-        await uploadBytes(storageRef, fotoFile);
-        fotoPerfil = await getDownloadURL(storageRef);
-        fotoPerfilPath = storageRef.fullPath;
+        const { url, path } = await uploadImage(
+          fotoFile,
+          'funcionario_photos',
+          uniqueName,
+          formData.fotoPerfilPath
+        );
+        fotoPerfil = url;
+        fotoPerfilPath = path;
       }
       const funcionarioRef = doc(firestore, 'funcionarios', funcionario.id);
       await updateDoc(funcionarioRef, {

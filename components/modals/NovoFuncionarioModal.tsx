@@ -3,7 +3,7 @@ import modalStyles from '@/styles/admin/medico/modalNovoMedico.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
 import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { uploadImage } from '@/utils/uploadImage';
 
 interface Props {
   isOpen: boolean;
@@ -147,17 +147,14 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
       let fotoPerfilPath = '';
       if (fotoFile) {
         try {
-          const storage = getStorage();
           const uniqueName = `${formData.cpf.replace(/\D/g, '')}_${Date.now()}`;
-          const storageRef = ref(storage, `funcionario_photos/${uniqueName}`);
-          // uploadBytes espera um File, mas pode dar erro se o objeto não for File
-          if (fotoFile instanceof File) {
-            await uploadBytes(storageRef, fotoFile);
-            fotoPerfil = await getDownloadURL(storageRef);
-            fotoPerfilPath = storageRef.fullPath;
-          } else {
-            throw new Error('Arquivo de foto inválido.');
-          }
+          const { url, path } = await uploadImage(
+            fotoFile,
+            'funcionario_photos',
+            uniqueName
+          );
+          fotoPerfil = url;
+          fotoPerfilPath = path;
         } catch (err) {
           setError('Erro ao fazer upload da foto.');
           setLoading(false);
