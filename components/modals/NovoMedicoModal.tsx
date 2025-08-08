@@ -6,7 +6,7 @@ import { criarHorario } from '@/functions/scheduleFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 import { buscarCargosSaude } from '@/functions/cargosFunctions';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { uploadImage } from '@/utils/uploadImage';
 import modalStyles from '@/styles/admin/medico/modalNovoMedico.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
 import { useRouter } from 'next/router';
@@ -250,12 +250,14 @@ const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
       let fotoPath = '';
 
       if (fotoFile) {
-        const storage = getStorage();
         const uniqueName = `${formData.cpf.replace(/\D/g, '')}_${Date.now()}`;
-        const storageRef = ref(storage, `medico_photos/${uniqueName}`);
-        await uploadBytes(storageRef, fotoFile);
-        fotoUrl = await getDownloadURL(storageRef);
-        fotoPath = storageRef.fullPath;
+        const { url, path } = await uploadImage(
+          fotoFile,
+          'medico_photos',
+          uniqueName
+        );
+        fotoUrl = url;
+        fotoPath = path;
       }
 
       const medicoRef = await criarMedico({

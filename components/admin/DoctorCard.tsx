@@ -5,8 +5,8 @@ import { excluirHorario, buscarHorariosPorMedico, atualizarHorario, criarHorario
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarCargosSaude, ajustarNumeroUsuariosCargo } from '@/functions/cargosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
-import { on } from 'events';
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { getStorage, ref, deleteObject } from 'firebase/storage';
+import { uploadImage } from '@/utils/uploadImage';
 
 export interface Medico {
   id: string;
@@ -154,20 +154,15 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
 
       // Upload da nova foto se houver arquivo novo
       if (fotoFile) {
-        // Remove foto antiga se existir
-        if (formData.fotoPath) {
-          try {
-            const storage = getStorage();
-            const storageRef = ref(storage, formData.fotoPath);
-            await deleteObject(storageRef);
-          } catch (err) {}
-        }
-        const storage = getStorage();
         const uniqueName = `${medico.cpf?.replace(/\D/g, '') || 'medico'}_${Date.now()}`;
-        const storageRef = ref(storage, `medico_photos/${uniqueName}`);
-        await uploadBytes(storageRef, fotoFile);
-        fotoUrl = await getDownloadURL(storageRef);
-        fotoPathFinal = storageRef.fullPath;
+        const { url, path } = await uploadImage(
+          fotoFile,
+          'medico_photos',
+          uniqueName,
+          formData.fotoPath
+        );
+        fotoUrl = url;
+        fotoPathFinal = path;
       }
 
       await atualizarMedico(medico.id, {
