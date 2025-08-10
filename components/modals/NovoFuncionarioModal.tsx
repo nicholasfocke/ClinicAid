@@ -6,6 +6,7 @@ import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firesto
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, firestore } from '@/firebase/firebaseConfig';
 import { uploadImage } from '@/utils/uploadImage';
+import { buscarCargosNaoSaude } from '@/functions/cargosFunctions';
 
 interface Props {
   isOpen: boolean;
@@ -55,6 +56,7 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
   const [loading, setLoading] = useState(false);
   const [foto, setFoto] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [cargos, setCargos] = useState<{ id: string; nome: string }[]>([]);
 
   // Resetar formulário ao fechar o modal usando useEffect
   // useEffect já está importado no topo do arquivo
@@ -84,6 +86,18 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
     // eslint-disable-next-line
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    (async () => {
+      try {
+        const fetched = await buscarCargosNaoSaude();
+        setCargos(fetched);
+      } catch (err) {
+        console.error('Erro ao buscar cargos:', err);
+      }
+    })();
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const formatTelefone = (value: string) => {
@@ -94,7 +108,7 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
       .slice(0, 15);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     let newValue = value;
     if (name === 'cpf') newValue = formatCPF(value);
@@ -272,15 +286,20 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
             className={styles.input}
             maxLength={14}
           />
-          <input
+          <select
             name="cargo"
-            type="text"
-            placeholder="Cargo"
             value={formData.cargo}
             onChange={handleChange}
             required
             className={styles.input}
-          />
+          >
+            <option value="">Selecione o cargo</option>
+            {cargos.map((cargo) => (
+              <option key={cargo.id} value={cargo.nome}>
+                {cargo.nome}
+              </option>
+            ))}
+          </select>
           <div style={{ position: 'relative', marginBottom: 16 }}>
             <input
               name="senha"
