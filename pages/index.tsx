@@ -1,7 +1,7 @@
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { auth, firestore } from '../firebase/firebaseConfig';
 import { buscarAgendamentosDeHoje, statusAgendamento } from '@/functions/agendamentosFunction';
 import { buscarNotificacoes, NotificacaoData, marcarNotificacoesLidas, } from '@/functions/notificacoesFunctions';
@@ -57,18 +57,22 @@ const Index = () => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         try {
-          const userQuery = query(
-            collection(firestore, 'users'),
-            where('__name__', '==', currentUser.uid)
-          );
-          const userSnapshot = await getDocs(userQuery);
-
-          if (!userSnapshot.empty) {
-            const userData = userSnapshot.docs[0].data();
+          const userRef = doc(firestore, 'users', currentUser.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
             const userType = userData.tipo || 'client';
             setUser({ ...currentUser, tipo: userType });
           } else {
-            setUser({ ...currentUser, tipo: 'client' });
+            const funcRef = doc(firestore, 'funcionarios', currentUser.uid);
+            const funcSnap = await getDoc(funcRef);
+            if (funcSnap.exists()) {
+              const funcData = funcSnap.data();
+              const userType = funcData.tipo || 'client';
+              setUser({ ...currentUser, tipo: userType });
+            } else {
+              setUser({ ...currentUser, tipo: 'client' });
+            }
           }
         } catch (error) {
           console.error('Erro ao buscar dados do usuário:', error);
