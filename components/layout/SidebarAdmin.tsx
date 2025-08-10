@@ -26,7 +26,12 @@ const SidebarAdmin = () => {
         if (userDoc.exists() && userDoc.data().tipo === 'admin') {
           setIsAdmin(true);
         } else {
-          setIsAdmin(false);
+          const funcDoc = await getDoc(doc(firestore, 'funcionarios', user.uid));
+          if (funcDoc.exists() && funcDoc.data().tipo === 'admin') {
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(false);
+          }
         }
       } else {
         setIsAdmin(false);

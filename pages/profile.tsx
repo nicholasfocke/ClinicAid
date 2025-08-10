@@ -59,9 +59,13 @@ const Profile = () => {
       if (user) {
         // Obter dados do usuário do Firestore
         const userDoc = doc(firestore, 'users', user.uid);
-        const docSnap = await getDoc(userDoc);
+        let docSnap = await getDoc(userDoc);
+        if (!docSnap.exists()) {
+          const funcDoc = doc(firestore, 'funcionarios', user.uid);
+          docSnap = await getDoc(funcDoc);
+        }
         if (docSnap.exists() && !ignore) {
-          const data = docSnap.data();
+          const data = docSnap.data() as any;
           // Formata data de nascimento para DD-MM-AAAA se existir
           let dataNascimento = '';
           if (data.dataNascimento) {

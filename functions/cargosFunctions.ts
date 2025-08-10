@@ -19,6 +19,13 @@ export const buscarCargosSaude = async () => {
     .map(doc => ({ id: doc.id, ...(doc.data() as CargoData) }));
 };
 
+export const buscarCargosNaoSaude = async () => {
+  const snap = await getDocs(collection(firestore, 'cargos'));
+  return snap.docs
+    .filter(d => !(d.data() as CargoData).profissionalSaude)
+    .map(doc => ({ id: doc.id, ...(doc.data() as CargoData) }));
+};
+
 export const criarCargo = async (data: CargoData) => {
   await addDoc(collection(firestore, 'cargos'), { ...data });
 };

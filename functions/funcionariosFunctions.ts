@@ -1,5 +1,6 @@
 import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import bcrypt from 'bcryptjs';
 import { auth, firestore } from '@/firebase/firebaseConfig';
 
 export interface FuncionarioData {
@@ -24,10 +25,12 @@ export const buscarFuncionarios = async () => {
 
 export const criarFuncionario = async (data: FuncionarioData) => {
   const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.senha);
+  const hashedPassword = await bcrypt.hash(data.senha, 10);
   await setDoc(doc(firestore, 'funcionarios', userCredential.user.uid), {
     nome: data.nome,
     email: data.email,
     cargo: data.cargo,
+    senha: hashedPassword,
     tipo: 'admin',
   });
 };

@@ -466,6 +466,11 @@ useEffect(() => {
   // Excluir pasta
   const deleteFolder = async (folderId: string) => {
     if (!window.confirm('Tem certeza que deseja excluir esta pasta e todos os chats dentro dela?')) return;
+    // Busca todos os chats da pasta e exclui do banco
+    const chatsDaPasta = chats.filter(c => c.folderId === folderId);
+    for (const chat of chatsDaPasta) {
+      await excluirChatDB(folderId, chat.id);
+    }
     await excluirPastaDB(folderId);
     setFolders(prev => prev.filter(f => f.id !== folderId));
     setChats(prev => prev.filter(c => c.folderId !== folderId));

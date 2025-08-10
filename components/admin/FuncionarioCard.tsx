@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { getStorage, ref, deleteObject } from 'firebase/storage';
 import styles from '@/styles/admin/medico/medicos.module.css';
+import { buscarCargosNaoSaude } from '@/functions/cargosFunctions';
 import { uploadImage } from '@/utils/uploadImage';
 
 export interface Funcionario {
@@ -23,17 +24,29 @@ interface FuncionarioCardProps {
   onUpdate?: (funcionario: Funcionario) => void;
 }
 
-import { useEffect } from 'react';
 const FuncionarioCard = ({ funcionario, onDelete, onUpdate }: FuncionarioCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Funcionario>({ ...funcionario });
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+  const [cargos, setCargos] = useState<{ id: string; nome: string }[]>([]);
+
+  useEffect(() => {
+    if (!editing) return;
+    (async () => {
+      try {
+        const fetched = await buscarCargosNaoSaude();
+        setCargos(fetched);
+      } catch (err) {
+        console.error('Erro ao buscar cargos:', err);
+      }
+    })();
+  }, [editing]);
 
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [fotoPreview, setFotoPreview] = useState<string | null>(formData.fotoPerfil || null);
@@ -187,13 +200,20 @@ const FuncionarioCard = ({ funcionario, onDelete, onUpdate }: FuncionarioCardPro
                 className={styles.inputEditar}
                 placeholder="Nome"
               />
-              <input
+              <select
                 name="cargo"
                 value={formData.cargo}
                 onChange={handleChange}
                 className={styles.inputEditar}
-                placeholder="Cargo"
-              />
+                required
+              >
+                <option value="">Selecione o cargo</option>
+                {cargos.map((cargo) => (
+                  <option key={cargo.id} value={cargo.nome}>
+                    {cargo.nome}
+                  </option>
+                ))}
+              </select>
               <input
                 name="email"
                 value={formData.email}
