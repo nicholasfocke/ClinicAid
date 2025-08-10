@@ -5,7 +5,7 @@ import { criarMedico, medicoExiste } from '@/functions/medicosFunctions';
 import { criarHorario } from '@/functions/scheduleFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
-import { buscarCargosSaude } from '@/functions/cargosFunctions';
+import { buscarEspecialidadesSaude } from '@/functions/especialidadesFunctions';
 import { uploadImage } from '@/utils/uploadImage';
 import modalStyles from '@/styles/admin/medico/modalNovoMedico.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
@@ -95,7 +95,7 @@ const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
   const [formData, setFormData] = useState<MedicoForm>(initialForm);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
   const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
-  const [cargosSaude, setCargosSaude] = useState<{ id: string; nome: string }[]>([]);
+  const [especialidadesSaude, setEspecialidadesSaude] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
@@ -132,10 +132,10 @@ const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
         setConvenios(fetchedConvenios);
         const fetchedProcedimentos = await buscarProcedimentos();
         setProcedimentos(fetchedProcedimentos);
-        const fetchedCargosSaude = await buscarCargosSaude();
-        setCargosSaude(fetchedCargosSaude);
+        const fetchedEspecialidadesSaude = await buscarEspecialidadesSaude();
+        setEspecialidadesSaude(fetchedEspecialidadesSaude);
       } catch (error) {
-        console.error('Erro ao buscar convênios, procedimentos ou cargos:', error);
+        console.error('Erro ao buscar convênios, procedimentos ou especialidades:', error);
       }
     })();
   }, [isOpen]);
@@ -317,9 +317,9 @@ const NovoMedicoModal = ({ isOpen, onClose, onCreate }: Props) => {
             <input name="nome" value={formData.nome} onChange={handleChange} placeholder="Nome" className={styles.input} required />
             <select name="especialidade" value={formData.especialidade} onChange={handleChange} className={styles.input} required>
               <option value="">Selecione a especialidade</option>
-              {cargosSaude.map((cargo) => (
-                <option key={cargo.id} value={cargo.nome}>
-                  {cargo.nome}
+              {especialidadesSaude.map((especialidade) => (
+                <option key={especialidade.id} value={especialidade.nome}>
+                  {especialidade.nome}
                 </option>
               ))}
             </select>

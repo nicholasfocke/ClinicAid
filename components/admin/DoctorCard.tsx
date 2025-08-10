@@ -3,7 +3,7 @@ import styles from '@/styles/admin/medico/medicos.module.css';
 import { excluirMedico, atualizarMedico } from '@/functions/medicosFunctions';
 import { excluirHorario, buscarHorariosPorMedico, atualizarHorario, criarHorario } from '@/functions/scheduleFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
-import { buscarCargosSaude, ajustarNumeroUsuariosCargo } from '@/functions/cargosFunctions';
+import { buscarEspecialidadesSaude, ajustarNumeroUsuariosEspecialidade } from '@/functions/especialidadesFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 import { getStorage, ref, deleteObject } from 'firebase/storage';
 import { uploadImage } from '@/utils/uploadImage';
@@ -29,7 +29,7 @@ interface DoctorCardProps {
   onUpdate?: (medico: Medico) => void;
 }
 
-interface CargoItem {
+interface EspecialidadeItem {
   id: string;
   nome: string;
   quantidadeUsuarios?: number;
@@ -50,7 +50,7 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
-  const [cargos, setCargos] = useState<CargoItem[]>([]);
+  const [especialidades, setEspecialidades] = useState<EspecialidadeItem[]>([]);
   const [horarios, setHorarios] = useState<{ [dia: string]: any }>({});
   const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
   const [saving, setSaving] = useState(false);
@@ -72,8 +72,8 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
       try {
         const list = await buscarConvenios();
         setConvenios(list);
-        const cargosList = await buscarCargosSaude();
-        setCargos(cargosList);
+        const especialidadesList = await buscarEspecialidadesSaude();
+        setEspecialidades(especialidadesList);
         // Buscar todos os procedimentos cadastrados no sistema
         const procs = await buscarProcedimentos();
         setProcedimentos(procs);
@@ -132,9 +132,9 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
       const horarios = await buscarHorariosPorMedico(medico.id);
       await Promise.all(horarios.map(h => excluirHorario(medico.id, h.id)));
 
-      const cargoAtual = cargos.find(c => c.nome === medico.especialidade);
-      if (cargoAtual) {
-        await ajustarNumeroUsuariosCargo(cargoAtual.id, -1);
+      const especialidadeAtual = especialidades.find(c => c.nome === medico.especialidade);
+      if (especialidadeAtual) {
+        await ajustarNumeroUsuariosEspecialidade(especialidadeAtual.id, -1);
       }
 
       if(onDelete) onDelete(medico.id);
@@ -183,12 +183,12 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
         procedimentos: formData.procedimentos || [],
       });
 
-      const cargoAntigo = cargos.find(c => c.nome === medico.especialidade);
-      const cargoNovo = cargos.find(c => c.nome === formData.especialidade);
+      const especialidadeAntiga = especialidades.find(c => c.nome === medico.especialidade);
+      const especialidadeNova = especialidades.find(c => c.nome === formData.especialidade);
 
-      if (cargoAntigo && cargoNovo && cargoAntigo.id !== cargoNovo.id) {
-        await ajustarNumeroUsuariosCargo(cargoAntigo.id, -1);
-        await ajustarNumeroUsuariosCargo(cargoNovo.id, 1);
+      if (especialidadeAntiga && especialidadeNova && especialidadeAntiga.id !== especialidadeNova.id) {
+        await ajustarNumeroUsuariosEspecialidade(especialidadeAntiga.id, -1);
+        await ajustarNumeroUsuariosEspecialidade(especialidadeNova.id, 1);
       }
 
       // Atualiza horários
@@ -371,7 +371,7 @@ const DoctorCard = ({ medico, onDelete, onUpdate }: DoctorCardProps) => {
                 className={styles.inputEditar}
               >
                 <option value="">Selecione a especialidade</option>
-                {cargos.map((c) => (
+                {especialidades.map((c) => (
                   <option key={c.id} value={c.nome}>
                     {c.nome}
                   </option>

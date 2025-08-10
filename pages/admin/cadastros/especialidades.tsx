@@ -6,11 +6,11 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import layoutStyles from '@/styles/admin/medico/medicos.module.css';
 import tableStyles from '@/styles/admin/cadastros/salas/salas.module.css';
 import modalStyles from '@/styles/admin/cadastros/modal.module.css';
-import { buscarCargos, criarCargo, excluirCargo, atualizarCargo } from '@/functions/cargosFunctions';
+import { buscarEspecialidades, criarEspecialidade, excluirEspecialidade, atualizarEspecialidade } from '@/functions/especialidadesFunctions';
 import StickyFooter from '@/components/StickyFooter';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
-interface Cargo {
+interface Especialidade {
   id: string;
   nome: string;
   quantidadeUsuarios: number;
@@ -22,11 +22,11 @@ interface User {
   email: string;
 }
 
-const Cargos = () => {
+const Especialidades = () => {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [cargos, setCargos] = useState<Cargo[]>([]);
+  const [especialidades, setEspecialidades] = useState<Especialidade[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,11 +37,11 @@ const Cargos = () => {
     profissionalSaude: false,
   });
   const [showModal, setShowModal] = useState(false);
-  const [newCargo, setNewCargo] = useState<{ nome: string; profissionalSaude: boolean }>({ nome: '', profissionalSaude: false });
+  const [novaEspecialidade, setNovaEspecialidade] = useState<{ nome: string; profissionalSaude: boolean }>({ nome: '', profissionalSaude: false });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [modalState, setModalState] = useState({isOpen: false, onConfirm: () => {} });
 
-  const allSelected = cargos.length > 0 && selectedIds.length === cargos.length;
+  const allSelected = especialidades.length > 0 && selectedIds.length === especialidades.length;
   
 
   useEffect(() => {
@@ -57,23 +57,23 @@ const Cargos = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const docs = await buscarCargos();
-      setCargos(docs as Cargo[]);
+      const docs = await buscarEspecialidades();
+      setEspecialidades(docs as Especialidade[]);
     };
     fetchData();
   }, []);
 
-  const filteredCargos = cargos.filter(c =>
+  const filteredEspecialidades = especialidades.filter(c =>
     c.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalItems = filteredCargos.length;
-  const paginatedCargos = filteredCargos.slice(
+  const totalItems = filteredEspecialidades.length;
+  const paginatedEspecialidades = filteredEspecialidades.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const startEdit = (c: Cargo) => {
+  const startEdit = (c: Especialidade) => {
     setEditingId(c.id);
     setFormData({ nome: c.nome, quantidadeUsuarios: c.quantidadeUsuarios, profissionalSaude: c.profissionalSaude });
   };
@@ -85,8 +85,8 @@ const Cargos = () => {
   };
 
   const saveEdit = async (id: string) => {
-    // Busca o cargo original para manter campos não editáveis
-    const original = cargos.find(c => c.id === id);
+    // Busca a especialidade original para manter campos não editáveis
+    const original = especialidades.find(c => c.id === id);
     if (!original) return;
     // Garante que quantidadeUsuarios nunca seja undefined ou NaN
     const quantidadeUsuarios =
@@ -98,8 +98,8 @@ const Cargos = () => {
       quantidadeUsuarios,
       profissionalSaude: formData.profissionalSaude,
     };
-    await atualizarCargo(id, payload);
-    setCargos(prev =>
+    await atualizarEspecialidade(id, payload);
+    setEspecialidades(prev =>
       prev.map(c =>
         c.id === id
           ? { ...c, ...payload }
@@ -114,27 +114,27 @@ const Cargos = () => {
   const handleNewChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     const val = type === 'checkbox' ? checked : value;
-    setNewCargo(prev => ({ ...prev, [name]: val }));
+    setNovaEspecialidade(prev => ({ ...prev, [name]: val }));
   };
 
-  const createCargo = async () => {
-    const nomeTrim = newCargo.nome.trim();
+  const createEspecialidade = async () => {
+    const nomeTrim = novaEspecialidade.nome.trim();
     if (!nomeTrim) { setError('O nome não pode estar vazio.'); return; }
-    await criarCargo({ nome: nomeTrim, quantidadeUsuarios: 0, profissionalSaude: newCargo.profissionalSaude });
-    // Após criar, busque novamente os cargos do Firestore para garantir IDs corretos
-    const docs = await buscarCargos();
-    setCargos(docs as Cargo[]);
+    await criarEspecialidade({ nome: nomeTrim, quantidadeUsuarios: 0, profissionalSaude: novaEspecialidade.profissionalSaude });
+    // Após criar, busque novamente as especialidades do Firestore para garantir IDs corretos
+    const docs = await buscarEspecialidades();
+    setEspecialidades(docs as Especialidade[]);
     setShowModal(false);
-    setNewCargo({ nome: '', profissionalSaude: false });
+    setNovaEspecialidade({ nome: '', profissionalSaude: false });
   };
 
   const handleDelete = (id: string) => {
     const confirmAction = async () => {
       try {
-        await excluirCargo(id);
-        setCargos(prev => prev.filter(c => c.id !== id));
+        await excluirEspecialidade(id);
+        setEspecialidades(prev => prev.filter(c => c.id !== id));
       } catch (error) {
-        setError('Erro ao excluir Cargo.');
+        setError('Erro ao excluir Especialidade.');
       }
       setModalState({ isOpen: false, onConfirm: () => {} });
     };
@@ -155,17 +155,17 @@ const Cargos = () => {
     if (allSelected) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(cargos.map(c => c.id));
+      setSelectedIds(especialidades.map(c => c.id));
     }
   };
 
   const deleteSelected = async () => {
-    const confirmDelete = window.confirm('Deseja excluir os cargos selecionados?');
+    const confirmDelete = window.confirm('Deseja excluir as especialidades selecionadas?');
     if (!confirmDelete) return;
     for (const id of selectedIds) {
-      await excluirCargo(id);
+      await excluirEspecialidade(id);
     }
-    setCargos(prev => prev.filter(c => !selectedIds.includes(c.id)));
+    setEspecialidades(prev => prev.filter(c => !selectedIds.includes(c.id)));
     setSelectedIds([]);
   };
 
@@ -175,14 +175,14 @@ const Cargos = () => {
         <div className={breadcrumbStyles.breadcrumbWrapper}>
           <span className={breadcrumbStyles.breadcrumb}>
             Menu Principal &gt; <span className={breadcrumbStyles.breadcrumb}>Cadastros &gt; </span>
-            <span className={breadcrumbStyles.breadcrumbActive}>Cargos</span>
+            <span className={breadcrumbStyles.breadcrumbActive}>Especialidades</span>
           </span>
         </div>
-        <h1 className={tableStyles.titleSalas}>Cargos</h1>
-        <div className={tableStyles.subtitleSalas}>Lista de cargos cadastrados</div>
+        <h1 className={tableStyles.titleSalas}>Especialidades</h1>
+        <div className={tableStyles.subtitleSalas}>Lista de especialidades cadastradas</div>
         <div className={tableStyles.topBar}>
           <div className={tableStyles.actionButtonsWrapper}>
-            <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>+ Adicionar cargo</button>
+            <button className={tableStyles.buttonAdicionar} onClick={() => setShowModal(true)}>+ Adicionar especialidade</button>
             {selectedIds.length > 0 && (
               <button
                 className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
@@ -196,7 +196,7 @@ const Cargos = () => {
           <div className={tableStyles.searchContainer}>
             <input
               type="text"
-              placeholder="🔍 Pesquisar cargo"
+              placeholder="🔍 Pesquisar especialidade"
               value={searchTerm}
               onChange={e => {
                 setSearchTerm(e.target.value);
@@ -227,7 +227,7 @@ const Cargos = () => {
               </tr>
             </thead>
             <tbody>
-            {paginatedCargos.map(c => (
+            {paginatedEspecialidades.map(c => (
                 <tr key={c.id}>
                   <td className={tableStyles.checkboxCell}>
                     <input
@@ -277,18 +277,18 @@ const Cargos = () => {
         <div className={modalStyles.overlay} onClick={() => setShowModal(false)}>
           <div className={modalStyles.modal} onClick={e => e.stopPropagation()}>
             <button className={modalStyles.closeButton} onClick={() => setShowModal(false)}>X</button>
-            <h3>Novo Cargo</h3>
+            <h3>Nova Especialidade</h3>
             <label className={modalStyles.label}>Nome</label>
-            <input name="nome" className={modalStyles.input} value={newCargo.nome} onChange={handleNewChange} />
+            <input name="nome" className={modalStyles.input} value={novaEspecialidade.nome} onChange={handleNewChange} />
             <label className={modalStyles.label}>Profissional da Saúde</label>
-            <input name="profissionalSaude" type="checkbox" checked={newCargo.profissionalSaude} onChange={handleNewChange} />
-            <button className={modalStyles.buttonSalvar} onClick={createCargo}>Salvar</button>
+            <input name="profissionalSaude" type="checkbox" checked={novaEspecialidade.profissionalSaude} onChange={handleNewChange} />
+            <button className={modalStyles.buttonSalvar} onClick={createEspecialidade}>Salvar</button>
           </div>
         </div>
       )}
     <ConfirmationModal
       isOpen={modalState.isOpen}
-      message="Você tem certeza que deseja excluir este Cargo?"
+      message="Você tem certeza que deseja excluir esta Especialidade?"
       onConfirm={modalState.onConfirm}
       onCancel={() => setModalState({ isOpen: false, onConfirm: () => {} })}
     />
@@ -296,4 +296,4 @@ const Cargos = () => {
   );
 };
 
-export default Cargos;
+export default Especialidades;
