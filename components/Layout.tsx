@@ -68,7 +68,13 @@ const Layout = ({ children }: LayoutProps) => {
         if (userDoc.exists() && userDoc.data().tipo === 'admin') {
           setIsAdmin(true);
         } else {
-          setIsAdmin(false);
+          const funcDocRef = doc(firestore, 'funcionarios', currentUser.uid);
+          const funcDoc = await getDoc(funcDocRef);
+          if (funcDoc.exists() && funcDoc.data().tipo === 'admin') {
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(false);
+          }
         }
       }
     };

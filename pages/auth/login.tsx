@@ -59,11 +59,14 @@ const Login = () => {
 
       const user = result.user;
 
-      await setDoc(doc(firestore, 'users', user.uid), {
-        email: user.email,
-        name: user.displayName,
-        photoURL: user.photoURL,
-      }, { merge: true });
+      const userRef = doc(firestore, 'users', user.uid);
+      const funcRef = doc(firestore, 'funcionarios', user.uid);
+      const funcSnap = await getDoc(funcRef);
+      const data = funcSnap.exists()
+        ? { ...funcSnap.data(), email: user.email, name: user.displayName, photoURL: user.photoURL }
+        : { email: user.email, name: user.displayName, photoURL: user.photoURL };
+
+      await setDoc(userRef, data, { merge: true });
 
       router.push('/');
     } catch (err: any) {
@@ -160,7 +163,17 @@ const Login = () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, senha);
       const user = userCredential.user;
 
-      await setDoc(doc(firestore, 'users', user.uid), { email: user.email }, { merge: true });
+      const userRef = doc(firestore, 'users', user.uid);
+      const userDoc = await getDoc(userRef);
+      if (!userDoc.exists()) {
+        const funcRef = doc(firestore, 'funcionarios', user.uid);
+        const funcSnap = await getDoc(funcRef);
+        if (funcSnap.exists()) {
+          await setDoc(userRef, funcSnap.data(), { merge: true });
+        } else {
+          await setDoc(userRef, { email: user.email }, { merge: true });
+        }
+      }
 
       await resetLoginAttempts(formData.email);
       router.push('/');
