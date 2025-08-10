@@ -3,7 +3,8 @@ import bcrypt from 'bcryptjs';
 import modalStyles from '@/styles/admin/medico/modalNovoMedico.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
 import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
-import { firestore } from '@/firebase/firebaseConfig';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth, firestore } from '@/firebase/firebaseConfig';
 import { uploadImage } from '@/utils/uploadImage';
 
 interface Props {
@@ -154,6 +155,10 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
         setLoading(false);
         return;
       }
+
+      // Cria usuário de autenticação
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.senha);
+
       // Upload da foto se houver
       let fotoPerfil = '';
       let fotoPerfilPath = '';
@@ -173,8 +178,10 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
           return;
         }
       }
+
       // Criptografa a senha antes de salvar
       const hashedPassword = await bcrypt.hash(formData.senha, 10);
+
       // Cria documento na coleção 'funcionarios'
       const novoFuncionario = {
         nome: formData.nome,
@@ -188,9 +195,7 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
         fotoPerfil,
         fotoPerfilPath,
       };
-      // Cria com id automático
-      const docRef = doc(funcionariosRef);
-      await setDoc(docRef, novoFuncionario);
+      await setDoc(doc(firestore, 'funcionarios', userCredential.user.uid), novoFuncionario);
       if (onCreate) onCreate();
       onClose();
     } catch (err) {
