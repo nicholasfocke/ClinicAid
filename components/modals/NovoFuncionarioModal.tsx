@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import bcrypt from 'bcryptjs';
 import modalStyles from '@/styles/admin/medico/modalNovoMedico.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
 import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
@@ -42,10 +43,13 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
     email: '',
     cargo: '',
     senha: '',
+    confirmarSenha: '',
     cpf: '',
     telefone: '',
     dataNascimento: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [foto, setFoto] = useState<string | null>(null);
@@ -61,6 +65,7 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
       email: '',
       cargo: '',
       senha: '',
+      confirmarSenha: '',
       cpf: '',
       telefone: '',
       dataNascimento: '',
@@ -96,6 +101,9 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
     setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
 
+  const toggleShowPassword = () => setShowPassword((v) => !v);
+  const toggleShowConfirmPassword = () => setShowConfirmPassword((v) => !v);
+
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFoto(URL.createObjectURL(e.target.files[0]));
@@ -106,12 +114,16 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!formData.nome || !formData.email || !formData.cargo || !formData.senha || !formData.cpf || !formData.dataNascimento || !formData.telefone) {
+    if (!formData.nome || !formData.email || !formData.cargo || !formData.senha || !formData.confirmarSenha || !formData.cpf || !formData.dataNascimento || !formData.telefone) {
       setError('Preencha todos os campos.');
       return;
     }
     if (formData.senha.length < 8) {
       setError('A senha deve conter no mínimo 8 caracteres.');
+      return;
+    }
+    if (formData.senha !== formData.confirmarSenha) {
+      setError('As senhas não coincidem.');
       return;
     }
     const cpfNumeros = formData.cpf.replace(/\D/g, '');
@@ -161,12 +173,14 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
           return;
         }
       }
+      // Criptografa a senha antes de salvar
+      const hashedPassword = await bcrypt.hash(formData.senha, 10);
       // Cria documento na coleção 'funcionarios'
       const novoFuncionario = {
         nome: formData.nome,
         email: formData.email,
         cargo: formData.cargo,
-        senha: formData.senha,
+        senha: hashedPassword,
         cpf: formData.cpf,
         telefone: formData.telefone,
         dataNascimento: dataNascimentoSalvar,
@@ -262,16 +276,54 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
             required
             className={styles.input}
           />
-          <input
-            name="senha"
-            type="password"
-            placeholder="Senha"
-            value={formData.senha}
-            onChange={handleChange}
-            required
-            className={styles.input}
-            minLength={8}
-          />
+          <div style={{ position: 'relative', marginBottom: 16 }}>
+            <input
+              name="senha"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Senha"
+              value={formData.senha}
+              onChange={handleChange}
+              required
+              className={styles.input}
+              minLength={8}
+              style={{ paddingRight: 40 }}
+            />
+            <span
+              onClick={toggleShowPassword}
+              style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}
+              tabIndex={0}
+            >
+              {showPassword ? (
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#bdbdbd" strokeWidth="2" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3" stroke="#bdbdbd" strokeWidth="2"/></svg>
+              ) : (
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#bdbdbd" strokeWidth="2" d="M17.94 17.94A10.97 10.97 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-6.06M9.88 9.88A3 3 0 0 1 12 9c1.66 0 3 1.34 3 3 0 .41-.08.8-.22 1.16"/><path stroke="#bdbdbd" strokeWidth="2" d="m1 1 22 22"/></svg>
+              )}
+            </span>
+          </div>
+          <div style={{ position: 'relative', marginBottom: 16 }}>
+            <input
+              name="confirmarSenha"
+              type={showConfirmPassword ? 'text' : 'password'}
+              placeholder="Confirmação de Senha"
+              value={formData.confirmarSenha}
+              onChange={handleChange}
+              required
+              className={styles.input}
+              minLength={8}
+              style={{ paddingRight: 40 }}
+            />
+            <span
+              onClick={toggleShowConfirmPassword}
+              style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}
+              tabIndex={0}
+            >
+              {showConfirmPassword ? (
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#bdbdbd" strokeWidth="2" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3" stroke="#bdbdbd" strokeWidth="2"/></svg>
+              ) : (
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="#bdbdbd" strokeWidth="2" d="M17.94 17.94A10.97 10.97 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-6.06M9.88 9.88A3 3 0 0 1 12 9c1.66 0 3 1.34 3 3 0 .41-.08.8-.22 1.16"/><path stroke="#bdbdbd" strokeWidth="2" d="m1 1 22 22"/></svg>
+              )}
+            </span>
+          </div>
           {error && <p className={styles.error}>{error}</p>}
           <button type="submit" className={styles.buttonSalvar} disabled={loading}>
             {loading ? 'Cadastrando...' : 'Cadastrar'}

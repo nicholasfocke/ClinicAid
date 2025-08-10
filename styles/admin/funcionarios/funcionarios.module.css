@@ -1,3 +1,28 @@
+/* Input de senha com olhinho */
+.inputSenha {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputSenha input {
+  padding-right: 44px !important;
+}
+
+.inputSenha .eyeIcon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #bdbdbd;
+  background: none;
+  border: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  height: 22px;
+}
 .container {
   margin-left: 260px;
   padding: 2rem 3rem;
