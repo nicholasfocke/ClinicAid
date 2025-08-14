@@ -10,6 +10,7 @@ import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore'
 import { firestore } from '@/firebase/firebaseConfig';
 import { ModalAdicionarConta } from '@/components/modals/ModalAdicionarConta';
 import { gerarRelatorioPDF } from '@/utils/gerarRelatorio';
+import { gerarExtratoContasPagar } from '@/utils/gerarContasPagar';
 
 function formatarMoeda(valor: string) {
   // Remove tudo que não for dígito
@@ -141,7 +142,17 @@ const ContasAPagar = () => {
       }
     });
 
-    if (contasExtrato.length === 0) return;
+    const nenhumFiltroAtivo = !mesSelecionado && !dataInicio && !dataFim && !search && !filtroStatus;
+    if (contasExtrato.length === 0 && nenhumFiltroAtivo) {
+      alert('Não é possível gerar o extrato: não há movimentações pagas e nenhum filtro ativo.');
+      return;
+    }
+    // Se filtro está ativo e não há resultado, também não permite baixar
+    const filtroAtivo = mesSelecionado || dataInicio || dataFim || search || filtroStatus;
+    if (contasExtrato.length === 0 && filtroAtivo) {
+      alert('Não há movimentações pagas para o filtro selecionado.');
+      return;
+    }
 
     const dados = contasExtrato.map(c => [
       c.vencimento,
@@ -150,7 +161,7 @@ const ContasAPagar = () => {
       c.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
     ]);
 
-    await gerarRelatorioPDF({
+    await gerarExtratoContasPagar({
       titulo: 'Extrato de Contas Pagas',
       colunas: ['Vencimento', 'Fornecedor', 'Descrição', 'Valor'],
       dados,
