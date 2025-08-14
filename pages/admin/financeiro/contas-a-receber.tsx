@@ -7,7 +7,7 @@ import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { ModalContaReceber } from '@/components/modals/ModalContaReceber';
-import { gerarRelatorioPDF } from '@/utils/gerarRelatorio';
+import { gerarExtratoContasReceber } from '@/utils/gerarContasReceber';
 
 interface ContaReceber {
   id: string;
@@ -215,7 +215,17 @@ const ContasAReceber = () => {
       }
     });
 
-    if (contasExtrato.length === 0) return;
+    const nenhumFiltroAtivo = !mesSelecionado && !dataInicio && !dataFim && !search && !filtroStatus;
+    if (contasExtrato.length === 0 && nenhumFiltroAtivo) {
+      alert('Não é possível gerar o extrato: não há movimentações recebidas e nenhum filtro ativo.');
+      return;
+    }
+    // Se filtro está ativo e não há resultado, também não permite baixar
+    const filtroAtivo = mesSelecionado || dataInicio || dataFim || search || filtroStatus;
+    if (contasExtrato.length === 0 && filtroAtivo) {
+      alert('Não há movimentações recebidas para o filtro selecionado.');
+      return;
+    }
 
     const dados = contasExtrato.map(c => [
       c.vencimento,
@@ -224,7 +234,7 @@ const ContasAReceber = () => {
       c.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
     ]);
 
-    await gerarRelatorioPDF({
+    await gerarExtratoContasReceber({
       titulo: 'Extrato de Contas Recebidas',
       colunas: ['Vencimento', 'Cliente', 'Descrição', 'Valor'],
       dados,

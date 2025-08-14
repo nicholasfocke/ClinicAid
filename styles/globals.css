@@ -38,31 +38,35 @@
 }
 
 .loadingLogo {
-  width: 470px;
+  width: 460px;
   margin-bottom: 1rem;
   height: 180px;
 }
 
+
 .loadingBar {
   position: relative;
   width: 80%;
-  height: 6px;
-  background: #e0e0e0;
+  height: 7px;
+  background: linear-gradient(90deg, #e0e0e0 0%, #f3f4f6 100%);
   overflow: hidden;
-  border-radius: 3px;
+  border-radius: 3.5px;
 }
 .loadingBar::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
+  left: -40%;
   height: 100%;
-  width: 0;
-  background: #0a2d4a;
-  animation: loadingProgress 2s linear infinite;
+  width: 40%;
+  background: linear-gradient(90deg, rgba(10,45,74,0.1) 0%, #2563eb 60%, rgba(10,45,74,0.1) 100%);
+  border-radius: 3.5px;
+  animation: loadingShine 1.6s cubic-bezier(.4,.2,.2,1) infinite;
 }
 
-@keyframes loadingProgress {
-  from { width: 0; }
-  to { width: 100%; }
+@keyframes loadingShine {
+  0% { left: -40%; opacity: 0.7; }
+  40% { opacity: 1; }
+  60% { opacity: 1; }
+  100% { left: 100%; opacity: 0.7; }
 }

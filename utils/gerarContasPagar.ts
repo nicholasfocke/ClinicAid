@@ -8,18 +8,21 @@ declare global {
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 (pdfMake as any).vfs = (pdfFonts as any).vfs;
 
-interface RelatorioOptions {
+interface ExtratoContasPagarOptions {
   titulo: string;
   colunas: string[];
   dados: (string | number | boolean)[][];
   nomeArquivo?: string;
+  periodo?: string;
+  status?: string;
+  filtroMes?: string;
+  saldoPago?: string;
 }
 
-// Utilitário para converter imagem do public para base64
 export const carregarImagemComoBase64 = (src: string): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous'; // importante
+    img.crossOrigin = 'anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
@@ -35,12 +38,16 @@ export const carregarImagemComoBase64 = (src: string): Promise<string> => {
   });
 };
 
-export const gerarRelatorioPDF = async ({
+export const gerarExtratoContasPagar = async ({
   titulo,
   colunas,
   dados,
-  nomeArquivo = 'relatorio.pdf',
-}: RelatorioOptions) => {
+  nomeArquivo = 'extrato-contas-pagar.pdf',
+  periodo = '',
+  status = '',
+  filtroMes = '',
+  saldoPago = '',
+}: ExtratoContasPagarOptions) => {
   const logoBase64 = await carregarImagemComoBase64('/images/logo nova clinicaid azul fonte.png');
 
   const docDefinition = {
@@ -55,16 +62,24 @@ export const gerarRelatorioPDF = async ({
             alignment: 'left',
             margin: [0, 0, 0, 4],
           },
-          { text: 'Telefone: (82) 90000-0000', style: 'clinicInfo', alignment: 'left', margin: [25, 0, 0, 0] },
-          { text: 'Email: suporteclinicaid@gmail.com', style: 'clinicInfo', alignment: 'left', margin: [25, 0, 0, 0] },
+          { text: 'Telefone: (82) 90000-0000', style: 'clinicInfo', alignment: 'left', margin: [30, 0, 0, 0] },
+          { text: 'Email: suporteclinicaid@gmail.com', style: 'clinicInfo', alignment: 'left', margin: [30, 0, 0, 0] },
         ],
         margin: [0, 0, 0, 20],
+      },
+      saldoPago && {
+        text: `Saldo pago\n${saldoPago}`,
+        style: 'saldoPago',
+        margin: [0, 0, 0, 16],
+        alignment: 'left',
       },
       { text: titulo, style: 'reportTitle' },
       {
         columns: [
-          { text: `Data: ${new Date().toLocaleDateString()}`, style: 'info' },
-          { text: `Total: ${dados.length} procedimentos`, style: 'info', alignment: 'right' },
+          { text: periodo ? `Período: ${periodo}` : `Data: ${new Date().toLocaleDateString()}`, style: 'info' },
+          { text: filtroMes ? `Mês: ${filtroMes}` : '', style: 'info', alignment: 'center' },
+          { text: status ? `Status: ${status}` : '', style: 'info', alignment: 'right' },
+          { text: `Total: ${dados.length} contas`, style: 'info', alignment: 'right' },
         ],
         margin: [0, 0, 0, 10],
       },
@@ -82,10 +97,10 @@ export const gerarRelatorioPDF = async ({
         },
       },
       {
-        text: '\nEste relatório foi gerado automaticamente pelo sistema ClinicAid.',
+        text: '\nEste extrato foi gerado automaticamente pelo sistema ClinicAid.',
         style: 'footer',
       },
-    ],
+    ].filter(Boolean),
     styles: {
       clinicName: {
         fontSize: 16,
@@ -96,6 +111,12 @@ export const gerarRelatorioPDF = async ({
       clinicInfo: {
         fontSize: 9,
         color: '#555',
+      },
+      saldoPago: {
+        fontSize: 18,
+        color: '#e53935',
+        bold: true,
+        marginBottom: 8,
       },
       reportTitle: {
         fontSize: 16,
@@ -135,7 +156,11 @@ export const gerarRelatorioPDF = async ({
         await writable.write(new Uint8Array(buffer));
         await writable.close();
       });
-    } catch (err) {
+    } catch (err: any) {
+      if (err && err.name === 'AbortError') {
+        // Usuário cancelou, não faz nada
+        return;
+      }
       console.error('Erro ao salvar arquivo:', err);
     }
   } else {
