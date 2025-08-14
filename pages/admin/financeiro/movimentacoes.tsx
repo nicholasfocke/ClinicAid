@@ -6,6 +6,7 @@ import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firesto
 import { firestore } from '@/firebase/firebaseConfig';
 import { ModalContaReceber } from '@/components/modals/ModalContaReceber';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
+import { gerarExtratoMovimentacoes } from '@/utils/gerarMovimentacoes';
 
 type TipoMovimentacao = 'Receber' | 'Pagar' | 'Despesa';
 interface Movimentacao {
@@ -17,6 +18,7 @@ interface Movimentacao {
   data: string; // vencimento ou data
   status: string;
   formaPagamento?: string;
+  categoria?: string;
 }
 
 const MovimentacoesFinanceiras = () => {
@@ -168,6 +170,60 @@ const MovimentacoesFinanceiras = () => {
   }))).filter(Boolean);
   anos.unshift('Todos');
 
+  const baixarExtrato = async () => {
+    // Filtra movimentações conforme filtros ativos
+    const movimentacoesExtrato = movimentacoes.filter(m => {
+      // Adapte os filtros conforme sua lógica de pesquisa
+      let matchSearch = search ? (m.descricao?.toLowerCase().includes(search.toLowerCase()) || m.categoria?.toLowerCase().includes(search.toLowerCase())) : true;
+      let matchTipo = tipoFiltro !== 'Todos' ? m.tipo === tipoFiltro : true;
+      let matchPeriodo = true;
+      if (periodoFiltro === 'mes') {
+        if (mesSelecionado && mesSelecionado !== 'Todos') {
+          let v = m.data;
+          if (!v) return false;
+          let partes = v.includes('/') ? v.split('/') : v.split('-').reverse();
+          const mesAno = `${partes[1]}/${partes[2]}`;
+          matchPeriodo = mesAno === mesSelecionado;
+        }
+      } else if (periodoFiltro === 'periodo') {
+        if (dataInicio || dataFim) {
+          let v = m.data;
+          if (!v) return false;
+          let partes = v.includes('/') ? v.split('/') : v.split('-').reverse();
+          const dataPadrao = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+          if (dataInicio && dataFim) {
+            matchPeriodo = dataPadrao >= dataInicio && dataPadrao <= dataFim;
+          } else if (dataInicio) {
+            matchPeriodo = dataPadrao >= dataInicio;
+          } else if (dataFim) {
+            matchPeriodo = dataPadrao <= dataFim;
+          }
+        }
+      }
+      return matchSearch && matchTipo && matchPeriodo;
+    });
+
+    if (movimentacoesExtrato.length === 0) {
+      alert('Não há movimentações para gerar o extrato.');
+      return;
+    }
+
+    const dados = movimentacoesExtrato.map(m => [
+      m.data,
+      m.categoria || '-',
+      m.descricao || '-',
+      m.valor ? m.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-',
+      m.tipo || '-'
+    ]);
+
+    await gerarExtratoMovimentacoes({
+      titulo: 'Extrato de Movimentações',
+      colunas: ['Data', 'Categoria', 'Descrição', 'Valor', 'Tipo'],
+      dados,
+      nomeArquivo: 'extrato_movimentacoes.pdf',
+    });
+  };
+
   return (
     <ProtectedRoute>
       <div className={styles.container}>
@@ -264,6 +320,11 @@ const MovimentacoesFinanceiras = () => {
             <option value="Pagar">Contas a Pagar</option>
             <option value="Despesa">Despesas</option>
           </select>
+          <button
+            type="button"
+            style={{ background: '#22c55e', color: '#fff', fontWeight: 700, border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: '1rem', cursor: 'pointer', marginLeft: 8 }}
+            onClick={baixarExtrato}
+          >Baixar extrato</button>
         </div>
 
         <div className={styles.tabelaWrapper}>

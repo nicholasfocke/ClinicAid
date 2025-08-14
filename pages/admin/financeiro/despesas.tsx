@@ -6,6 +6,7 @@ import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { gerarRelatorioPDF } from '@/utils/gerarRelatorio';
+import { gerarExtratoDespesas } from '@/utils/gerarDespesas';
 
 interface Despesa {
   id: string;
@@ -308,11 +309,11 @@ const Despesas = () => {
       d.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
     ]);
 
-    await gerarRelatorioPDF({
-      titulo: 'Extrato de Despesas Pagas',
+    await gerarExtratoDespesas({
+      titulo: 'Extrato de Despesas',
       colunas: ['Data', 'Categoria', 'Descrição', 'Valor'],
       dados,
-      nomeArquivo: 'extrato_despesas_pagas.pdf',
+      nomeArquivo: 'extrato_despesas.pdf',
     });
   };
 
