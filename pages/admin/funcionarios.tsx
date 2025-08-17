@@ -114,6 +114,14 @@ const Funcionarios = () => {
         setError('Esse email já está cadastrado como funcionário.');
         return;
       }
+      // Determina o tipo de usuário com base no cargo selecionado
+      const cargoLower = formData.cargo.toLowerCase();
+      let tipo = 'admin';
+      if (cargoLower.includes('gerente')) {
+        tipo = 'gerente';
+      } else if (cargoLower.includes('assistente')) {
+        tipo = 'assistente';
+      }
       // Cria documento na coleção 'funcionarios'
       const novoFuncionario = {
         nome: formData.nome,
@@ -123,7 +131,7 @@ const Funcionarios = () => {
         cpf: formData.cpf,
         telefone: formData.telefone,
         dataNascimento: dataNascimentoSalvar,
-        tipo: 'admin',
+        tipo,
         fotoPerfil: '',
         fotoPerfilPath: '',
       };

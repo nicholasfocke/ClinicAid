@@ -196,6 +196,15 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
       // Criptografa a senha antes de salvar
       const hashedPassword = await bcrypt.hash(formData.senha, 10);
 
+      // Determina o tipo de usuário com base no cargo selecionado
+      const cargoLower = formData.cargo.toLowerCase();
+      let tipo = 'admin';
+      if (cargoLower.includes('gerente')) {
+        tipo = 'gerente';
+      } else if (cargoLower.includes('assistente')) {
+        tipo = 'assistente';
+      }
+
       // Cria documento na coleção 'funcionarios'
       const novoFuncionario = {
         nome: formData.nome,
@@ -205,7 +214,7 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
         cpf: formData.cpf,
         telefone: formData.telefone,
         dataNascimento: dataNascimentoSalvar,
-        tipo: 'admin',
+        tipo,
         fotoPerfil,
         fotoPerfilPath,
       };

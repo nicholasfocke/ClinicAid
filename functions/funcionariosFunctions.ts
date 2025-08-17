@@ -26,12 +26,19 @@ export const buscarFuncionarios = async () => {
 export const criarFuncionario = async (data: FuncionarioData) => {
   const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.senha);
   const hashedPassword = await bcrypt.hash(data.senha, 10);
+  const cargoLower = data.cargo.toLowerCase();
+  let tipo = 'admin';
+  if (cargoLower.includes('gerente')) {
+    tipo = 'gerente';
+  } else if (cargoLower.includes('assistente')) {
+    tipo = 'assistente';
+  }
   await setDoc(doc(firestore, 'funcionarios', userCredential.user.uid), {
     nome: data.nome,
     email: data.email,
     cargo: data.cargo,
     senha: hashedPassword,
-    tipo: 'admin',
+    tipo,
   });
 };
 
