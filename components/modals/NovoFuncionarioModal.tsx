@@ -3,8 +3,9 @@ import bcrypt from 'bcryptjs';
 import modalStyles from '@/styles/admin/medico/modalNovoMedico.module.css';
 import styles from '@/styles/admin/medico/novoMedico.module.css';
 import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth, firestore } from '@/firebase/firebaseConfig';
+import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { getApps, initializeApp } from 'firebase/app';
+import app, { firestore } from '@/firebase/firebaseConfig';
 import { uploadImage } from '@/utils/uploadImage';
 import { buscarCargosNaoSaude } from '@/functions/cargosFunctions';
 
@@ -170,8 +171,11 @@ const NovoFuncionarioModal = ({ isOpen, onClose, onCreate }: Props) => {
         return;
       }
 
-      // Cria usuário de autenticação
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.senha);
+      // Cria usuário de autenticação sem desconectar o administrador
+      const secondaryApp = getApps().find(a => a.name === 'Secondary') || initializeApp(app.options, 'Secondary');
+      const secondaryAuth = getAuth(secondaryApp);
+      const userCredential = await createUserWithEmailAndPassword(secondaryAuth, formData.email, formData.senha);
+      await signOut(secondaryAuth);
 
       // Upload da foto se houver
       let fotoPerfil = '';
