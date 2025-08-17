@@ -1,7 +1,8 @@
 import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { getApps, initializeApp } from 'firebase/app';
 import bcrypt from 'bcryptjs';
-import { auth, firestore } from '@/firebase/firebaseConfig';
+import app, { firestore } from '@/firebase/firebaseConfig';
 
 export interface FuncionarioData {
   nome: string;
@@ -24,14 +25,24 @@ export const buscarFuncionarios = async () => {
 };
 
 export const criarFuncionario = async (data: FuncionarioData) => {
-  const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.senha);
+  const secondaryApp = getApps().find(a => a.name === 'Secondary') || initializeApp(app.options, 'Secondary');
+  const secondaryAuth = getAuth(secondaryApp);
+  const userCredential = await createUserWithEmailAndPassword(secondaryAuth, data.email, data.senha);
+  await signOut(secondaryAuth);
   const hashedPassword = await bcrypt.hash(data.senha, 10);
+  const cargoLower = data.cargo.toLowerCase();
+  let tipo = 'assistente';
+  if (cargoLower.includes('admin')) {
+    tipo = 'admin';
+  } else if (cargoLower.includes('gerente')) {
+    tipo = 'gerente';
+  }
   await setDoc(doc(firestore, 'funcionarios', userCredential.user.uid), {
     nome: data.nome,
     email: data.email,
     cargo: data.cargo,
     senha: hashedPassword,
-    tipo: 'admin',
+    tipo,
   });
 };
 

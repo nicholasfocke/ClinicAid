@@ -6,6 +6,9 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/ia/assistente.module.css';
 import pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import { doc, getDoc } from 'firebase/firestore';
+import { firestore } from '@/firebase/firebaseConfig';
+import { useRouter } from 'next/router';
 import {
   IAChat,
   IAFolder,
@@ -42,6 +45,7 @@ type Folder = IAFolder;
 
 export default function AssistenteIA() {
   const { user } = useAuth();
+  const router = useRouter();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null); // NOVO
@@ -135,11 +139,31 @@ export default function AssistenteIA() {
     return text;
   }
 
-useEffect(() => {
-  if (typeof window === 'undefined') return;
-  const SpeechRecognition =
-    (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-  if (!SpeechRecognition) return;
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (!user) return;
+      let tipo: string | null = null;
+      const funcDoc = await getDoc(doc(firestore, 'funcionarios', user.uid));
+      if (funcDoc.exists()) {
+        tipo = funcDoc.data().tipo;
+      } else {
+        const userDoc = await getDoc(doc(firestore, 'users', user.uid));
+        if (userDoc.exists()) {
+          tipo = userDoc.data().tipo;
+        }
+      }
+      if (tipo !== 'admin') {
+        router.replace('/');
+      }
+    };
+    checkAccess();
+  }, [user, router]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
 
   const recognition: SpeechRecognition = new SpeechRecognition();
   recognition.lang = 'pt-BR';

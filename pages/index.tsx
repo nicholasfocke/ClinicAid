@@ -87,11 +87,9 @@ const Index = () => {
     return () => unsubscribe();
   }, [router]);
 
-  useEffect(() => {
-    if (user && user.tipo !== 'admin') {
-      router.replace('/paciente/indexCliente');
-    }
-  }, [user, router]);
+  // All user roles (admin, gerente and assistente) can access the dashboard.
+  // The previous redirect to `/paciente/indexCliente` for non-admins has been
+  // removed to unify the entry point.
 
   useEffect(() => {
     const fetchPacientesPorDia = async () => {

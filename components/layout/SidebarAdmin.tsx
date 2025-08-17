@@ -10,7 +10,7 @@ import { doc, getDoc } from 'firebase/firestore';
 const SidebarAdmin = () => {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [userTipo, setUserTipo] = useState<string | null>(null);
   const [cadastroOpen, setCadastroOpen] = useState(false);
   const [farmaciaOpen, setFarmaciaOpen] = useState(false);
   const [financeiroOpen, setFinanceiroOpen] = useState(false);
@@ -21,20 +21,19 @@ const SidebarAdmin = () => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       setIsAuthenticated(!!user);
       if (user) {
-        // Busca o tipo do usuário no Firestore
+        let tipo: string | null = null;
         const userDoc = await getDoc(doc(firestore, 'users', user.uid));
-        if (userDoc.exists() && userDoc.data().tipo === 'admin') {
-          setIsAdmin(true);
+        if (userDoc.exists()) {
+          tipo = userDoc.data().tipo;
         } else {
           const funcDoc = await getDoc(doc(firestore, 'funcionarios', user.uid));
-          if (funcDoc.exists() && funcDoc.data().tipo === 'admin') {
-            setIsAdmin(true);
-          } else {
-            setIsAdmin(false);
+          if (funcDoc.exists()) {
+            tipo = funcDoc.data().tipo;
           }
         }
+        setUserTipo(tipo);
       } else {
-        setIsAdmin(false);
+        setUserTipo(null);
       }
     });
     return () => unsubscribe();
@@ -69,9 +68,12 @@ const SidebarAdmin = () => {
     setColaboradoresOpen((prev) => !prev);
   };
 
-  if (!isAuthenticated || !isAdmin) {
+  if (!isAuthenticated || !userTipo) {
     return null;
   }
+
+  const isAdmin = userTipo === 'admin';
+  const isGerente = userTipo === 'gerente';
 
   return (
     <aside className={styles.sidebar}>
@@ -107,66 +109,76 @@ const SidebarAdmin = () => {
               <Home className={styles.icon} style={{ marginTop: 0 }} />
               <span style={{ marginTop: 0 }}>Dashboard</span>
             </Link>
-            <button type="button" onClick={toggleCadastro} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
-              <FilePlus className={styles.icon} style={{ marginTop: 0 }} />
-              <span style={{ marginTop: 0 }}>Cadastros</span>
-              {cadastroOpen ? (
-                <ChevronDown className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
-              ) : (
-                <ChevronRight className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
-              )}
-            </button>
-            {cadastroOpen && (
-              <div className={styles.subNav} style={{ marginTop: 0 }}>
-                <Link href="/admin/cadastros/procedimentos" className={styles.subNavItem}>
-                  Procedimentos
-                </Link>
-                <Link href="/admin/cadastros/convenios" className={styles.subNavItem}>
-                  Convênios
-                </Link>
-                <Link href="/admin/cadastros/cargos" className={styles.subNavItem}>
-                  Cargos
-                </Link>
-                <Link href="/admin/cadastros/formas-pagamento" className={styles.subNavItem}>
-                  Formas de Pagamento
-                </Link>
-                <Link href="/admin/cadastros/salas" className={styles.subNavItem}>
-                  Salas
-                </Link>
-              </div>
+            {isAdmin && (
+              <>
+                <button type="button" onClick={toggleCadastro} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
+                  <FilePlus className={styles.icon} style={{ marginTop: 0 }} />
+                  <span style={{ marginTop: 0 }}>Cadastros</span>
+                  {cadastroOpen ? (
+                    <ChevronDown className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+                  ) : (
+                    <ChevronRight className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+                  )}
+                </button>
+                {cadastroOpen && (
+                  <div className={styles.subNav} style={{ marginTop: 0 }}>
+                    <Link href="/admin/cadastros/procedimentos" className={styles.subNavItem}>
+                      Procedimentos
+                    </Link>
+                    <Link href="/admin/cadastros/convenios" className={styles.subNavItem}>
+                      Convênios
+                    </Link>
+                    <Link href="/admin/cadastros/cargos" className={styles.subNavItem}>
+                      Cargos
+                    </Link>
+                    <Link href="/admin/cadastros/formas-pagamento" className={styles.subNavItem}>
+                      Formas de Pagamento
+                    </Link>
+                    <Link href="/admin/cadastros/salas" className={styles.subNavItem}>
+                      Salas
+                    </Link>
+                  </div>
+                )}
+              </>
             )}
             <Link href="/admin/agendamentos" className={styles.navItem} style={{ marginTop: 0 }}>
               <Calendar className={styles.icon} style={{ marginTop: 0 }} />
               <span style={{ marginTop: 0 }}>Agendamentos</span>
             </Link>
-            <Link href="/assistente-ia" className={styles.navItem} style={{ marginTop: 0 }}>
-              <Bot className={styles.icon} color="#fff" style={{ marginTop: 0 }} />
-              <span style={{ marginTop: 0 }}>Assistente IA</span>
-            </Link>
+            {isAdmin && (
+              <Link href="/assistente-ia" className={styles.navItem} style={{ marginTop: 0 }}>
+                <Bot className={styles.icon} color="#fff" style={{ marginTop: 0 }} />
+                <span style={{ marginTop: 0 }}>Assistente IA</span>
+              </Link>
+            )}
             {/* Colaboradores dropdown */}
-            <button
-              type="button"
-              onClick={toggleColaboradores}
-              className={`${styles.navItem} ${styles.cadastroButton}`}
-              style={{ marginTop: 0 }}
-            >
-              <Stethoscope className={styles.icon} color="#fff" style={{ marginTop: 0 }} />
-              <span style={{ marginTop: 0 }}>Colaboradores</span>
-              {colaboradoresOpen ? (
-                <ChevronDown className={styles.chevronIcon} size={16} color="#fff" style={{ marginTop: 0 }} />
-              ) : (
-                <ChevronRight className={styles.chevronIcon} size={16} color="#fff" style={{ marginTop: 0 }} />
-              )}
-            </button>
-            {colaboradoresOpen && (
-              <div className={styles.subNav} style={{ marginTop: 0 }}>
-                <Link href="/admin/profissionais" className={styles.subNavItem}>
-                  Profissionais
-                </Link>
-                <Link href="/admin/funcionarios" className={styles.subNavItem}>
-                  Funcionários
-                </Link>
-              </div>
+            {isAdmin && (
+              <>
+                <button
+                  type="button"
+                  onClick={toggleColaboradores}
+                  className={`${styles.navItem} ${styles.cadastroButton}`}
+                  style={{ marginTop: 0 }}
+                >
+                  <Stethoscope className={styles.icon} color="#fff" style={{ marginTop: 0 }} />
+                  <span style={{ marginTop: 0 }}>Colaboradores</span>
+                  {colaboradoresOpen ? (
+                    <ChevronDown className={styles.chevronIcon} size={16} color="#fff" style={{ marginTop: 0 }} />
+                  ) : (
+                    <ChevronRight className={styles.chevronIcon} size={16} color="#fff" style={{ marginTop: 0 }} />
+                  )}
+                </button>
+                {colaboradoresOpen && (
+                  <div className={styles.subNav} style={{ marginTop: 0 }}>
+                    <Link href="/admin/profissionais" className={styles.subNavItem}>
+                      Profissionais
+                    </Link>
+                    <Link href="/admin/funcionarios" className={styles.subNavItem}>
+                      Funcionários
+                    </Link>
+                  </div>
+                )}
+              </>
             )}
             <button type="button" onClick={togglePacientes} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
               <span className={styles.icon} style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
@@ -211,33 +223,37 @@ const SidebarAdmin = () => {
                 </Link>
               </div>
             )}
-            <button type="button" onClick={toggleFinanceiro} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
-              <DollarSign className={styles.icon} style={{ marginTop: 0 }} />
-              <span style={{ marginTop: 0 }}>Financeiro</span>
-              {financeiroOpen ? (
-                <ChevronDown className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
-              ) : (
-                <ChevronRight className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
-              )}
-            </button>
-            {financeiroOpen && (
-              <div className={styles.subNav} style={{ marginTop: 0 }}>
-                <Link href="/admin/Dashboardfinanceiro/" className={styles.subNavItem}>
-                  Dashboard Financeiro
-                </Link>
-                <Link href="/admin/financeiro/contas-a-receber" className={styles.subNavItem}>
-                  Contas a Receber
-                </Link>
-                <Link href="/admin/financeiro/contas-a-pagar" className={styles.subNavItem}>
-                  Contas a Pagar
-                </Link>
-                <Link href="/admin/financeiro/despesas" className={styles.subNavItem}>
-                  Despesas
-                </Link>
-                <Link href="/admin/financeiro/movimentacoes" className={styles.subNavItem}>
-                  Movimentações
-                </Link>
-              </div>
+            {(isAdmin || isGerente) && (
+              <>
+                <button type="button" onClick={toggleFinanceiro} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
+                  <DollarSign className={styles.icon} style={{ marginTop: 0 }} />
+                  <span style={{ marginTop: 0 }}>Financeiro</span>
+                  {financeiroOpen ? (
+                    <ChevronDown className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+                  ) : (
+                    <ChevronRight className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+                  )}
+                </button>
+                {financeiroOpen && (
+                  <div className={styles.subNav} style={{ marginTop: 0 }}>
+                    <Link href="/admin/Dashboardfinanceiro/" className={styles.subNavItem}>
+                      Dashboard Financeiro
+                    </Link>
+                    <Link href="/admin/financeiro/contas-a-receber" className={styles.subNavItem}>
+                      Contas a Receber
+                    </Link>
+                    <Link href="/admin/financeiro/contas-a-pagar" className={styles.subNavItem}>
+                      Contas a Pagar
+                    </Link>
+                    <Link href="/admin/financeiro/despesas" className={styles.subNavItem}>
+                      Despesas
+                    </Link>
+                    <Link href="/admin/financeiro/movimentacoes" className={styles.subNavItem}>
+                      Movimentações
+                    </Link>
+                  </div>
+                )}
+              </>
             )}
             <Link href="/profile" className={styles.navItem} style={{ marginTop: 0 }}>
               <User className={styles.icon} style={{ marginTop: 0 }} />
