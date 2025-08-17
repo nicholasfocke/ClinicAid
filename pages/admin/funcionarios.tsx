@@ -116,11 +116,11 @@ const Funcionarios = () => {
       }
       // Determina o tipo de usuário com base no cargo selecionado
       const cargoLower = formData.cargo.toLowerCase();
-      let tipo = 'admin';
-      if (cargoLower.includes('gerente')) {
+      let tipo = 'assistente';
+      if (cargoLower.includes('admin')) {
+        tipo = 'admin';
+      } else if (cargoLower.includes('gerente')) {
         tipo = 'gerente';
-      } else if (cargoLower.includes('assistente')) {
-        tipo = 'assistente';
       }
       // Cria documento na coleção 'funcionarios'
       const novoFuncionario = {
