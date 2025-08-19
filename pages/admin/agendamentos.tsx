@@ -10,7 +10,7 @@ import { ptBR } from 'date-fns/locale';
 import { ExternalLink } from 'lucide-react';
 import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
 import Modal from 'react-modal';
-import { statusAgendamento, buscarAgendamentosPorData, criarAgendamento } from '@/functions/agendamentosFunction';
+import { statusAgendamento, buscarAgendamentosPorData, criarAgendamento, excluirAgendamento } from '@/functions/agendamentosFunction';
 import CreateAppointment from '@/components/modals/CreateAppointment';
 import { buscarHorariosPorMedico, ScheduleData } from '@/functions/scheduleFunctions';
 import { buscarProcedimentos, ProcedimentoData } from '@/functions/procedimentosFunctions';
@@ -325,7 +325,7 @@ const Agendamentos = () => {
     const confirmDelete = window.confirm('Deseja excluir o agendamento?');
     if (!confirmDelete) return;
     try {
-      await deleteDoc(doc(firestore, 'agendamentos', id));
+      await excluirAgendamento(id);
       fetchAgendamentosSemana();
     } catch (error) {
       setError('Erro ao remover o agendamento.');
