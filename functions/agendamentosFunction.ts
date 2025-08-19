@@ -1,4 +1,5 @@
-import { collection, query, where, getDocs, setDoc, doc, runTransaction, orderBy, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, setDoc, doc, runTransaction, orderBy, getDoc, updateDoc, DocumentData, 
+    DocumentReference, deleteDoc } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { format } from 'date-fns';
 
@@ -300,4 +301,24 @@ export const buscarAgendamentosPorData = async (data: string) => {
       convenio: doc.data().convenio,
       procedimento: doc.data().procedimento,
     }));
+};
+
+export const excluirAgendamento = async (id: string) => {
+  const agRef = doc(firestore, 'agendamentos', id);
+  const snap = await getDoc(agRef);
+  if (!snap.exists()) return;
+  const { usuarioId, data, hora, profissional } = snap.data() as any;
+  await deleteDoc(agRef);
+  if (usuarioId) {
+    const pacienteRef = doc(firestore, 'pacientes', usuarioId);
+    const pacienteSnap = await getDoc(pacienteRef);
+    if (pacienteSnap.exists()) {
+      const pacienteData = pacienteSnap.data();
+      const ags: any[] = pacienteData.agendamentos || [];
+      const novaLista = ags.filter(
+        ag => !(ag.data === data && ag.hora === hora && ag.profissional === profissional)
+      );
+      await updateDoc(pacienteRef, { agendamentos: novaLista });
+    }
+  }
 };

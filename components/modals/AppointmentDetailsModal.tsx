@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import ConfirmationModal from './ConfirmationModal';
 import styles from '@/styles/admin/agendamentos/appointmentDetails.module.css';
-import { doc, getDoc, updateDoc, deleteDoc, addDoc, collection } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
 import { format as formatDateFns, parse as parseDateFns } from 'date-fns';
-import { statusAgendamento } from '@/functions/agendamentosFunction';
+import { statusAgendamento, excluirAgendamento } from '@/functions/agendamentosFunction';
 import { criarNotificacao } from '@/functions/notificacoesFunctions';
 
 interface Appointment {
@@ -155,22 +155,7 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
     setDeleteLoading(true);
     setDeleteError(null);
     try {
-      // Remove do agendamentos
-      await deleteDoc(doc(firestore, 'agendamentos', appointment.id));
-      // Remove da lista do paciente
-      const pacienteRef = doc(firestore, 'pacientes', appointment.usuarioId);
-      const pacienteSnap = await getDoc(pacienteRef);
-      if (pacienteSnap.exists()) {
-        const pacienteData = pacienteSnap.data();
-        const ags: any[] = pacienteData.agendamentos || [];
-        const novaLista = ags.filter(
-          ag =>
-            !(ag.data === appointment.data &&
-              ag.hora === appointment.hora &&
-              ag.profissional === appointment.profissional)
-        );
-        await updateDoc(pacienteRef, { agendamentos: novaLista });
-      }
+      await excluirAgendamento(appointment.id);
       setDeleteLoading(false);
       setDeleteError(null);
       if (onComplete) onComplete(appointment.id);
