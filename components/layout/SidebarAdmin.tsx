@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styles from './SidebarAdmin.module.css';
-import { Home, Calendar, User, LogOut, Stethoscope, Bot, FilePlus, ChevronDown, ChevronRight, Pill, Users, DollarSign } from 'lucide-react';
+import { Home, Calendar, User, LogOut, Stethoscope, Bot, FilePlus, ChevronDown, ChevronRight, Pill, Users, DollarSign, UserCheck, FileText, Activity } from 'lucide-react';
 import Link from 'next/link';
 import { auth, firestore } from '../../firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
@@ -109,41 +109,17 @@ const SidebarAdmin = () => {
               <Home className={styles.icon} style={{ marginTop: 0 }} />
               <span style={{ marginTop: 0 }}>Dashboard</span>
             </Link>
-            {isAdmin && (
-              <>
-                <button type="button" onClick={toggleCadastro} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
-                  <FilePlus className={styles.icon} style={{ marginTop: 0 }} />
-                  <span style={{ marginTop: 0 }}>Cadastros</span>
-                  {cadastroOpen ? (
-                    <ChevronDown className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
-                  ) : (
-                    <ChevronRight className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
-                  )}
-                </button>
-                {cadastroOpen && (
-                  <div className={styles.subNav} style={{ marginTop: 0 }}>
-                    <Link href="/admin/cadastros/procedimentos" className={styles.subNavItem}>
-                      Procedimentos
-                    </Link>
-                    <Link href="/admin/cadastros/convenios" className={styles.subNavItem}>
-                      Convênios
-                    </Link>
-                    <Link href="/admin/cadastros/cargos" className={styles.subNavItem}>
-                      Cargos
-                    </Link>
-                    <Link href="/admin/cadastros/formas-pagamento" className={styles.subNavItem}>
-                      Formas de Pagamento
-                    </Link>
-                    <Link href="/admin/cadastros/salas" className={styles.subNavItem}>
-                      Salas
-                    </Link>
-                  </div>
-                )}
-              </>
-            )}
             <Link href="/admin/agendamentos" className={styles.navItem} style={{ marginTop: 0 }}>
               <Calendar className={styles.icon} style={{ marginTop: 0 }} />
-              <span style={{ marginTop: 0 }}>Agendamentos</span>
+              <span style={{ marginTop: 0 }}>
+                Agendamentos
+              </span>
+            </Link>
+            <Link href="/admin/recepcao" className={styles.navItem} style={{ marginTop: 0 }}>
+              <UserCheck className={styles.icon} style={{ marginTop: 0 }} />
+              <span style={{ marginTop: 0 }}>
+                Recepção
+              </span>
             </Link>
             {isAdmin && (
               <Link href="/assistente-ia" className={styles.navItem} style={{ marginTop: 0 }}>
@@ -201,6 +177,18 @@ const SidebarAdmin = () => {
                 </Link>
               </div>
             )}
+            <Link href="/admin/prontuario" className={styles.navItem} style={{ marginTop: 0 }}>
+              <FileText className={styles.icon} style={{ marginTop: 0 }} />
+              <span style={{ marginTop: 0 }}>
+                  Prontuário
+              </span>
+            </Link>
+            <Link href="/admin/tratamentos" className={styles.navItem} style={{ marginTop: 0 }}>
+              <Activity className={styles.icon} style={{ marginTop: 0 }} />
+              <span style={{ marginTop: 0 }}>
+                Tratamentos
+              </span>
+            </Link>
             <button type="button" onClick={toggleFarmacia} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
               <Pill className={styles.icon} style={{ marginTop: 0 }} />
               <span style={{ marginTop: 0 }}>Farmácia</span>
@@ -250,6 +238,38 @@ const SidebarAdmin = () => {
                     </Link>
                     <Link href="/admin/financeiro/movimentacoes" className={styles.subNavItem}>
                       Movimentações
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
+            {isAdmin && (
+              <>
+                <button type="button" onClick={toggleCadastro} className={`${styles.navItem} ${styles.cadastroButton}`} style={{ marginTop: 0 }}>
+                  <FilePlus className={styles.icon} style={{ marginTop: 0 }} />
+                  <span style={{ marginTop: 0 }}>Cadastros</span>
+                  {cadastroOpen ? (
+                    <ChevronDown className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+                  ) : (
+                    <ChevronRight className={styles.chevronIcon} size={16} style={{ marginTop: 0 }} />
+                  )}
+                </button>
+                {cadastroOpen && (
+                  <div className={styles.subNav} style={{ marginTop: 0 }}>
+                    <Link href="/admin/cadastros/procedimentos" className={styles.subNavItem}>
+                      Procedimentos
+                    </Link>
+                    <Link href="/admin/cadastros/convenios" className={styles.subNavItem}>
+                      Convênios
+                    </Link>
+                    <Link href="/admin/cadastros/cargos" className={styles.subNavItem}>
+                      Cargos
+                    </Link>
+                    <Link href="/admin/cadastros/formas-pagamento" className={styles.subNavItem}>
+                      Formas de Pagamento
+                    </Link>
+                    <Link href="/admin/cadastros/salas" className={styles.subNavItem}>
+                      Salas
                     </Link>
                   </div>
                 )}
