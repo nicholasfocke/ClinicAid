@@ -164,6 +164,12 @@
   color: #22c55e !important;
 }
 
+.statusEmAndamento,
+.upcomingStatusCell.statusEmAndamento {
+  background: #ede9fe;
+  color: #7c3aed !important;
+}
+
 .statusCancelado,
 .upcomingStatusCell.statusCancelado {
   background: #fee2e2;

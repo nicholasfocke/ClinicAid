@@ -83,6 +83,7 @@ interface Props {
     fim: string;
     profissional: string;
     detalhes: string;
+    motivo: string;
     pacienteId?: string;
     nomePaciente: string;
     email: string;
@@ -226,6 +227,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
       fim: '',
       profissional: '',
       detalhes: '',
+      motivo: '',
       pacienteId: '',
       nomePaciente: '',
       email: '',
@@ -838,6 +840,23 @@ const isTimeDisabled = (time: string) => {
               </select>
             </div>
           )}
+          <div className={styles.selectGroup}>
+            <select
+              value={appointmentData.motivo}
+              onChange={e =>
+                setAppointmentData((prev: typeof appointmentData) => ({ ...prev, motivo: e.target.value }))
+              }
+              className={styles.selectStyled}
+            >
+              <option value="">Motivo da consulta</option>
+              <option value="Urgência">Urgência</option>
+              <option value="Retorno">Retorno</option>
+              <option value="Primeira consulta">Primeira consulta</option>
+              <option value="Acompanhamento">Acompanhamento</option>
+              <option value="Exame de rotina">Exame de rotina</option>
+              <option value="Encaminhamento">Encaminhamento</option>
+            </select>
+          </div>
         </div>
         {/* Descrição menor */}
         <textarea
@@ -869,7 +888,8 @@ const isTimeDisabled = (time: string) => {
               !appointmentData.cpf ||
               !isValidCPF(appointmentData.cpf) ||
               !appointmentData.telefone ||
-              !appointmentData.dataNascimento
+              !appointmentData.dataNascimento ||
+              !appointmentData.motivo
             }
           >
             {isSubmitting ? 'Aguarde...' : 'Confirmar'}

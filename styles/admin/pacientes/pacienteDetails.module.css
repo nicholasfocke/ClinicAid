@@ -179,6 +179,11 @@ details[open] > summary .detailsArrow {
   color: #22c55e;
 }
 
+.statusEmAndamento {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
 .statusCancelado {
   background: #fee2e2;
   color: #dc2626;

@@ -12,6 +12,37 @@
   padding: 20px;
   padding-top: 0px; /* Adicione este padding-top para subir os itens do menu */
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  /* Garante que a rolagem customizada funcione em toda a sidebar */
+  scrollbar-width: thin;
+  scrollbar-color: #1a466a #0a2d4a;
+}
+.sidebar *::-webkit-scrollbar {
+  width: 6px;
+  background: transparent;
+  left: 0;
+  right: auto;
+}
+.sidebar *::-webkit-scrollbar-thumb {
+  background: #1a466a;
+  border-radius: 6px;
+  min-height: 24px;
+  transition: background 0.2s;
+}
+.sidebar *::-webkit-scrollbar-thumb:hover {
+  background: #255a8c;
+}
+.sidebar *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Firefox: barra de rolagem à esquerda */
+.sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: #1a466a #0a2d4a;
+  direction: rtl;
+}
+.sidebar * {
+  direction: ltr;
 }
 
 .logo img {
@@ -89,7 +120,7 @@
   padding: 10px 15px;
   border-radius: 5px;
   transition: background-color 0.3s;
-  margin-top: 40px;
+  margin-top: 0px;
 }
 
 .logoutButton:hover {

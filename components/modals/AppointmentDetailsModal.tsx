@@ -17,7 +17,11 @@ interface Appointment {
   profissional: string;
   nomePaciente: string;
   detalhes: string;
+  motivo?: string;
   usuarioId: string;
+  inicioAtendimento?: string;
+  duracaoAtendimento?: number;
+  fimAtendimento?: string;
   convenio?: string;
   procedimento?: string;
   especialidade?: string;
@@ -52,6 +56,15 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentValue, setPaymentValue] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
+
+  const statusClassMap: Record<string, string> = {
+    [statusAgendamento.AGENDADO]: styles.statusAgendado,
+    [statusAgendamento.CONFIRMADO]: styles.statusConfirmado,
+    [statusAgendamento.EM_ANDAMENTO]: styles.statusEmAndamento,
+    [statusAgendamento.CANCELADO]: styles.statusCancelado,
+    [statusAgendamento.CONCLUIDO]: styles.statusConcluido,
+    [statusAgendamento.PENDENTE]: styles.statusPendente,
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -98,9 +111,34 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
     setStatusLoading(true);
     setStatusError(null);
     try {
-      await updateDoc(doc(firestore, 'agendamentos', appointment.id), { status: newStatus });
-      // Atualiza o status localmente (opcional, depende do parent atualizar)
-      appointment.status = newStatus;
+      const agendamentoRef = doc(firestore, 'agendamentos', appointment.id);
+      if (newStatus === statusAgendamento.EM_ANDAMENTO) {
+        const inicio = new Date().toISOString();
+        await updateDoc(agendamentoRef, {
+          status: newStatus,
+          inicioAtendimento: inicio,
+        });
+        appointment.status = newStatus;
+        appointment.inicioAtendimento = inicio;
+      } else if (newStatus === statusAgendamento.CONCLUIDO) {
+        const fim = new Date();
+        let duracao = 0;
+        if (appointment.inicioAtendimento) {
+          const inicioDate = new Date(appointment.inicioAtendimento);
+          duracao = Math.floor((fim.getTime() - inicioDate.getTime()) / 1000);
+        }
+        await updateDoc(agendamentoRef, {
+          status: newStatus,
+          fimAtendimento: fim.toISOString(),
+          duracaoAtendimento: duracao,
+        });
+        appointment.status = newStatus;
+        appointment.fimAtendimento = fim.toISOString();
+        appointment.duracaoAtendimento = duracao;
+      } else {
+        await updateDoc(agendamentoRef, { status: newStatus });
+        appointment.status = newStatus;
+      }
 
       try {
         const pacienteRef = doc(firestore, 'pacientes', appointment.usuarioId);
@@ -116,6 +154,14 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
           );
           if (idx > -1) {
             ags[idx].status = newStatus;
+            if (newStatus === statusAgendamento.EM_ANDAMENTO) {
+              const inicio = appointment.inicioAtendimento || new Date().toISOString();
+              ags[idx].inicioAtendimento = inicio;
+            } else if (newStatus === statusAgendamento.CONCLUIDO) {
+              const fim = appointment.fimAtendimento || new Date().toISOString();
+              ags[idx].fimAtendimento = fim;
+              ags[idx].duracaoAtendimento = appointment.duracaoAtendimento || 0;
+            }
             await updateDoc(pacienteRef, { agendamentos: ags });
           }
         }
@@ -215,12 +261,13 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
         <p><strong>Profissional:</strong> {profissionalNome}</p>
         <p><strong>Convênio:</strong> {convenioNome}</p>
         <p><strong>Procedimento:</strong> {procedimentoNome}</p>
+        <p><strong>Motivo:</strong> {appointment.motivo || '-'}</p>
         <p><strong>Descrição:</strong> {appointment.detalhes}</p>
         <p>
           <strong>Status:</strong>{' '}
           <span
             className={`${styles.statusText} ${
-              styles[appointment.status] || styles.statusAgendado
+              statusClassMap[appointment.status] || styles.statusAgendado
             }`}
           >
             {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
@@ -243,6 +290,14 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
             type="button"
           >
             Confirmado
+          </button>
+          <button
+            disabled={statusLoading || appointment.status === statusAgendamento.EM_ANDAMENTO}
+            className={`${styles.statusButton} ${appointment.status === statusAgendamento.EM_ANDAMENTO ? styles.statusButtonActive : ''}`}
+            onClick={() => handleStatusChange(statusAgendamento.EM_ANDAMENTO)}
+            type="button"
+          >
+            Em andamento
           </button>
           <button
             disabled={statusLoading || appointment.status === statusAgendamento.CANCELADO}
