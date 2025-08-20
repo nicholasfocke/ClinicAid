@@ -80,31 +80,31 @@ const SidebarAdmin = () => {
       <div className={styles.logo}>
         <img src="/images/logo clinic branca fonte nova.png" alt="ClinicAid Logo" />
       </div>
-      <div
-        style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          flexGrow: 1,
-          justifyContent: 'flex-start',
-          alignItems: 'flex-start',
-          height: '100%',
-          paddingTop: 0,
-        }}
-      >
-        <nav
-          className={styles.nav}
-          style={{
-            flexGrow: 0,
-            width: '100%',
-            marginTop: 0,
-            marginBottom: 0,
-            alignItems: 'flex-start',
-            gap: 0,
-            paddingTop: 0,
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, width: '100%' }}>
+      <div style={{
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        flexGrow: 1,
+        justifyContent: 'flex-start',
+        alignItems: 'flex-start',
+        height: '100%',
+        paddingTop: 0,
+        overflow: 'hidden',
+      }}>
+        <div style={{ flex: 1, width: '100%', overflowY: 'auto', minHeight: 0 }}>
+          <nav
+            className={styles.nav}
+            style={{
+              flexGrow: 0,
+              width: '100%',
+              marginTop: 0,
+              marginBottom: 0,
+              alignItems: 'flex-start',
+              gap: 0,
+              paddingTop: 0,
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0, width: '100%' }}>
             <Link href="/" className={styles.navItem} style={{ marginTop: 0 }}>
               <Home className={styles.icon} style={{ marginTop: 0 }} />
               <span style={{ marginTop: 0 }}>Dashboard</span>
@@ -281,6 +281,7 @@ const SidebarAdmin = () => {
             </Link>
           </div>
         </nav>
+        </div>
         <button
           onClick={handleLogout}
           className={`${styles.logoutButton}`}
