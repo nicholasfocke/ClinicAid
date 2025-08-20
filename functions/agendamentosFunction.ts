@@ -12,6 +12,7 @@ export interface AppointmentData { //mudar a estrutura para incluir ao nosso nov
   nomesPacientes: string[];
   profissional: string;
   detalhes: string;
+  motivo?: string;
   convenio?: string;
   procedimento?: string;
   email?: string;
@@ -184,6 +185,7 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
         status: statusAgendamento.AGENDADO,
         profissional: data.profissional,
         detalhes: data.detalhes,
+        motivo: data.motivo || '',
         convenio: data.convenio || 'Particular',
         procedimento: data.procedimento || '',
       });
@@ -203,6 +205,7 @@ export const criarAgendamento = async (data: AppointmentData, user: UserLike) =>
     status: statusAgendamento.AGENDADO,
     procedimento: data.procedimento || '',
     descricao: data.detalhes,
+    motivo: data.motivo || '',
   }));
 
   if (!pacienteSnap.exists()) {
@@ -271,6 +274,7 @@ export const enviarEmailDeConfirmacao = async (
       profissional: data.profissional,
       nomesPacientes: data.nomesPacientes,
       detalhes: data.detalhes,
+      motivo: data.motivo,
       isEdit: false,
       isDelete: false,
     }),
@@ -298,6 +302,7 @@ export const buscarAgendamentosPorData = async (data: string) => {
       nomePaciente: doc.data().nomePaciente,
       status: doc.data().status,
       detalhes: doc.data().detalhes,
+      motivo: doc.data().motivo,
       usuarioId: doc.data().usuarioId,
       convenio: doc.data().convenio,
       procedimento: doc.data().procedimento,

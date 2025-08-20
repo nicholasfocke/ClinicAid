@@ -41,6 +41,7 @@ interface HistoricoAgendamento {
   procedimento?:string;
   status: string;
   descricao?: string;
+  motivo?: string;
   especialidade?: string;
   prontuarioLink?: string;
 }
@@ -252,6 +253,7 @@ const Pacientes = () => {
             procedimento: data.procedimento || '',
             status: data.status || '',
             descricao: data.detalhes || '',
+            motivo: data.motivo || '',
           });
         });
         setAvailableAppointments(list);
@@ -360,6 +362,7 @@ const Pacientes = () => {
             procedimento: data.procedimento || '',
             status: data.status || '',
             descricao: data.detalhes || '',
+            motivo: data.motivo || '',
           });
         });
         setAvailableAppointments(list);
@@ -1418,6 +1421,11 @@ const Pacientes = () => {
                               </span>
                             </summary>
                             <div className={detailsStyles.agendamentoContent}>
+                              {a.motivo && (
+                                <p>
+                                  <strong>Motivo:</strong> {a.motivo}
+                                </p>
+                              )}
                               {a.descricao && (
                                 <p>
                                   <strong>Descrição:</strong> {a.descricao}

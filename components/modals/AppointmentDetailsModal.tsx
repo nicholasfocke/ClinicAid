@@ -17,6 +17,7 @@ interface Appointment {
   profissional: string;
   nomePaciente: string;
   detalhes: string;
+  motivo?: string;
   usuarioId: string;
   inicioAtendimento?: string;
   duracaoAtendimento?: number;
@@ -260,6 +261,7 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
         <p><strong>Profissional:</strong> {profissionalNome}</p>
         <p><strong>Convênio:</strong> {convenioNome}</p>
         <p><strong>Procedimento:</strong> {procedimentoNome}</p>
+        <p><strong>Motivo:</strong> {appointment.motivo || '-'}</p>
         <p><strong>Descrição:</strong> {appointment.detalhes}</p>
         <p>
           <strong>Status:</strong>{' '}
