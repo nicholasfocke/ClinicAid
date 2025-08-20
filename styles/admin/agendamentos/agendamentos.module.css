@@ -185,6 +185,11 @@
   color: #22c55e !important;
 }
 
+.statusEmAndamento {
+  background: #ede9fe;
+  color: #7c3aed !important;
+}
+
 .statusCancelado {
   background: #fee2e2;
   color: #dc2626 !important;
@@ -391,6 +396,11 @@
 .statusConfirmado {
   background: #e7f9ef !important;
   color: #22c55e !important;
+}
+
+.statusEmAndamento {
+  background: #ede9fe !important;
+  color: #7c3aed !important;
 }
 
 .statusCancelado {

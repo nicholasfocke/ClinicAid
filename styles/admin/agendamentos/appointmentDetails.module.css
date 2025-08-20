@@ -63,6 +63,13 @@
   padding: 2px 8px;
 }
 
+.statusEmAndamento {
+  background: #ede9fe;
+  color: #7c3aed;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
 .statusCancelado {
   background: #fee2e2;
   color: #dc2626;

@@ -37,6 +37,7 @@ const Index = () => {
   const statusClassMap: Record<string, string> = {
     [statusAgendamento.AGENDADO]: styles.statusAgendado,
     [statusAgendamento.CONFIRMADO]: styles.statusConfirmado,
+    [statusAgendamento.EM_ANDAMENTO]: styles.statusEmAndamento,
     [statusAgendamento.CANCELADO]: styles.statusCancelado,
     [statusAgendamento.CONCLUIDO]: styles.statusConcluido,
     [statusAgendamento.PENDENTE]: styles.statusPendente,

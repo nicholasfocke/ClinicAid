@@ -27,6 +27,8 @@ interface Agendamento {
   status: string;
   detalhes: string;
   usuarioId: string;
+  inicioAtendimento?: string;
+  duracaoAtendimento?: number;
   convenio?: string;
   procedimento?: string;
   especialidade?: string;
@@ -124,6 +126,8 @@ const Agendamentos = () => {
           status: agendamentoData.status || 'agendado',
           detalhes: agendamentoData.detalhes || '',
           usuarioId: agendamentoData.usuarioId || '',
+          inicioAtendimento: agendamentoData.inicioAtendimento,
+          duracaoAtendimento: agendamentoData.duracaoAtendimento,
           convenio: agendamentoData.convenio || '',
           procedimento: agendamentoData.procedimento || especialidade,
           especialidade,
@@ -316,6 +320,7 @@ const Agendamentos = () => {
   const statusClassMap: Record<string, string> = {
     [statusAgendamento.AGENDADO]: styles.statusAgendado,
     [statusAgendamento.CONFIRMADO]: styles.statusConfirmado,
+    [statusAgendamento.EM_ANDAMENTO]: styles.statusEmAndamento,
     [statusAgendamento.CANCELADO]: styles.statusCancelado,
     [statusAgendamento.CONCLUIDO]: styles.statusConcluido,
     [statusAgendamento.PENDENTE]: styles.statusPendente,
