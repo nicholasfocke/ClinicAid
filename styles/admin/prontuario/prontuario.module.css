@@ -5,13 +5,27 @@
   min-height: 80vh;
   background-color: #f3f4f6;
 }
+.topBar {
+  display: flex;
+  justify-content: space-between; /* esquerda ↔ direita */
+  align-items: flex-start;        /* título no topo, botão alinhado */
+  margin-bottom: 1.5rem;
+}
+
+.pageHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem; /* espaçamento entre título e subtítulo */
+}
 
 .title {
   font-size: 2.25rem;
   font-weight: 800;
   color: #111827;
-  margin: 18px 0 0 0;
+  margin: 0;
   letter-spacing: -1px;
+  line-height: 1.2;
   text-align: left;
 }
 
@@ -19,5 +33,185 @@
   font-size: 1rem;
   font-weight: 400;
   color: #6b7280;
-  margin: 0.1rem 0 2rem 0;
+  margin: 0;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+}
+
+.searchButton {
+  background-color: #2563eb;
+  color: white;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+}
+.searchButton:hover {
+  background-color: #1d4ed8;
+}
+
+.historyList {
+  list-style: disc;
+  margin: 0.5rem 0 1rem 1.25rem;
+  padding: 0;
+}
+
+.noPaciente {
+  color: #6b7280;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalBox {
+  background: #fff;
+  border-radius: 8px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.patientList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.patientItem {
+  padding: 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.patientItem:hover {
+  background: #f3f4f6;
+}
+
+.actionButtonsWrapper {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  margin: 18px 0;
+}
+
+.primaryButton {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-width: 180px;
+}
+
+.primaryButton:hover {
+  background: #1746a2;
+}
+
+.card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(16, 30, 54, 0.08);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.patientInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.patientPhoto {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.patientName {
+  font-weight: 600;
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.patientDetails {
+  color: #6b7280;
+  margin: 0;
+}
+
+.cardTitle {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.filterContainer {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.filterContainer label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.filterInput {
+  padding: 0.25rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+.evolucaoList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.evolucaoItem {
+  margin-bottom: 0.5rem;
+}
+
+.evolucaoDate {
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.evolucaoResumo {
+  display: inline;
+}
+
+.noEvolucoes {
+  color: #6b7280;
 }
