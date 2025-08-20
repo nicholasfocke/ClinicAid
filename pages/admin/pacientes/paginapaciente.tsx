@@ -7,7 +7,7 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/pacientes/paginapaciente.module.css';
 import { buscarPacientesComDetalhes, PacienteDetails, buscarPacientePorId, atualizarPaciente } from '@/functions/pacientesFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
-import { User, Calendar, Phone, FileText, Stethoscope, Download, Trash, PenLine } from 'lucide-react'
+import { User, Calendar, Phone, FileText, Stethoscope, Download, Trash, PenLine, ClipboardList } from 'lucide-react'
 import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage'
 import { format as formatDateFns, parse as parseDateFns } from 'date-fns'
 import AppointmentDetailsModal from '@/components/modals/AppointmentDetailsModal';
@@ -578,6 +578,7 @@ const PaginaPaciente = () => {
                             ) : null;
                           })()}
                           {a.procedimento && <p><FileText size={19} strokeWidth={3} /> Procedimento: {a.procedimento}</p>}
+                          {a.motivo && <p><ClipboardList size={19} strokeWidth={3} /> Motivo: {a.motivo}</p>}
                         </div>
                         <button className={styles.detailsButton} type="button" onClick={() => openDetails(a)}>
                           Ver detalhes

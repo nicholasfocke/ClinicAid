@@ -14,6 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       profissional,
       nomesPacientes,
       detalhes,
+      motivo,
       isEdit,
       isDelete,
       // campos antigos para compatibilidade
@@ -81,6 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const profissionalNome = profissional || funcionaria || '-';
       const servico = service || '-';
       const detalhesTexto = detalhes || '-';
+      const motivoTexto = motivo || '-';
 
       // Template de e-mail para o usuário
       const userMessage = `
@@ -94,6 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             <li><strong>Paciente(s):</strong> ${Array.isArray(pacienteList) ? pacienteList.join(', ') : pacienteList}</li>
             <li><strong>Data:</strong> ${formattedDate}</li>
             <li><strong>Horários:</strong> ${Array.isArray(times) ? times.join(', ') : times}</li>
+            <li><strong>Motivo:</strong> ${motivoTexto}</li>
             <li><strong>Detalhes:</strong> ${detalhesTexto}</li>
           </ul>
           <p>Se precisar de alguma alteração, entre em contato.</p>
@@ -113,6 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             <li><strong>Paciente(s):</strong> ${Array.isArray(pacienteList) ? pacienteList.join(', ') : pacienteList}</li>
             <li><strong>Data:</strong> ${formattedDate}</li>
             <li><strong>Horários:</strong> ${Array.isArray(times) ? times.join(', ') : times}</li>
+            <li><strong>Motivo:</strong> ${motivoTexto}</li>
             <li><strong>Detalhes:</strong> ${detalhesTexto}</li>
             <li><strong>Telefone do usuário:</strong> ${userPhone}</li>
           </ul>

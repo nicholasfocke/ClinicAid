@@ -26,6 +26,7 @@ interface Agendamento {
   nomePaciente: string;
   status: string;
   detalhes: string;
+  motivo: string;
   usuarioId: string;
   inicioAtendimento?: string;
   duracaoAtendimento?: number;
@@ -71,6 +72,7 @@ const Agendamentos = () => {
     dataNascimento: string;
     profissional: string;
     detalhes: string;
+    motivo: string;
     convenio: string;
     procedimento: string;
   }
@@ -87,6 +89,7 @@ const Agendamentos = () => {
     dataNascimento: '',
     profissional: '',
     detalhes: '',
+    motivo: '',
     convenio: '',
     procedimento: '',
   });
@@ -125,6 +128,7 @@ const Agendamentos = () => {
           nomePaciente: agendamentoData.nomePaciente,
           status: agendamentoData.status || 'agendado',
           detalhes: agendamentoData.detalhes || '',
+          motivo: agendamentoData.motivo || '',
           usuarioId: agendamentoData.usuarioId || '',
           inicioAtendimento: agendamentoData.inicioAtendimento,
           duracaoAtendimento: agendamentoData.duracaoAtendimento,
@@ -370,6 +374,7 @@ const Agendamentos = () => {
           nomesPacientes: [appointmentData.nomePaciente],
           profissional: appointmentData.profissional,
           detalhes: appointmentData.detalhes,
+          motivo: appointmentData.motivo,
           convenio: appointmentData.convenio,
           procedimento: appointmentData.procedimento,
           email: appointmentData.email,
@@ -392,6 +397,7 @@ const Agendamentos = () => {
         dataNascimento: '',
         profissional: '',
         detalhes: '',
+        motivo: '',
         convenio: '',
         procedimento: '',
       });
@@ -420,6 +426,7 @@ const Agendamentos = () => {
       fim: fimPadrao,
       profissional: selectedProfissional,
       detalhes: '',
+      motivo: '',
       pacienteId: '',
       nomePaciente: '',
       email: '',

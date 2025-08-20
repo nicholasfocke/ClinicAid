@@ -39,6 +39,7 @@ const NotificacaoDetalhes = () => {
     'nomePaciente',
     'convenio',
     'data',
+    'motivo',
     'detalhes',
     'profissional',
     'procedimento',
