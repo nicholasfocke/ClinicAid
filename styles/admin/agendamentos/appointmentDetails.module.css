@@ -63,6 +63,13 @@
   padding: 2px 8px;
 }
 
+.statusEmAndamento {
+  background: #ede9fe;
+  color: #7c3aed;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
 .statusCancelado {
   background: #fee2e2;
   color: #dc2626;
@@ -97,17 +104,17 @@
   background: #e5e7eb;
   color: #222;
   border: none;
-  border-radius: 6px;
-  padding: 10px 0;
+  border-radius: 7px;
+  padding: 6px 0;
   font-weight: 600;
   cursor: pointer;
   opacity: 1;
   transition: background 0.18s, color 0.18s;
-  min-width: 110px;
+  min-width: 95px;
   flex: 1 1 0;
   text-align: center;
-  font-size: 1.04rem;
-  max-width: 140px;
+  font-size: 1.0rem;
+  max-width: 150px;
 }
 
 .statusButton:disabled {

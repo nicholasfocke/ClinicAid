@@ -170,6 +170,7 @@ const Pacientes = () => {
   const statusClassMap: Record<string, string> = {
     [statusAgendamento.AGENDADO]: detailsStyles.statusAgendado,
     [statusAgendamento.CONFIRMADO]: detailsStyles.statusConfirmado,
+    [statusAgendamento.EM_ANDAMENTO]: detailsStyles.statusEmAndamento,
     [statusAgendamento.CANCELADO]: detailsStyles.statusCancelado,
     [statusAgendamento.CONCLUIDO]: detailsStyles.statusConcluido,
     [statusAgendamento.PENDENTE]: detailsStyles.statusPendente,

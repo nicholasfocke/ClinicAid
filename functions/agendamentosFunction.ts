@@ -34,6 +34,7 @@ export interface BlockedTime {
 export const statusAgendamento = {
     AGENDADO: 'agendado',
     CONFIRMADO: 'confirmado',
+    EM_ANDAMENTO: 'em andamento',
     CANCELADO: 'cancelado',
     CONCLUIDO: 'concluído',
     PENDENTE: 'pendente',

@@ -47,6 +47,7 @@ const PaginaPaciente = () => {
   const statusClassMap: Record<string, string> = {
     agendado: styles.statusAgendado,
     confirmado: styles.statusConfirmado,
+    'em andamento': styles.statusEmAndamento,
     cancelado: styles.statusCancelado,
     'concluído': styles.statusConcluido,
     pendente: styles.statusPendente,
