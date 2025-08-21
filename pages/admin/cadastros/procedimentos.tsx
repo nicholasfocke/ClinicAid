@@ -132,7 +132,8 @@ const Procedimentos = () => {
       valor: p.valor,
       duracao: p.duracao,
       convenio: p.convenio,
-      tipo: p.tipo
+      tipo: p.tipo,
+      valoresConvenio: p.valoresConvenio || {}
     });
     setShowEditModal(true);
   };
@@ -144,6 +145,13 @@ const Procedimentos = () => {
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : name === 'valor' || name === 'duracao' ? Number(value) : value,
+    }));
+  };
+
+  const handleConvenioValorChange = (nome: string, valor: number) => {
+    setFormData(prev => ({
+      ...prev,
+      valoresConvenio: { ...(prev.valoresConvenio || {}), [nome]: valor },
     }));
   };
 
@@ -514,6 +522,22 @@ const Procedimentos = () => {
               <option value="consulta">Consulta</option>
               <option value="exame">Exame</option>
             </select>
+            {formData.valoresConvenio &&
+              Object.entries(formData.valoresConvenio).map(([conv, val]) => (
+                <div key={conv}>
+                  <label className={modalStyles.label}>
+                    Valor do procedimento ({conv})
+                  </label>
+                  <input
+                    type="number"
+                    className={modalStyles.input}
+                    value={val}
+                    onChange={e =>
+                      handleConvenioValorChange(conv, Number(e.target.value))
+                    }
+                  />
+                </div>
+              ))}
             <div style={{ display: 'flex', gap: '8px' }}>
               <button className={modalStyles.buttonSalvar} onClick={() => saveEdit(editingId)}>
                 Salvar
