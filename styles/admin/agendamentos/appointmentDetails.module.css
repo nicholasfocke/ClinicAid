@@ -203,6 +203,11 @@
   font-weight: 500;
 }
 
+.paymentValue {
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
 .paymentInput,
 .paymentSelect {
   width: 100%;

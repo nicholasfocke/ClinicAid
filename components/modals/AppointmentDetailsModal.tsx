@@ -4,7 +4,7 @@ import styles from '@/styles/admin/agendamentos/appointmentDetails.module.css';
 import { doc, getDoc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
-import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
+import { buscarProcedimentos, ProcedimentoData } from '@/functions/procedimentosFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
 import { format as formatDateFns, parse as parseDateFns } from 'date-fns';
 import { statusAgendamento, excluirAgendamento } from '@/functions/agendamentosFunction';
@@ -46,7 +46,7 @@ interface Props {
 const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, readOnly = false }: Props) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
-  const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
+  const [procedimentos, setProcedimentos] = useState<(ProcedimentoData & { id: string })[]>([]);
   const [medicos, setMedicos] = useState<{ id: string; nome: string }[]>([]);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -54,7 +54,6 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentValue, setPaymentValue] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
 
   const statusClassMap: Record<string, string> = {
@@ -220,12 +219,16 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
     convenios.find(c => c.nome === appointment.convenio)?.nome ||
     appointment.convenio ||
     '-';
+  const procedimentoSelecionado =
+    procedimentos.find(
+      p => p.id === appointment.procedimento || p.nome === appointment.procedimento
+    );
   const procedimentoNome =
-    procedimentos.find(p => p.id === appointment.procedimento)?.nome ||
-    procedimentos.find(p => p.nome === appointment.procedimento)?.nome ||
+    procedimentoSelecionado?.nome ||
     appointment.procedimento ||
     appointment.especialidade ||
     '-';
+  const valorProcedimento = procedimentoSelecionado?.valor || 0;
   const profissionalNome =
     medicos.find(m => m.id === appointment.profissional)?.nome ||
     medicos.find(m => m.nome === appointment.profissional)?.nome ||
@@ -329,27 +332,9 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
           <div className={styles.paymentOverlay}>
             <div className={styles.paymentModal}>
               <h4 className={styles.paymentTitle}>Registrar pagamento</h4>
-              <label className={styles.paymentLabel}>
-                Valor
-                <input
-                  type="text"
-                  value={paymentValue}
-                  onChange={e => {
-                    const onlyDigits = e.target.value.replace(/\D/g, '');
-                    const number = Number(onlyDigits) / 100;
-                    setPaymentValue(
-                      isNaN(number)
-                        ? ''
-                        : number.toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL',
-                          })
-                    );
-                  }}
-                  className={styles.paymentInput}
-                  placeholder="R$ 0,00"
-                />
-              </label>
+              <p className={styles.paymentValue}>
+                Valor: {valorProcedimento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </p>
               <label className={styles.paymentLabel}>
                 Forma de pagamento
                 <select
@@ -376,20 +361,18 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
                   type="button"
                   className={styles.saveButton}
                   onClick={async () => {
-                    if (!paymentValue || !paymentMethod || !appointment) return;
+                    if (!paymentMethod || !appointment) return;
                     try {
-                      const valorNumerico = Number(paymentValue.replace(/[^\d]/g, '')) / 100;
                       await addDoc(collection(firestore, 'contasAReceber'), {
                         vencimento: formatDateFns(new Date(), 'dd/MM/yyyy'),
                         cliente: appointment.nomePaciente,
                         descricao: 'Agendamento concluído',
-                        valor: valorNumerico,
+                        valor: valorProcedimento,
                         status: 'Recebido',
                         formaPagamento: paymentMethod,
                       });
                       await handleStatusChange(statusAgendamento.CONCLUIDO);
                       setShowPaymentModal(false);
-                      setPaymentValue('');
                       setPaymentMethod('');
                     } catch {
                       // erro ao salvar
