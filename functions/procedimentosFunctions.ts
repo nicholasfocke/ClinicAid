@@ -7,6 +7,7 @@ export interface ProcedimentoData {
   duracao: number;
   convenio: boolean;
   tipo: 'consulta' | 'exame';
+  valoresConvenio?: { [key: string]: number };
 }
 
 export const buscarProcedimentos = async () => {
