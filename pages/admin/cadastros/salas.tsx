@@ -37,6 +37,7 @@ const Salas = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<{ nome: string; profissionalId: string | null }>({ nome: '', profissionalId: null });
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [newSala, setNewSala] = useState<{ nome: string; profissionalId: string | null }>({ nome: '', profissionalId: null });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -88,6 +89,7 @@ const Salas = () => {
   const startEdit = (s: Sala) => {
     setEditingId(s.id);
     setFormData({ nome: s.nome, profissionalId: s.profissionalId });
+    setShowEditModal(true);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -99,9 +101,13 @@ const Salas = () => {
     await atualizarSala(id, { nome: formData.nome, profissionalId: formData.profissionalId });
     setSalas(prev => prev.map(s => (s.id === id ? { ...s, nome: formData.nome, profissionalId: formData.profissionalId } : s)));
     setEditingId(null);
+    setShowEditModal(false);
   };
 
-  const cancelEdit = () => setEditingId(null);
+  const cancelEdit = () => {
+    setEditingId(null);
+    setShowEditModal(false);
+  };
 
   const handleNewChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -130,6 +136,12 @@ const Salas = () => {
       isOpen: true,
       onConfirm: confirmAction,
     });
+  };
+
+  const handleDeleteFromModal = (id: string) => {
+    setShowEditModal(false);
+    setEditingId(null);
+    handleDelete(id);
   };
 
   const toggleSelect = (id: string) => {
@@ -233,53 +245,21 @@ const Salas = () => {
                       onChange={() => toggleSelect(s.id)}
                     />
                   </td>
-                  {editingId === s.id ? (
-                    <>
-                      <td>
-                        <input name="nome" value={formData.nome} onChange={handleChange} />
-                      </td>
-                      <td>
-                        <select name="profissionalId" value={formData.profissionalId || ''} onChange={handleChange}>
-                          <option value="">Selecione</option>
-                          {medicos.map(m => (
-                            <option key={m.id} value={m.id}>
-                              {m.nome}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td>{s.ativo ? 'Sim' : 'Não'}</td>
-                      <td>
-                        <button className={tableStyles.buttonAcao} onClick={() => saveEdit(s.id)}>
-                          Salvar
-                        </button>
-                        <button className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`} onClick={cancelEdit}>
-                          Cancelar
-                        </button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td>{s.nome}</td>
-                      <td>{getNomeMedico(s.profissionalId)}</td>
-                      <td>{s.ativo ? 'Sim' : 'Não'}</td>
-                      <td>
-                        <button className={tableStyles.iconBtn} title="Editar" onClick={() => startEdit(s)}>
-                          <svg className={tableStyles.iconEdit} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1976D2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-                        </button>
-                        <button className={tableStyles.iconBtn} title={s.ativo ? 'Desativar' : 'Ativar'} onClick={() => toggleAtivo(s)}>
-                          {s.ativo ? (
-                            <svg className={tableStyles.iconAtivar} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F44336" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-                          ) : (
-                            <svg className={tableStyles.iconAtivar} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
-                          )}
-                        </button>
-                        <button className={tableStyles.iconBtn} title="Excluir" onClick={() => handleDelete(s.id)}>
-                          <svg className={tableStyles.iconDelete} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F44336" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                        </button>
-                      </td>
-                    </>
-                  )}
+                  <td>{s.nome}</td>
+                  <td>{getNomeMedico(s.profissionalId)}</td>
+                  <td>{s.ativo ? 'Sim' : 'Não'}</td>
+                  <td>
+                    <button className={tableStyles.iconBtn} title="Editar" onClick={() => startEdit(s)}>
+                      <svg className={tableStyles.iconEdit} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1976D2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+                    </button>
+                    <button className={tableStyles.iconBtn} title={s.ativo ? 'Desativar' : 'Ativar'} onClick={() => toggleAtivo(s)}>
+                      {s.ativo ? (
+                        <svg className={tableStyles.iconAtivar} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F44336" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+                      ) : (
+                        <svg className={tableStyles.iconAtivar} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+                      )}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -305,6 +285,33 @@ const Salas = () => {
               ))}
             </select>
             <button className={modalStyles.buttonSalvar} onClick={createSala}>Salvar</button>
+          </div>
+        </div>
+      )}
+      {showEditModal && editingId && (
+        <div className={modalStyles.overlay} onClick={cancelEdit}>
+          <div className={modalStyles.modal} onClick={e => e.stopPropagation()}>
+            <button className={modalStyles.closeButton} onClick={cancelEdit}>X</button>
+            <h3>Editar Sala</h3>
+            <label className={modalStyles.label}>Nome</label>
+            <input name="nome" className={modalStyles.input} value={formData.nome} onChange={handleChange} />
+            <label className={modalStyles.label}>Profissional</label>
+            <select name="profissionalId" className={modalStyles.input} value={formData.profissionalId || ''} onChange={handleChange}>
+              <option value="">Selecione</option>
+              {medicos.map(m => (
+                <option key={m.id} value={m.id}>
+                  {m.nome}
+                </option>
+              ))}
+            </select>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className={modalStyles.buttonSalvar} onClick={() => saveEdit(editingId)}>
+                Salvar
+              </button>
+              <button className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`} onClick={() => handleDeleteFromModal(editingId)}>
+                Excluir
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -48,6 +48,7 @@ const Convenios = () => {
   });
 
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [newConvenio, setNewConvenio] = useState<{ nome: string; comissao: number; telefone: string }>({
     nome: '',
     comissao: 0,
@@ -112,6 +113,12 @@ const Convenios = () => {
     });
   };
 
+  const handleDeleteFromModal = (id: string) => {
+    setShowEditModal(false);
+    setEditingId(null);
+    handleDelete(id);
+  };
+
   const toggleSelect = (id: string) => {
     setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -139,6 +146,7 @@ const Convenios = () => {
   const startEdit = (c: Convenio) => {
     setEditingId(c.id);
     setFormData({ nome: c.nome, numeroPacientes: c.numeroPacientes, comissao: c.comissao, telefone: c.telefone || '' });
+    setShowEditModal(true);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,9 +167,13 @@ const Convenios = () => {
     await atualizarConvenio(id, formData);
     setConvenios(prev => prev.map(c => (c.id === id ? { id, ...formData } : c)));
     setEditingId(null);
+    setShowEditModal(false);
   };
 
-  const cancelEdit = () => setEditingId(null);
+  const cancelEdit = () => {
+    setEditingId(null);
+    setShowEditModal(false);
+  };
 
   const handleNewChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value: raw } = e.target;
@@ -251,41 +263,15 @@ const Convenios = () => {
                     onChange={() => toggleSelect(c.id)}
                   />
                 </td>
-                {editingId === c.id ? (
-                  <>
-                    <td>
-                      <input name="nome" value={formData.nome} onChange={handleChange} />
-                    </td>
-                    <td>
-                      <input name="numeroPacientes" type="number" value={formData.numeroPacientes} onChange={handleChange} />
-                    </td>
-                    <td>
-                      <input name="comissao" type="number" step="1.00" value={formData.comissao} onChange={handleChange} />
-                    </td>
-                    <td>
-                      <input name="telefone" value={formData.telefone} onChange={handleChange} />
-                    </td>
-                    <td>
-                      <button className={tableStyles.buttonAcao} onClick={() => saveEdit(c.id)}>Salvar</button>
-                      <button className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`} onClick={cancelEdit}>Cancelar</button>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td>{c.nome}</td>
-                    <td>{c.numeroPacientes}</td>
-                    <td>{c.comissao}</td>
-                    <td>{c.telefone || '-'}</td>
-                    <td className={tableStyles.acoesTd}>
-                      <button className={tableStyles.iconBtn} title="Editar" onClick={() => startEdit(c)}>
-                        <svg className={tableStyles.iconEdit} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1976D2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-                      </button>
-                      <button className={tableStyles.iconBtn} title="Excluir" onClick={() => handleDelete(c.id)}>
-                        <svg className={tableStyles.iconDelete} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F44336" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                      </button>
-                    </td>
-                  </>
-                )}
+                <td>{c.nome}</td>
+                <td>{c.numeroPacientes}</td>
+                <td>{c.comissao}</td>
+                <td>{c.telefone || '-'}</td>
+                <td className={tableStyles.acoesTd}>
+                  <button className={tableStyles.iconBtn} title="Editar" onClick={() => startEdit(c)}>
+                    <svg className={tableStyles.iconEdit} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1976D2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -325,6 +311,56 @@ const Convenios = () => {
             onChange={handleNewChange}
           />
           <button className={modalStyles.buttonSalvar} onClick={createConvenio}>Salvar</button>
+        </div>
+      </div>
+    )}
+    {showEditModal && editingId && (
+      <div className={modalStyles.overlay} onClick={cancelEdit}>
+        <div className={modalStyles.modal} onClick={e => e.stopPropagation()}>
+          <button className={modalStyles.closeButton} onClick={cancelEdit}>X</button>
+          <h3>Editar Convênio</h3>
+          <label htmlFor="nome" className={modalStyles.label}>Nome</label>
+          <input
+            name="nome"
+            className={modalStyles.input}
+            value={formData.nome}
+            onChange={handleChange}
+          />
+          <label htmlFor="numeroPacientes" className={modalStyles.label}>Pacientes</label>
+          <input
+            name="numeroPacientes"
+            type="number"
+            className={modalStyles.input}
+            value={formData.numeroPacientes}
+            onChange={handleChange}
+          />
+          <label htmlFor="comissao" className={modalStyles.label}>Comissão da clínica (%)</label>
+          <input
+            name="comissao"
+            type="number"
+            step="1.00"
+            className={modalStyles.input}
+            value={formData.comissao}
+            onChange={handleChange}
+          />
+          <label htmlFor="telefone" className={modalStyles.label}>Telefone</label>
+          <input
+            name="telefone"
+            className={modalStyles.input}
+            value={formData.telefone}
+            onChange={handleChange}
+          />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className={modalStyles.buttonSalvar} onClick={() => saveEdit(editingId)}>
+              Salvar
+            </button>
+            <button
+              className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+              onClick={() => handleDeleteFromModal(editingId)}
+            >
+              Excluir
+            </button>
+          </div>
         </div>
       </div>
     )}
