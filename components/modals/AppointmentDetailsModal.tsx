@@ -110,6 +110,42 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
     setShowConfirmDelete(false);
   }, [appointment, isOpen]);
 
+
+  // --- Cálculo de valores e nomes relacionados ao procedimento/convenio ---
+  // Busca pelo id ou nome salvo no agendamento
+  const convenioNome =
+    convenios.find(c => c.id === appointment?.convenio)?.nome ||
+    convenios.find(c => c.nome === appointment?.convenio)?.nome ||
+    appointment?.convenio ||
+    '-';
+  const procedimentoSelecionado =
+    procedimentos.find(
+      p => p.id === appointment?.procedimento || p.nome === appointment?.procedimento
+    );
+  const procedimentoNome =
+    procedimentoSelecionado?.nome ||
+    appointment?.procedimento ||
+    appointment?.especialidade ||
+    '-';
+  const convenioKey =
+    convenioNome !== '-' ? convenioNome : appointment?.convenio;
+  const valorProcedimento =
+    procedimentoSelecionado &&
+    convenioKey &&
+    procedimentoSelecionado.valoresConvenio &&
+    procedimentoSelecionado.valoresConvenio[convenioKey] !== undefined
+      ? procedimentoSelecionado.valoresConvenio[convenioKey]
+      : procedimentoSelecionado?.valor || 0;
+  const hasDefaultValue =
+    convenioKey &&
+    procedimentoSelecionado?.valoresConvenio &&
+    procedimentoSelecionado.valoresConvenio[convenioKey] !== undefined;
+  const profissionalNome =
+    medicos.find(m => m.id === appointment?.profissional)?.nome ||
+    medicos.find(m => m.nome === appointment?.profissional)?.nome ||
+    appointment?.profissional ||
+    '-';
+
   useEffect(() => {
     if (showPaymentModal) {
       setBillingValue(valorProcedimento);
@@ -226,38 +262,7 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
 
   if (!isOpen || !appointment) return null;
 
-  // Busca pelo id ou nome salvo no agendamento
-  const convenioNome =
-    convenios.find(c => c.id === appointment.convenio)?.nome ||
-    convenios.find(c => c.nome === appointment.convenio)?.nome ||
-    appointment.convenio ||
-    '-';
-  const procedimentoSelecionado =
-    procedimentos.find(
-      p => p.id === appointment.procedimento || p.nome === appointment.procedimento
-    );
-  const procedimentoNome =
-    procedimentoSelecionado?.nome ||
-    appointment.procedimento ||
-    appointment.especialidade ||
-    '-';
-  const convenioKey =
-    convenioNome !== '-' ? convenioNome : appointment.convenio;
-  const valorProcedimento =
-    (convenioKey &&
-      procedimentoSelecionado?.valoresConvenio &&
-      procedimentoSelecionado.valoresConvenio[convenioKey] !== undefined)
-      ? procedimentoSelecionado.valoresConvenio![convenioKey]
-      : procedimentoSelecionado?.valor || 0;
-  const hasDefaultValue =
-    convenioKey &&
-    procedimentoSelecionado?.valoresConvenio &&
-    procedimentoSelecionado.valoresConvenio[convenioKey] !== undefined;
-  const profissionalNome =
-    medicos.find(m => m.id === appointment.profissional)?.nome ||
-    medicos.find(m => m.nome === appointment.profissional)?.nome ||
-    appointment.profissional ||
-    '-';
+  // ...existing code...
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -379,7 +384,7 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
                   <option value="Transferência">Transferência</option>
                 </select>
               </label>
-              {appointment.convenio && !hasDefaultValue && (
+              {appointment.convenio && appointment.convenio !== 'Particular' && !hasDefaultValue && (
                 <label className={styles.paymentLabel}>
                   <input
                     type="checkbox"
@@ -411,7 +416,12 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
                         status: 'Recebido',
                         formaPagamento: paymentMethod,
                       });
-                      if (saveDefault && convenioKey && procedimentoSelecionado?.id) {
+                      if (
+                        saveDefault &&
+                        convenioKey &&
+                        procedimentoSelecionado?.id &&
+                        convenioKey !== 'Particular'
+                      ) {
                         const novosValores = {
                           ...(procedimentoSelecionado.valoresConvenio || {}),
                           [convenioKey as string]: billingValue,
