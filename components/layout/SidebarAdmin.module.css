@@ -158,11 +158,17 @@
 }
 
 .chevronIcon {
-  margin-left: auto; /* garante que a seta fique à direita */
+  margin-left: auto !important; /* força a seta para a direita mesmo em flex */
   color: #fff;
   font-size: 20px;
   display: flex;
   align-items: center;
+  min-width: 14px;
+  min-height: 15px;
+  width: 14px;
+  height: 15px;
+  justify-content: flex-end;
+  pointer-events: none;
 }
 
 .subNav {
