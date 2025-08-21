@@ -104,6 +104,10 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
     fetchAll();
   }, [isOpen]);
 
+  useEffect(() => {
+    setShowConfirmDelete(false);
+  }, [appointment, isOpen]);
+
   // Função para atualizar status do agendamento
   const handleStatusChange = async (newStatus: string) => {
     if (!appointment) return;
