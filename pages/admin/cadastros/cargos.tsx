@@ -37,6 +37,7 @@ const Cargos = () => {
     profissionalSaude: false,
   });
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [newCargo, setNewCargo] = useState<{ nome: string; profissionalSaude: boolean }>({ nome: '', profissionalSaude: false });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [modalState, setModalState] = useState({isOpen: false, onConfirm: () => {} });
@@ -76,6 +77,7 @@ const Cargos = () => {
   const startEdit = (c: Cargo) => {
     setEditingId(c.id);
     setFormData({ nome: c.nome, quantidadeUsuarios: c.quantidadeUsuarios, profissionalSaude: c.profissionalSaude });
+    setShowEditModal(true);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,9 +109,13 @@ const Cargos = () => {
       )
     );
     setEditingId(null);
+    setShowEditModal(false);
   };
 
-  const cancelEdit = () => setEditingId(null);
+  const cancelEdit = () => {
+    setEditingId(null);
+    setShowEditModal(false);
+  };
 
   const handleNewChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -143,6 +149,12 @@ const Cargos = () => {
       isOpen: true,
       onConfirm: confirmAction,
     });
+  };
+
+  const handleDeleteFromModal = (id: string) => {
+    setShowEditModal(false);
+    setEditingId(null);
+    handleDelete(id);
   };
 
   const toggleSelect = (id: string) => {
@@ -236,37 +248,14 @@ const Cargos = () => {
                       onChange={() => toggleSelect(c.id)}
                     />
                   </td>
-                  {editingId === c.id ? (
-                    <>
-                      <td>
-                        <input name="nome" value={formData.nome} onChange={handleChange} />
-                      </td>
-                      <td>
-                        <input name="quantidadeUsuarios" type="number" value={formData.quantidadeUsuarios} onChange={handleChange} />
-                      </td>
-                      <td>
-                        <input name="profissionalSaude" type="checkbox" checked={formData.profissionalSaude} onChange={handleChange} />
-                      </td>
-                      <td>
-                        <button className={tableStyles.buttonAcao} onClick={() => saveEdit(c.id)}>Salvar</button>
-                        <button className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`} onClick={cancelEdit}>Cancelar</button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td>{c.nome}</td>
-                      <td>{c.quantidadeUsuarios ?? 0}</td>
-                      <td>{c.profissionalSaude ? 'Sim' : 'Não'}</td>
-                      <td>
-                        <button className={tableStyles.iconBtn} title="Editar" onClick={() => startEdit(c)}>
-                          <svg className={tableStyles.iconEdit} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1976D2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-                        </button>
-                        <button className={tableStyles.iconBtn} title="Excluir" onClick={() => handleDelete(c.id)}>
-                          <svg className={tableStyles.iconDelete} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F44336" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                        </button>
-                      </td>
-                    </>
-                  )}
+                  <td>{c.nome}</td>
+                  <td>{c.quantidadeUsuarios ?? 0}</td>
+                  <td>{c.profissionalSaude ? 'Sim' : 'Não'}</td>
+                  <td>
+                    <button className={tableStyles.iconBtn} title="Editar" onClick={() => startEdit(c)}>
+                      <svg className={tableStyles.iconEdit} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1976D2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -283,6 +272,28 @@ const Cargos = () => {
             <label className={modalStyles.label}>Profissional da Saúde</label>
             <input name="profissionalSaude" type="checkbox" checked={newCargo.profissionalSaude} onChange={handleNewChange} />
             <button className={modalStyles.buttonSalvar} onClick={createCargo}>Salvar</button>
+          </div>
+        </div>
+      )}
+      {showEditModal && editingId && (
+        <div className={modalStyles.overlay} onClick={cancelEdit}>
+          <div className={modalStyles.modal} onClick={e => e.stopPropagation()}>
+            <button className={modalStyles.closeButton} onClick={cancelEdit}>X</button>
+            <h3>Editar Cargo</h3>
+            <label className={modalStyles.label}>Nome</label>
+            <input name="nome" className={modalStyles.input} value={formData.nome} onChange={handleChange} />
+            <label className={modalStyles.label}>Usuários</label>
+            <input name="quantidadeUsuarios" type="number" className={modalStyles.input} value={formData.quantidadeUsuarios} onChange={handleChange} />
+            <label className={modalStyles.label}>Profissional da Saúde</label>
+            <input name="profissionalSaude" type="checkbox" checked={formData.profissionalSaude} onChange={handleChange} />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className={modalStyles.buttonSalvar} onClick={() => saveEdit(editingId)}>
+                Salvar
+              </button>
+              <button className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`} onClick={() => handleDeleteFromModal(editingId)}>
+                Excluir
+              </button>
+            </div>
           </div>
         </div>
       )}

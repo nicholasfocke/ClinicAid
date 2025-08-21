@@ -32,6 +32,7 @@ const FormasPagamento = () => {
   const [formData, setFormData] = useState<{ nome: string; taxa: number }>({ nome: '', taxa: 0 });
   const [newForma, setNewForma] = useState<{ nome: string; taxa: number }>({ nome: '', taxa: 0 });
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const allSelected = formas.length > 0 && selectedIds.length === formas.length;
@@ -78,6 +79,7 @@ const FormasPagamento = () => {
   const startEdit = (f: FormaPagamento) => {
     setEditingId(f.id);
     setFormData({ nome: f.nome, taxa: f.taxa });
+    setShowEditModal(true);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,10 +96,14 @@ const FormasPagamento = () => {
     await atualizarFormaPagamento(id, { nome: nomeTrim, taxa: formData.taxa });
     setFormas(prev => prev.map(f => (f.id === id ? { id, ...formData } : f)));
     setEditingId(null);
+    setShowEditModal(false);
     setError(null);
   };
 
-  const cancelEdit = () => setEditingId(null);
+  const cancelEdit = () => {
+    setEditingId(null);
+    setShowEditModal(false);
+  };
 
   const handleNewChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -132,6 +138,12 @@ const FormasPagamento = () => {
       isOpen: true,
       onConfirm: confirmAction,
     });
+  };
+
+  const handleDeleteFromModal = (id: string) => {
+    setShowEditModal(false);
+    setEditingId(null);
+    handleDelete(id);
   };
 
   const toggleSelect = (id: string) => {
@@ -224,53 +236,22 @@ const FormasPagamento = () => {
                       onChange={() => toggleSelect(f.id)}
                     />
                   </td>
-                  {editingId === f.id ? (
-                    <>
-                      <td>
-                        <input name="nome" value={formData.nome} onChange={handleChange} />
-                      </td>
-                      <td>
-                        <input name="taxa" type="number" step="0.5" value={formData.taxa} onChange={handleChange} />
-                      </td>
-                      <td>
-                        <button className={tableStyles.buttonAcao} onClick={() => saveEdit(f.id)}>Salvar</button>
-                        <button className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`} onClick={cancelEdit}>Cancelar</button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td>{f.nome}</td>
-                      <td>{f.taxa}</td>
-                      <td className={tableStyles.acoesTd}>
-                        <button
-                          className={tableStyles.iconBtn + ' ' + tableStyles.iconEdit}
-                          title="Editar"
-                          onClick={() => startEdit(f)}
-                          aria-label="Editar"
-                        >
-                          {/* Feather Icon: edit (caneta) */}
-                          <svg width="22" height="22" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                            <path d="M12 20h9"/>
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z"/>
-                          </svg>
-                        </button>
-                        <button
-                          className={tableStyles.iconBtn + ' ' + tableStyles.iconDelete}
-                          title="Excluir"
-                          onClick={() => handleDelete(f.id)}
-                          aria-label="Excluir"
-                        >
-                          {/* Feather Icon: trash (lixeira) */}
-                          <svg width="22" height="22" fill="none" stroke="#e53935" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
-                            <line x1="10" y1="11" x2="10" y2="17"/>
-                            <line x1="14" y1="11" x2="14" y2="17"/>
-                          </svg>
-                        </button>
-                      </td>
-                    </>
-                  )}
+                  <td>{f.nome}</td>
+                  <td>{f.taxa}</td>
+                  <td className={tableStyles.acoesTd}>
+                    <button
+                      className={tableStyles.iconBtn + ' ' + tableStyles.iconEdit}
+                      title="Editar"
+                      onClick={() => startEdit(f)}
+                      aria-label="Editar"
+                    >
+                      {/* Feather Icon: edit (caneta) */}
+                      <svg width="22" height="22" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        <path d="M12 20h9"/>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z"/>
+                      </svg>
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -301,6 +282,41 @@ const FormasPagamento = () => {
               onChange={handleNewChange}
             />
             <button className={modalStyles.buttonSalvar} onClick={createForma}>Salvar</button>
+          </div>
+        </div>
+      )}
+      {showEditModal && editingId && (
+        <div className={modalStyles.overlay} onClick={cancelEdit}>
+          <div className={modalStyles.modal} onClick={e => e.stopPropagation()}>
+            <button className={modalStyles.closeButton} onClick={cancelEdit}>X</button>
+            <h3>Editar Forma de Pagamento</h3>
+            <label htmlFor="nome" className={modalStyles.label}>Nome</label>
+            <input
+              name="nome"
+              className={modalStyles.input}
+              value={formData.nome}
+              onChange={handleChange}
+            />
+            <label htmlFor="taxa" className={modalStyles.label}>Taxa (%)</label>
+            <input
+              name="taxa"
+              type="number"
+              step="0.5"
+              className={modalStyles.input}
+              value={formData.taxa}
+              onChange={handleChange}
+            />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className={modalStyles.buttonSalvar} onClick={() => saveEdit(editingId)}>
+                Salvar
+              </button>
+              <button
+                className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+                onClick={() => handleDeleteFromModal(editingId)}
+              >
+                Excluir
+              </button>
+            </div>
           </div>
         </div>
       )}

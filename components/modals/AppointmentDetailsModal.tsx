@@ -4,7 +4,7 @@ import styles from '@/styles/admin/agendamentos/appointmentDetails.module.css';
 import { doc, getDoc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { firestore } from '@/firebase/firebaseConfig';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
-import { buscarProcedimentos } from '@/functions/procedimentosFunctions';
+import { buscarProcedimentos, ProcedimentoData, atualizarProcedimento } from '@/functions/procedimentosFunctions';
 import { buscarMedicos } from '@/functions/medicosFunctions';
 import { format as formatDateFns, parse as parseDateFns } from 'date-fns';
 import { statusAgendamento, excluirAgendamento } from '@/functions/agendamentosFunction';
@@ -46,7 +46,7 @@ interface Props {
 const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, readOnly = false }: Props) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [convenios, setConvenios] = useState<{ id: string; nome: string }[]>([]);
-  const [procedimentos, setProcedimentos] = useState<{ id: string; nome: string }[]>([]);
+  const [procedimentos, setProcedimentos] = useState<(ProcedimentoData & { id: string })[]>([]);
   const [medicos, setMedicos] = useState<{ id: string; nome: string }[]>([]);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -54,8 +54,9 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentValue, setPaymentValue] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [billingValue, setBillingValue] = useState(0);
+  const [saveDefault, setSaveDefault] = useState(false);
 
   const statusClassMap: Record<string, string> = {
     [statusAgendamento.AGENDADO]: styles.statusAgendado,
@@ -104,6 +105,53 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
     };
     fetchAll();
   }, [isOpen]);
+
+  useEffect(() => {
+    setShowConfirmDelete(false);
+  }, [appointment, isOpen]);
+
+
+  // --- Cálculo de valores e nomes relacionados ao procedimento/convenio ---
+  // Busca pelo id ou nome salvo no agendamento
+  const convenioNome =
+    convenios.find(c => c.id === appointment?.convenio)?.nome ||
+    convenios.find(c => c.nome === appointment?.convenio)?.nome ||
+    appointment?.convenio ||
+    '-';
+  const procedimentoSelecionado =
+    procedimentos.find(
+      p => p.id === appointment?.procedimento || p.nome === appointment?.procedimento
+    );
+  const procedimentoNome =
+    procedimentoSelecionado?.nome ||
+    appointment?.procedimento ||
+    appointment?.especialidade ||
+    '-';
+  const convenioKey =
+    convenioNome !== '-' ? convenioNome : appointment?.convenio;
+  const valorProcedimento =
+    procedimentoSelecionado &&
+    convenioKey &&
+    procedimentoSelecionado.valoresConvenio &&
+    procedimentoSelecionado.valoresConvenio[convenioKey] !== undefined
+      ? procedimentoSelecionado.valoresConvenio[convenioKey]
+      : procedimentoSelecionado?.valor || 0;
+  const hasDefaultValue =
+    convenioKey &&
+    procedimentoSelecionado?.valoresConvenio &&
+    procedimentoSelecionado.valoresConvenio[convenioKey] !== undefined;
+  const profissionalNome =
+    medicos.find(m => m.id === appointment?.profissional)?.nome ||
+    medicos.find(m => m.nome === appointment?.profissional)?.nome ||
+    appointment?.profissional ||
+    '-';
+
+  useEffect(() => {
+    if (showPaymentModal) {
+      setBillingValue(valorProcedimento);
+      setSaveDefault(false);
+    }
+  }, [showPaymentModal, valorProcedimento]);
 
   // Função para atualizar status do agendamento
   const handleStatusChange = async (newStatus: string) => {
@@ -214,23 +262,7 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
 
   if (!isOpen || !appointment) return null;
 
-  // Busca pelo id ou nome salvo no agendamento
-  const convenioNome =
-    convenios.find(c => c.id === appointment.convenio)?.nome ||
-    convenios.find(c => c.nome === appointment.convenio)?.nome ||
-    appointment.convenio ||
-    '-';
-  const procedimentoNome =
-    procedimentos.find(p => p.id === appointment.procedimento)?.nome ||
-    procedimentos.find(p => p.nome === appointment.procedimento)?.nome ||
-    appointment.procedimento ||
-    appointment.especialidade ||
-    '-';
-  const profissionalNome =
-    medicos.find(m => m.id === appointment.profissional)?.nome ||
-    medicos.find(m => m.nome === appointment.profissional)?.nome ||
-    appointment.profissional ||
-    '-';
+  // ...existing code...
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -330,24 +362,12 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
             <div className={styles.paymentModal}>
               <h4 className={styles.paymentTitle}>Registrar pagamento</h4>
               <label className={styles.paymentLabel}>
-                Valor
+                Valor a faturar
                 <input
-                  type="text"
-                  value={paymentValue}
-                  onChange={e => {
-                    const onlyDigits = e.target.value.replace(/\D/g, '');
-                    const number = Number(onlyDigits) / 100;
-                    setPaymentValue(
-                      isNaN(number)
-                        ? ''
-                        : number.toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL',
-                          })
-                    );
-                  }}
-                  className={styles.paymentInput}
-                  placeholder="R$ 0,00"
+                  type="number"
+                  value={billingValue}
+                  onChange={e => setBillingValue(Number(e.target.value))}
+                  className={styles.paymentSelect}
                 />
               </label>
               <label className={styles.paymentLabel}>
@@ -364,6 +384,16 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
                   <option value="Transferência">Transferência</option>
                 </select>
               </label>
+              {appointment.convenio && appointment.convenio !== 'Particular' && !hasDefaultValue && (
+                <label className={styles.paymentLabel}>
+                  <input
+                    type="checkbox"
+                    checked={saveDefault}
+                    onChange={e => setSaveDefault(e.target.checked)}
+                  />{' '}
+                  Salvar como padrão para este convênio + procedimento?
+                </label>
+              )}
               <div className={styles.paymentActions}>
                 <button
                   type="button"
@@ -376,20 +406,33 @@ const AppointmentDetailsModal = ({ appointment, isOpen, onClose, onComplete, rea
                   type="button"
                   className={styles.saveButton}
                   onClick={async () => {
-                    if (!paymentValue || !paymentMethod || !appointment) return;
+                    if (!paymentMethod || !appointment || billingValue <= 0) return;
                     try {
-                      const valorNumerico = Number(paymentValue.replace(/[^\d]/g, '')) / 100;
                       await addDoc(collection(firestore, 'contasAReceber'), {
                         vencimento: formatDateFns(new Date(), 'dd/MM/yyyy'),
                         cliente: appointment.nomePaciente,
                         descricao: 'Agendamento concluído',
-                        valor: valorNumerico,
+                        valor: billingValue,
                         status: 'Recebido',
                         formaPagamento: paymentMethod,
                       });
+                      if (
+                        saveDefault &&
+                        convenioKey &&
+                        procedimentoSelecionado?.id &&
+                        convenioKey !== 'Particular'
+                      ) {
+                        const novosValores = {
+                          ...(procedimentoSelecionado.valoresConvenio || {}),
+                          [convenioKey as string]: billingValue,
+                        };
+                        await atualizarProcedimento(procedimentoSelecionado.id, {
+                          valoresConvenio: novosValores,
+                        });
+                        procedimentoSelecionado.valoresConvenio = novosValores;
+                      }
                       await handleStatusChange(statusAgendamento.CONCLUIDO);
                       setShowPaymentModal(false);
-                      setPaymentValue('');
                       setPaymentMethod('');
                     } catch {
                       // erro ao salvar

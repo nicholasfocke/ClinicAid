@@ -227,7 +227,7 @@ const CreateAppointmentModal: React.FC<Props> = ({
       fim: '',
       profissional: '',
       detalhes: '',
-      motivo: '',
+      motivoConsulta: '',
       pacienteId: '',
       nomePaciente: '',
       email: '',

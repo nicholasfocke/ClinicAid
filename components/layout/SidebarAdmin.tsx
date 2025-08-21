@@ -134,10 +134,10 @@ const SidebarAdmin = () => {
                   type="button"
                   onClick={toggleColaboradores}
                   className={`${styles.navItem} ${styles.cadastroButton}`}
-                  style={{ marginTop: 0 }}
+                  style={{ marginTop: 0, display: 'flex', alignItems: 'center', width: '100%' }}
                 >
                   <Stethoscope className={styles.icon} color="#fff" style={{ marginTop: 0 }} />
-                  <span style={{ marginTop: 0 }}>Colaboradores</span>
+                  <span style={{ marginTop: 0, flex: 1 }}>Colaboradores</span>
                   {colaboradoresOpen ? (
                     <ChevronDown className={styles.chevronIcon} size={16} color="#fff" style={{ marginTop: 0 }} />
                   ) : (
