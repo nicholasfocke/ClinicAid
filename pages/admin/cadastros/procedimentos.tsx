@@ -52,6 +52,7 @@ const Procedimentos = () => {
   });
   const [valorInput, setValorInput] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'todos' | 'consultas' | 'exames'>('todos');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -126,13 +127,14 @@ const Procedimentos = () => {
 
   const startEdit = (p: Procedimento) => {
     setEditingId(p.id);
-    setFormData({ 
-      nome: p.nome, 
-      valor: p.valor, 
-      duracao: p.duracao, 
-      convenio: p.convenio, 
-      tipo: p.tipo 
+    setFormData({
+      nome: p.nome,
+      valor: p.valor,
+      duracao: p.duracao,
+      convenio: p.convenio,
+      tipo: p.tipo
     });
+    setShowEditModal(true);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -156,13 +158,17 @@ const Procedimentos = () => {
       await atualizarProcedimento(id, { ...formData });
       setProcedimentos(prev => prev.map(p => (p.id === id ? { id, ...formData } : p)));
       setEditingId(null);
+      setShowEditModal(false);
       setError(null);
     } catch (error) {
       setError('Erro ao atualizar procedimento');
     }
   };
 
-  const cancelEdit = () => setEditingId(null);
+  const cancelEdit = () => {
+    setEditingId(null);
+    setShowEditModal(false);
+  };
 
   const handleNewChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -217,6 +223,12 @@ const Procedimentos = () => {
       isOpen: true,
       onConfirm: confirmAction,
     });
+  };
+
+  const handleDeleteFromModal = (id: string) => {
+    setShowEditModal(false);
+    setEditingId(null);
+    handleDelete(id);
   };
 
   const toggleSelect = (id: string) => {
@@ -363,77 +375,32 @@ const Procedimentos = () => {
                     onChange={() => toggleSelect(p.id)}
                   />
                 </td>
-                {editingId === p.id ? (
-                  <>
-                    <td>
-                      <input name="nome" value={formData.nome} onChange={handleChange} className={tableStyles.inputEdit} />
-                    </td>
-                    <td>
-                      <input type="number" name="valor" value={formData.valor} onChange={handleChange} className={tableStyles.inputEdit} />
-                    </td>
-                    <td>
-                      <input type="number" name="duracao" value={formData.duracao} onChange={handleChange} className={tableStyles.inputEdit} />
-                    </td>
-                    <td>
-                      <input type="checkbox" name="convenio" checked={formData.convenio} onChange={handleChange} />
-                    </td>
-                    <td>
-                      <select name="tipo" value={formData.tipo} onChange={handleChange} className={tableStyles.inputEdit}>
-                        <option value="consulta">Consulta</option>
-                        <option value="exame">Exame</option>
-                      </select>
-                    </td>
-                    <td>
-                      <button className={tableStyles.buttonAcao} onClick={() => saveEdit(p.id)}>Salvar</button>
-                      <button className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`} onClick={cancelEdit}>
-                        Cancelar
-                      </button>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td>{p.nome}</td>
-                    <td>{formatValor(p.valor)}</td>
-                    <td>{p.duracao}</td>
-                    <td>{p.convenio ? 'Sim' : 'Não'}</td>
-                    <td>
-                      <span
-                        className={`${tableStyles.tipoQuad} ${
-                          p.tipo === 'exame' ? tableStyles.exame : tableStyles.consulta
-                        }`}
-                      ></span>
-                      {p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1)}
-                    </td>
-                    <td className={tableStyles.acoesTd}>
-                      <button
-                        className={tableStyles.iconBtn + ' ' + tableStyles.iconEdit}
-                        title="Editar"
-                        onClick={() => startEdit(p)}
-                        aria-label="Editar"
-                      >
-                        {/* Feather Icon: edit (caneta) */}
-                        <svg width="22" height="22" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                          <path d="M12 20h9"/>
-                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z"/>
-                        </svg>
-                      </button>
-                      <button
-                        className={tableStyles.iconBtn + ' ' + tableStyles.iconDelete}
-                        title="Excluir"
-                        onClick={() => handleDelete(p.id)}
-                        aria-label="Excluir"
-                      >
-                        {/* Feather Icon: trash (lixeira) */}
-                        <svg width="22" height="22" fill="none" stroke="#e53935" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                          <polyline points="3 6 5 6 21 6"/>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
-                          <line x1="10" y1="11" x2="10" y2="17"/>
-                          <line x1="14" y1="11" x2="14" y2="17"/>
-                        </svg>
-                      </button>
-                    </td>
-                  </>
-                )}
+                <td>{p.nome}</td>
+                <td>{formatValor(p.valor)}</td>
+                <td>{p.duracao}</td>
+                <td>{p.convenio ? 'Sim' : 'Não'}</td>
+                <td>
+                  <span
+                    className={`${tableStyles.tipoQuad} ${
+                      p.tipo === 'exame' ? tableStyles.exame : tableStyles.consulta
+                    }`}
+                  ></span>
+                  {p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1)}
+                </td>
+                <td className={tableStyles.acoesTd}>
+                  <button
+                    className={tableStyles.iconBtn + ' ' + tableStyles.iconEdit}
+                    title="Editar"
+                    onClick={() => startEdit(p)}
+                    aria-label="Editar"
+                  >
+                    {/* Feather Icon: edit (caneta) */}
+                    <svg width="22" height="22" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z"/>
+                    </svg>
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -497,6 +464,67 @@ const Procedimentos = () => {
             <button className={modalStyles.buttonSalvar} onClick={createProcedimento}>
               Salvar
             </button>
+          </div>
+        </div>
+      )}
+      {showEditModal && editingId && (
+        <div className={modalStyles.overlay} onClick={cancelEdit}>
+          <div className={modalStyles.modal} onClick={e => e.stopPropagation()}>
+            <button className={modalStyles.closeButton} onClick={cancelEdit}>
+              X
+            </button>
+            <h3>Editar Procedimento</h3>
+            <label className={modalStyles.label}>Nome</label>
+            <input
+              name="nome"
+              className={modalStyles.input}
+              value={formData.nome}
+              onChange={handleChange}
+            />
+            <label className={modalStyles.label}>Valor</label>
+            <input
+              type="number"
+              name="valor"
+              className={modalStyles.input}
+              value={formData.valor}
+              onChange={handleChange}
+            />
+            <label className={modalStyles.label}>Duração (minutos)</label>
+            <input
+              type="number"
+              name="duracao"
+              className={modalStyles.input}
+              value={formData.duracao}
+              onChange={handleChange}
+            />
+            <label className={modalStyles.label}>Convênio?</label>
+            <input
+              type="checkbox"
+              name="convenio"
+              checked={formData.convenio}
+              onChange={handleChange}
+            />
+            <label className={modalStyles.label}>Tipo</label>
+            <select
+              name="tipo"
+              className={modalStyles.input}
+              value={formData.tipo}
+              onChange={handleChange}
+            >
+              <option value="consulta">Consulta</option>
+              <option value="exame">Exame</option>
+            </select>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className={modalStyles.buttonSalvar} onClick={() => saveEdit(editingId)}>
+                Salvar
+              </button>
+              <button
+                className={`${tableStyles.buttonAcao} ${tableStyles.buttonExcluir}`}
+                onClick={() => handleDeleteFromModal(editingId)}
+              >
+                Excluir
+              </button>
+            </div>
           </div>
         </div>
       )}
