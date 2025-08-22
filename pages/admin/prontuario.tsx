@@ -7,7 +7,7 @@ import styles from '@/styles/admin/prontuario/prontuario.module.css';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import { buscarPacientesComDetalhes, PacienteDetails, buscarPacientePorId } from '@/functions/pacientesFunctions';
 import { format, parseISO } from 'date-fns';
-import { User } from 'lucide-react';
+import { User, FileText } from 'lucide-react';
 
 const Prontuario = () => {
   const router = useRouter();
@@ -125,6 +125,26 @@ const Prontuario = () => {
             </div>
 
             <div className={styles.card}>
+              <h3 className={styles.cardTitle}>Histórico de evoluções</h3>
+              {evolucoesOrdenadas.length > 0 ? (
+                <ul className={styles.evolucaoList}>
+                  {evolucoesOrdenadas.map((ev: any, index: number) => (
+                    <li key={index} className={styles.evolucaoItem}>
+                      <span className={styles.evolucaoDate}>
+                        {format(parseISO(ev.data), 'dd/MM/yy')}
+                      </span>
+                      <span className={styles.evolucaoResumo}>
+                        {ev.diagnostico || ev.procedimentos || ''}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className={styles.noEvolucoes}>Não existre evoluções registradas</p>
+              )}
+            </div>
+
+            <div className={styles.card}>
               <h3 className={styles.cardTitle}>Histórico de consultas</h3>
               <div className={styles.filterContainer}>
                 <label>
@@ -156,35 +176,16 @@ const Prontuario = () => {
                         </span>
                       )}
                     </div>
-                    {ag.profissional && (
+                    {(ag.profissional || ag.procedimento) && (
                       <div className={styles.agendamentoInfo}>
-                        <p><User size={16} strokeWidth={3} /> {ag.profissional}</p>
+                        {ag.profissional && <p><User size={16} strokeWidth={3} /> <strong>Profissional:</strong>{ag.profissional}</p>}
+                        {ag.procedimento && <p><FileText size={16} strokeWidth={3} /> <strong>Procedimento:</strong> {ag.procedimento}</p>}
                       </div>
                     )}
                   </div>
                 ))
               ) : (
                 <p>Nenhum agendamento.</p>
-              )}
-            </div>
-
-            <div className={styles.card}>
-              <h3 className={styles.cardTitle}>Histórico de evoluções</h3>
-              {evolucoesOrdenadas.length > 0 ? (
-                <ul className={styles.evolucaoList}>
-                  {evolucoesOrdenadas.map((ev: any, index: number) => (
-                    <li key={index} className={styles.evolucaoItem}>
-                      <span className={styles.evolucaoDate}>
-                        {format(parseISO(ev.data), 'dd/MM/yy')}
-                      </span>
-                      <span className={styles.evolucaoResumo}>
-                        {ev.diagnostico || ev.procedimentos || ''}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className={styles.noEvolucoes}>Não existre evoluções registradas</p>
               )}
             </div>
           </>
