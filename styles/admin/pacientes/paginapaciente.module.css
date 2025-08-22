@@ -6,34 +6,55 @@
   min-height: 90vh;
 }
 
-/* Top bar (título + botão) */
+.title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 18px 0 0 0;
+  letter-spacing: -1px;
+  text-align: left;
+}
+
+.subtitle {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #6b7280;
+  margin: 0.1rem 0 2rem 0;
+}
+
 .topBar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: space-between; /* esquerda ↔ direita */
+  align-items: flex-start;        /* título no topo, botão alinhado */
   margin-bottom: 1.5rem;
 }
 
-.title {
-  margin: 0;
-  font-size: 2rem;
-  color: #111827;
+.pageHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  margin-top: 0rem; /* espaçamento entre título e subtítulo */
+}
+.topActions {
+  display: flex;
+  align-items: center;
 }
 
 .searchButton {
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 6px 14px;
-  font-size: 0.9rem;
+  background-color: #2563eb;
+  color: white;
+  font-size: 1rem;
   font-weight: 600;
+  padding: 10px 26px;
+  border-radius: 8px;
+  border: none;
   cursor: pointer;
-  transition: background 0.2s;
-  margin-left: 8px;
+  margin-top: 2.5rem;
 }
+
 .searchButton:hover {
-  background-color: #16285f;
+  background-color: #1d4ed8;
 }
 
 .addDocButton {

@@ -233,10 +233,15 @@ const PaginaPaciente = () => {
           <span className={breadcrumbStyles.breadcrumbActive}>Página do paciente</span>
         </div>
         <div className={styles.topBar}>
-          <h1 className={styles.title}>Página do paciente</h1>
-          <button className={styles.searchButton} onClick={() => setShowModal(true)}>
-            Buscar paciente
-          </button>
+
+          <div className={styles.pageHeader}>
+            <h1 className={styles.title}>Página do Paciente</h1>
+            <h2 className={styles.subtitle}>Visualize todas as informações sobre o paciente</h2>
+          </div>
+
+          <div className={styles.topActions}>
+            <button className={styles.searchButton} onClick={() => setShowModal(true)}>Buscar paciente</button>
+          </div>
         </div>
         {selectedPaciente ? (
           <>

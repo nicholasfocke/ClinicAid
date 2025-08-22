@@ -5,6 +5,7 @@
   min-height: 80vh;
   background-color: #f3f4f6;
 }
+
 .topBar {
   display: flex;
   justify-content: space-between; /* esquerda ↔ direita */
@@ -16,7 +17,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.25rem; /* espaçamento entre título e subtítulo */
+  gap: 0.25rem;
+  margin-top: 1.5rem; /* espaçamento entre título e subtítulo */
 }
 
 .title {
@@ -46,12 +48,15 @@
 .searchButton {
   background-color: #2563eb;
   color: white;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 26px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
+  margin-top: 2.5rem;
 }
+
 .searchButton:hover {
   background-color: #1d4ed8;
 }
@@ -64,6 +69,7 @@
 
 .noPaciente {
   color: #6b7280;
+  text-align: center;
 }
 
 .modalOverlay {

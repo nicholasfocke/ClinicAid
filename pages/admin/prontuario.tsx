@@ -70,11 +70,14 @@ const Prontuario = () => {
   return (
     <ProtectedRoute>
       <div className={styles.container}>
+        
         <div className={breadcrumbStyles.breadcrumbWrapper}>
           <span className={breadcrumbStyles.breadcrumb}>Menu Principal &gt; </span>
           <span className={breadcrumbStyles.breadcrumbActive}>Prontuário</span>
         </div>
+
         <div className={styles.topBar}>
+
           <div className={styles.pageHeader}>
             <h1 className={styles.title}>Prontuário</h1>
             <h2 className={styles.subtitle}>Página de prontuários da clínica</h2>
