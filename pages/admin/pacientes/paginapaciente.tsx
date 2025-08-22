@@ -34,6 +34,8 @@ const PaginaPaciente = () => {
   const [activeTab, setActiveTab] = useState<Tab>('resumo');
   const [medicos, setMedicos] = useState<{ id: string; nome: string; especialidade: string }[]>([]);
 
+  const [agendamentosLimit, setAgendamentosLimit] = useState(10);
+
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [editingDoc, setEditingDoc] = useState<any | null>(null);
   const [docTitle, setDocTitle] = useState('');
@@ -547,19 +549,37 @@ const PaginaPaciente = () => {
             {activeTab === 'agendamentos' && (
               <div>
                 {selectedPaciente.agendamentos && selectedPaciente.agendamentos.length > 0 ? (
-                  [...selectedPaciente.agendamentos]
-                    .sort((a: any, b: any) => {
-                      const da = a.data ? (a.data.includes('-') ? parseDateFns(a.data, 'yyyy-MM-dd', new Date()) : parseDateFns(a.data, 'dd/MM/yyyy', new Date())) : new Date(0);
-                      const db = b.data ? (b.data.includes('-') ? parseDateFns(b.data, 'yyyy-MM-dd', new Date()) : parseDateFns(b.data, 'dd/MM/yyyy', new Date())) : new Date(0);
-                      if (da.getTime() !== db.getTime()) return da.getTime() - db.getTime();
-                      if (a.hora && b.hora) {
-                        return a.hora.localeCompare(b.hora);
-                      }
-                      return 0;
-                    })
-                    .map((a: any, idx: number) => (
-                      <div key={idx} className={styles.agendamentoCard}>
-                        <div className={styles.agendamentoHeader}>
+                  <>
+                    <div className={styles.filterContainer}>
+                      <label>
+                        Quantidade:
+                        <select
+                          value={agendamentosLimit}
+                          onChange={e => setAgendamentosLimit(Number(e.target.value))}
+                          className={styles.filterInput}
+                        >
+                          {[5, 10, 20, 30, 40, 50, 70, 100].map(opt => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    {[...selectedPaciente.agendamentos]
+                      .sort((a: any, b: any) => {
+                        const da = a.data ? (a.data.includes('-') ? parseDateFns(a.data, 'yyyy-MM-dd', new Date()) : parseDateFns(a.data, 'dd/MM/yyyy', new Date())) : new Date(0);
+                        const db = b.data ? (b.data.includes('-') ? parseDateFns(b.data, 'yyyy-MM-dd', new Date()) : parseDateFns(b.data, 'dd/MM/yyyy', new Date())) : new Date(0);
+                        if (da.getTime() !== db.getTime()) return da.getTime() - db.getTime();
+                        if (a.hora && b.hora) {
+                          return a.hora.localeCompare(b.hora);
+                        }
+                        return 0;
+                      })
+                      .slice(0, agendamentosLimit)
+                      .map((a: any, idx: number) => (
+                        <div key={idx} className={styles.agendamentoCard}>
+                          <div className={styles.agendamentoHeader}>
                           <span>
                             {(() => {
                               try {
@@ -589,7 +609,8 @@ const PaginaPaciente = () => {
                           Ver detalhes
                         </button>
                       </div>
-                    ))
+                    ))}
+                  </>
                 ) : (
                   <p>Nenhum agendamento.</p>
                 )}

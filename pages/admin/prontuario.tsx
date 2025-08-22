@@ -7,6 +7,7 @@ import styles from '@/styles/admin/prontuario/prontuario.module.css';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import { buscarPacientesComDetalhes, PacienteDetails, buscarPacientePorId } from '@/functions/pacientesFunctions';
 import { format, parseISO } from 'date-fns';
+import { User } from 'lucide-react';
 
 const Prontuario = () => {
   const router = useRouter();
@@ -15,7 +16,16 @@ const Prontuario = () => {
   const [query, setQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedPaciente, setSelectedPaciente] = useState<any | null>(null);
-  const [consultasLimit, setConsultasLimit] = useState(10);
+  const [consultasLimit, setConsultasLimit] = useState(5);
+
+  const statusClassMap: Record<string, string> = {
+    agendado: styles.statusAgendado,
+    confirmado: styles.statusConfirmado,
+    'em andamento': styles.statusEmAndamento,
+    cancelado: styles.statusCancelado,
+    'concluído': styles.statusConcluido,
+    pendente: styles.statusPendente,
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, currentUser => {
@@ -124,7 +134,7 @@ const Prontuario = () => {
                     onChange={e => setConsultasLimit(Number(e.target.value))}
                     className={styles.filterInput}
                   >
-                    {[10, 25, 50, 100].map(opt => (
+                    {[5, 10, 20, 30, 40, 50, 70, 100].map(opt => (
                       <option key={opt} value={opt}>
                         {opt}
                       </option>
@@ -132,14 +142,30 @@ const Prontuario = () => {
                   </select>
                 </label>
               </div>
-              <ul className={styles.historyList}>
-                {agendamentosFiltrados.map((ag: any, index: number) => (
-                  <li key={index}>
-                    {format(parseISO(ag.data), 'dd/MM/yy')} –
-                    {ag.status ? ` ${ag.status.charAt(0).toUpperCase() + ag.status.slice(1)}` : ''}
-                  </li>
-                ))}
-              </ul>
+              {agendamentosFiltrados.length > 0 ? (
+                agendamentosFiltrados.map((ag: any, index: number) => (
+                  <div key={index} className={styles.agendamentoCard}>
+                    <div className={styles.agendamentoHeader}>
+                      <span>
+                        {format(parseISO(ag.data), 'dd/MM/yy')}
+                        {ag.hora ? ` · ${ag.hora}` : ''}
+                      </span>
+                      {ag.status && (
+                        <span className={`${styles.statusBadge} ${statusClassMap[ag.status] || styles.statusAgendado}`}>
+                          {ag.status}
+                        </span>
+                      )}
+                    </div>
+                    {ag.profissional && (
+                      <div className={styles.agendamentoInfo}>
+                        <p><User size={16} strokeWidth={3} /> {ag.profissional}</p>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p>Nenhum agendamento.</p>
+              )}
             </div>
 
             <div className={styles.card}>
