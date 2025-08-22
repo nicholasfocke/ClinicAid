@@ -7,6 +7,7 @@ import styles from '@/styles/admin/prontuario/prontuario.module.css';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import { buscarPacientesComDetalhes, PacienteDetails, buscarPacientePorId } from '@/functions/pacientesFunctions';
 import { format, parseISO } from 'date-fns';
+import { User, FileText } from 'lucide-react';
 
 const Prontuario = () => {
   const router = useRouter();
@@ -15,7 +16,16 @@ const Prontuario = () => {
   const [query, setQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedPaciente, setSelectedPaciente] = useState<any | null>(null);
-  const [consultasLimit, setConsultasLimit] = useState(10);
+  const [consultasLimit, setConsultasLimit] = useState(5);
+
+  const statusClassMap: Record<string, string> = {
+    agendado: styles.statusAgendado,
+    confirmado: styles.statusConfirmado,
+    'em andamento': styles.statusEmAndamento,
+    cancelado: styles.statusCancelado,
+    'concluído': styles.statusConcluido,
+    pendente: styles.statusPendente,
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, currentUser => {
@@ -70,11 +80,14 @@ const Prontuario = () => {
   return (
     <ProtectedRoute>
       <div className={styles.container}>
+        
         <div className={breadcrumbStyles.breadcrumbWrapper}>
           <span className={breadcrumbStyles.breadcrumb}>Menu Principal &gt; </span>
           <span className={breadcrumbStyles.breadcrumbActive}>Prontuário</span>
         </div>
+
         <div className={styles.topBar}>
+
           <div className={styles.pageHeader}>
             <h1 className={styles.title}>Prontuário</h1>
             <h2 className={styles.subtitle}>Página de prontuários da clínica</h2>
@@ -112,34 +125,6 @@ const Prontuario = () => {
             </div>
 
             <div className={styles.card}>
-              <h3 className={styles.cardTitle}>Histórico de consultas</h3>
-              <div className={styles.filterContainer}>
-                <label>
-                  Quantidade:
-                  <select
-                    value={consultasLimit}
-                    onChange={e => setConsultasLimit(Number(e.target.value))}
-                    className={styles.filterInput}
-                  >
-                    {[10, 25, 50, 100].map(opt => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <ul className={styles.historyList}>
-                {agendamentosFiltrados.map((ag: any, index: number) => (
-                  <li key={index}>
-                    {format(parseISO(ag.data), 'dd/MM/yy')} –
-                    {ag.status ? ` ${ag.status.charAt(0).toUpperCase() + ag.status.slice(1)}` : ''}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className={styles.card}>
               <h3 className={styles.cardTitle}>Histórico de evoluções</h3>
               {evolucoesOrdenadas.length > 0 ? (
                 <ul className={styles.evolucaoList}>
@@ -156,6 +141,51 @@ const Prontuario = () => {
                 </ul>
               ) : (
                 <p className={styles.noEvolucoes}>Não existre evoluções registradas</p>
+              )}
+            </div>
+
+            <div className={styles.card}>
+              <h3 className={styles.cardTitle}>Histórico de consultas</h3>
+              <div className={styles.filterContainer}>
+                <label>
+                  Quantidade:
+                  <select
+                    value={consultasLimit}
+                    onChange={e => setConsultasLimit(Number(e.target.value))}
+                    className={styles.filterInput}
+                  >
+                    {[5, 10, 20, 30, 40, 50, 70, 100].map(opt => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              {agendamentosFiltrados.length > 0 ? (
+                agendamentosFiltrados.map((ag: any, index: number) => (
+                  <div key={index} className={styles.agendamentoCard}>
+                    <div className={styles.agendamentoHeader}>
+                      <span>
+                        {format(parseISO(ag.data), 'dd/MM/yy')}
+                        {ag.hora ? ` · ${ag.hora}` : ''}
+                      </span>
+                      {ag.status && (
+                        <span className={`${styles.statusBadge} ${statusClassMap[ag.status] || styles.statusAgendado}`}>
+                          {ag.status}
+                        </span>
+                      )}
+                    </div>
+                    {(ag.profissional || ag.procedimento) && (
+                      <div className={styles.agendamentoInfo}>
+                        {ag.profissional && <p><User size={16} strokeWidth={3} /> <strong>Profissional:</strong>{ag.profissional}</p>}
+                        {ag.procedimento && <p><FileText size={16} strokeWidth={3} /> <strong>Procedimento:</strong> {ag.procedimento}</p>}
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p>Nenhum agendamento.</p>
               )}
             </div>
           </>
