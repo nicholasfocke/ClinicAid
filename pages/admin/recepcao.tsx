@@ -15,6 +15,22 @@ const Recepcao = () => (
       <h2 className={styles.subtitle}>
         Controle de pacientes dentro da clínica
       </h2>
+
+      <div className={styles.buttonContainer}>
+        <button className={styles.registerButton}>+ Registrar chegada</button>
+      </div>
+
+      <div className={styles.cardsWrapper}>
+
+        <div className={styles.cardLeft}>
+          <h3 className={styles.cardTitle}>Em atendimento</h3>
+        </div>
+
+        <div className={styles.cardRight}>
+          <h3 className={styles.cardTitle}>Em espera</h3>
+        </div>
+
+      </div>
     </div>
   </ProtectedRoute>
 );

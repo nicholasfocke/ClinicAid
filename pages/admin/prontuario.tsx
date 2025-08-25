@@ -140,7 +140,7 @@ const Prontuario = () => {
                   ))}
                 </ul>
               ) : (
-                <p className={styles.noEvolucoes}>Não existre evoluções registradas</p>
+                <p className={styles.noEvolucoes}>Não existe evoluções registradas</p>
               )}
             </div>
 

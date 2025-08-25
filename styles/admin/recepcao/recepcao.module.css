@@ -21,3 +21,60 @@
   color: #6b7280;
   margin: 0.1rem 0 2rem 0;
 }
+
+.buttonContainer {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 18px;
+}
+
+.cardsWrapper {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.cardLeft,
+.cardRight {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(16, 30, 54, 0.08);
+  padding: 24px;
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardLeft {
+  flex: 1;
+}
+
+.cardRight {
+  flex: 2;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.registerButton {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: inline-block;
+  text-align: center;
+  min-width: 180px;
+}
+
+.registerButton:hover {
+  background: #1746a2;
+}
