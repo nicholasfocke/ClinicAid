@@ -118,3 +118,15 @@
   background: #f59e0b;
   color: #fff;
 }
+
+.inlineTriplet {
+  display: flex;
+  align-items: center;          
+  flex-wrap: wrap;  
+  gap: 12px  
+}
+
+.sep {
+  color: #9ca3af;     
+  user-select: none;
+}

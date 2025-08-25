@@ -56,9 +56,10 @@ const PacienteAtendimentoCard: React.FC<PacienteCardProps> = ({
       <div className={styles.divider}></div>
 
       <div className={styles.details}>
-        <div className={styles.detailRow}>
+        <div className={`${styles.detailRow} ${styles.inlineTriplet}`}>
           <span><strong>Início:</strong> {inicio}</span>
-          <span> <strong>Em consulta:</strong> {tempoConsulta}</span>
+          <span className ={styles.sep}>|</span>
+          <span><strong>Em consulta:</strong> {tempoConsulta}</span>
         </div>
         <div className={styles.detailRow}>
           <span><strong>Motivo:</strong> {motivo}</span>

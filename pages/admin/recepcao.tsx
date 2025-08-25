@@ -30,18 +30,20 @@ const Recepcao = () => {
 
           <div className={styles.cardLeft}>
             <h3 className={styles.cardTitle}>Em atendimento</h3>
-            <PacienteAtendimentoCard
-              nome="Hugo Stankowich"
-              idade={20}
-              sexo="Masculino"
-              sala="Sala 02"
-              status="Em atendimento"
-              inicio="11:00"
-              tempoConsulta="00:15:32"
-              motivo="Dor abdominal"
-              profissional="Patricia Stankowich"
-              alergias="Sem alergias registradas"
-            />
+            <div className={styles.cardList}>
+              <PacienteAtendimentoCard
+                nome="Hugo Stankowich"
+                idade={20}
+                sexo="Masculino"
+                sala="Sala 02"
+                status="Em atendimento"
+                inicio="11:00"
+                tempoConsulta="00:15:32"
+                motivo="Dor abdominal"
+                profissional="Patricia Stankowich"
+                alergias="Sem alergias registradas"
+              />
+            </div>
           </div>
 
           <div className={styles.cardRight}>
@@ -75,20 +77,23 @@ const Recepcao = () => {
                 </select>
               </div>
             </div>
-            <PacienteEsperaCard
-              nome="Nicholas Focke"
-              idade={30}
-              sexo="Masculino"
-              sala="Sala 04"
-              status="Em espera"
-              chegada="10:30"
-              tempoEspera="00:25:14"
-              motivo="Retorno de consulta"
-              profissional="Dra. Patrícia Stankowich"
-              alergias="Penicilina"
-            />
-          </div>
+            <div className={styles.cardList}>
+              <PacienteEsperaCard
+                nome="Nicholas Focke"
+                idade={30}
+                sexo="Masculino"
+                sala="Sala 04"
+                status="Em espera"
+                chegada="10:30"
+                tempoEspera="00:25:14"
+                motivo="Retorno de consulta"
+                profissional="Dra. Patrícia Stankowich"
+                alergias="Penicilina"
+                horarioAgendamento="9:30"
+              />
+            </div>
 
+          </div>
         </div>
       </div>
     </ProtectedRoute>

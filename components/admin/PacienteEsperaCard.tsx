@@ -10,6 +10,7 @@ interface PacienteEsperaCardProps {
   status: string;
   chegada: string;
   tempoEspera: string;
+  horarioAgendamento: string;
   motivo: string;
   profissional: string;
   alergias: string;
@@ -24,6 +25,7 @@ const PacienteEsperaCard: React.FC<PacienteEsperaCardProps> = ({
   status,
   chegada,
   tempoEspera,
+  horarioAgendamento,
   motivo,
   profissional,
   alergias,
@@ -56,8 +58,11 @@ const PacienteEsperaCard: React.FC<PacienteEsperaCardProps> = ({
       <div className={styles.divider}></div>
 
       <div className={styles.details}>
-        <div className={styles.detailRow}>
+        <div className={`${styles.detailRow} ${styles.inlineTriplet}`}>
+          <span><strong>Horário de agendamento:</strong> {horarioAgendamento}</span>
+          <span className ={styles.sep}>|</span>
           <span><strong>Chegada:</strong> {chegada}</span>
+          <span className ={styles.sep}>|</span>
           <span><strong>Em espera:</strong> {tempoEspera}</span>
         </div>
         <div className={styles.detailRow}>
