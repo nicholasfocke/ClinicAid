@@ -1,12 +1,17 @@
 import { useState } from 'react';
+import Modal from 'react-modal';
+import RegistrarChegadaModal from '@/components/modals/RegistrarChegadaModal';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import PacienteAtendimentoCard from '@/components/admin/PacienteAtendimentoCard';
 import PacienteEsperaCard from '@/components/admin/PacienteEsperaCard';
 import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/recepcao/recepcao.module.css';
 
+Modal.setAppElement('#__next');
+
 const Recepcao = () => {
   const [activeTab, setActiveTab] = useState('clinica');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <ProtectedRoute>
@@ -23,7 +28,7 @@ const Recepcao = () => {
         </h2>
 
         <div className={styles.buttonContainer}>
-          <button className={styles.registerButton}>+ Registrar chegada</button>
+          <button className={styles.registerButton} onClick={() => setIsModalOpen(true)}>+ Registrar chegada</button>
         </div>
 
         <div className={styles.cardsWrapper}>
@@ -96,6 +101,10 @@ const Recepcao = () => {
           </div>
         </div>
       </div>
+      <RegistrarChegadaModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </ProtectedRoute>
   );
 };
