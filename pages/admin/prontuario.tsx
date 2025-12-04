@@ -82,8 +82,10 @@ const Prontuario = () => {
       <div className={styles.container}>
         
         <div className={breadcrumbStyles.breadcrumbWrapper}>
-          <span className={breadcrumbStyles.breadcrumb}>Menu Principal &gt; </span>
-          <span className={breadcrumbStyles.breadcrumbActive}>Prontuário</span>
+          <span className={breadcrumbStyles.breadcrumb}>Menu Principal &gt; 
+            <span className={breadcrumbStyles.breadcrumbActive}> Prontuário</span>
+          </span>
+          
         </div>
 
         <div className={styles.topBar}>
