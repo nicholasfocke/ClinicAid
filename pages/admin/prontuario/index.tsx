@@ -75,6 +75,11 @@ const Prontuario = () => {
       )
     : [];
 
+  const iniciarAtendimento = () => {
+    if (!selectedPaciente) return;
+    router.push(`/admin/prontuario/iniciar-atendimento?pacienteId=${selectedPaciente.id}`);
+  };
+
   if (!user) return <p>Carregando...</p>;
 
   return (
@@ -102,7 +107,9 @@ const Prontuario = () => {
         {selectedPaciente ? (
           <>
             <div className={styles.actionButtonsWrapper}>
-              <button className={styles.primaryButton}>Iniciar atendimento</button>
+              <button className={styles.primaryButton} onClick={iniciarAtendimento} disabled={!selectedPaciente}>
+                Iniciar atendimento
+              </button>
               <button className={styles.primaryButton}>Registrar informação avulsa</button>
               <button className={styles.primaryButton}>Ver prescrições</button>
             </div>
