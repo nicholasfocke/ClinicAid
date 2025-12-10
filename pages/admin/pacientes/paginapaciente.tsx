@@ -94,7 +94,8 @@ const PaginaPaciente = () => {
   const selectPaciente = async (id: string) => {
     try {
       const doc = await buscarPacientePorId(id);
-      setSelectedPaciente(doc);
+      const fallback = pacientes.find(p => p.id === id);
+      setSelectedPaciente({ ...(fallback || {}), ...(doc || {}) });
       setActiveTab('resumo');
       setShowModal(false);
     } catch (err) {
@@ -297,9 +298,14 @@ const PaginaPaciente = () => {
                       <div className={styles.basicInfo}>
                         <div className={styles.basicInfoHeader}>
                           <img
-                            src={selectedPaciente.foto || '/avatar.png'}
+                            src={selectedPaciente.foto && selectedPaciente.foto.length > 0
+                              ? selectedPaciente.foto
+                              : 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"%3E%3Cpath d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/%3E%3Ccircle cx="12" cy="7" r="4"/%3E%3C/svg%3E'}
                             alt="Avatar"
                             className={styles.avatar}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"%3E%3Cpath d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/%3E%3Ccircle cx="12" cy="7" r="4"/%3E%3C/svg%3E';
+                            }}  
                           />
                           <h2>{selectedPaciente.nome}</h2>
                         </div>
@@ -484,7 +490,7 @@ const PaginaPaciente = () => {
                           <button
                             className={styles.searchButton}
                             type="button"
-                            onClick={handleSaveDocumento  }
+                            onClick={handleSaveDocumento}
                             disabled={uploadingDoc}
                           >
                             {uploadingDoc ? 'Enviando...' : 'Salvar'}

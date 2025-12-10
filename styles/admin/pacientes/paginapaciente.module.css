@@ -502,13 +502,26 @@
   margin-top: 8px;
 }
 
-.btnCancelar {
-  background: #e5e7eb;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
+  /* background-color: #e5e7eb;
+  color: white;
+  font-size: 1rem;
   font-weight: 600;
+  padding: 10px 26px;
+  border-radius: 8px;
+  border: none;
   cursor: pointer;
+  margin-top: 2.5rem; */
+
+.btnCancelar {
+  background-color: #e5e7eb;
+  color: black;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 26px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  margin-top: 2.5rem;
 }
 
 .btnCancelar:hover {
