@@ -205,8 +205,8 @@ export const buscarPacientePorId = async (id: string): Promise<any | null> => {
       idade = differenceInYears(new Date(), birth);
     }
   }
-  const numAgendamentos = Array.isArray(data.agendamentos)
-    ? data.agendamentos.length
-    : 0;
-  return { id: snap.id, ...data, idade, numAgendamentos };
+  const numAgendamentos = Array.isArray(data.agendamentos) ? data.agendamentos.length : 0;
+  const fotoValida = data.foto && typeof data.foto === 'string' && data.foto.length > 0 ? data.foto : '';
+
+  return { id: snap.id, ...data, idade, foto: fotoValida, numAgendamentos };
 };

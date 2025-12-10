@@ -61,6 +61,7 @@ interface Paciente {
   dataNascimento?: string;
   sexo?: string;
   foto?: string;
+  fotoPath?: string;
   endereco?: {
     logradouro: string;
     numero: string;
@@ -110,6 +111,7 @@ const Pacientes = () => {
   dataNascimento: '',
   sexo: '',
   foto: '',
+  fotoPath: '',
     endereco: {
       logradouro: '',
       numero: '',
@@ -134,6 +136,9 @@ const Pacientes = () => {
   const [file, setFile] = useState<File | null>(null);
   const [foto, setFoto] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [editFotoFile, setEditFotoFile] = useState<File | null>(null);
+  const [editFotoPreview, setEditFotoPreview] = useState<string | null>(null);
+  const [removeFoto, setRemoveFoto] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [pacienteInfo, setPacienteInfo] = useState<Paciente | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -205,6 +210,8 @@ const Pacientes = () => {
             convenio: data.convenio || '',
             dataNascimento: data.dataNascimento || '',
             sexo: data.sexo || '',
+            foto: data.foto || '',
+            fotoPath: data.fotoPath || '',
             endereco: data.endereco || {
               logradouro: '',
               numero: '',
@@ -263,6 +270,14 @@ const Pacientes = () => {
     };
     fetchAppointments();
   }, []);
+
+  useEffect(() => {
+    if (editing) {
+      setEditFotoPreview(formData.foto || null);
+      setEditFotoFile(null);
+      setRemoveFoto(false);
+    }
+  }, [editing, formData.foto]);
 
   useEffect(() => {
     if (!showCreateModal) return;
@@ -464,21 +479,66 @@ const Pacientes = () => {
     }
   };
 
+  const handleEditFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setEditFotoFile(e.target.files[0]);
+      setEditFotoPreview(URL.createObjectURL(e.target.files[0]));
+      setRemoveFoto(false);
+    }
+  };
+
+  const handleRemoveFotoEdicao = () => {
+    setEditFotoFile(null);
+    setEditFotoPreview(null);
+    setRemoveFoto(true);
+  };
+
   const handleSave = async () => {
     if (!selectedPaciente) return;
+    let fotoUrl = formData.foto || '';
+    let fotoPath = formData.fotoPath || '';
+
+    if (removeFoto) {
+      if (fotoPath) {
+        const storage = getStorage();
+        const ref = storageRef(storage, fotoPath);
+        await deleteObject(ref).catch(() => null);
+      }
+      fotoUrl = '';
+      fotoPath = '';
+    } else if (editFotoFile) {
+      const storage = getStorage();
+      if (fotoPath) {
+        const oldRef = storageRef(storage, fotoPath);
+        await deleteObject(oldRef).catch(() => null);
+      }
+      const uniqueName = `${(formData.cpf || '').replace(/\D/g, '')}_${Date.now()}`;
+      const newRef = storageRef(storage, `paciente_photos/${uniqueName}`);
+      await uploadBytes(newRef, editFotoFile);
+      fotoUrl = await getDownloadURL(newRef);
+      fotoPath = newRef.fullPath;
+    }
+
+    const updatedForm = { ...formData, foto: fotoUrl, fotoPath };
     await atualizarPaciente(selectedPaciente.id, {
-      nome: formData.nome,
-      email: formData.email,
-      cpf: formData.cpf,
-      telefone: formData.telefone,
-      convenio: formData.convenio,
-      dataNascimento: formData.dataNascimento,
-      sexo: formData.sexo,
-      endereco: formData.endereco,
+      nome: updatedForm.nome,
+      email: updatedForm.email,
+      cpf: updatedForm.cpf,
+      telefone: updatedForm.telefone,
+      convenio: updatedForm.convenio,
+      dataNascimento: updatedForm.dataNascimento,
+      sexo: updatedForm.sexo,
+      endereco: updatedForm.endereco,
+      foto: updatedForm.foto,
+      fotoPath: updatedForm.fotoPath,
     });
-    const updated = { ...selectedPaciente, ...formData };
+    const updated = { ...selectedPaciente, ...updatedForm };
     setPacientes(prev => prev.map(p => (p.id === updated.id ? updated : p)));
     setSelectedPaciente(updated);
+    setFormData(updated);
+    setEditFotoFile(null);
+    setEditFotoPreview(null);
+    setRemoveFoto(false);
     setEditing(false);
   };
 
@@ -626,6 +686,7 @@ const Pacientes = () => {
       id,
       ...newPaciente,
       foto: fotoUrl,
+      fotoPath,
       endereco: {
         logradouro: newPaciente.logradouro,
         numero: newPaciente.numero,
@@ -1018,6 +1079,26 @@ const Pacientes = () => {
                       <option value="outro">Outro</option>
                       <option value="prefiro não informar">Prefiro não informar</option>
                     </select>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <label>Foto</label>
+                      <input type="file" accept="image/*" onChange={handleEditFotoChange} />
+                      {(editFotoPreview || formData.foto) && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <img
+                            src={editFotoPreview || formData.foto || ''}
+                            alt="Foto do paciente"
+                            style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8 }}
+                          />
+                          <button
+                            type="button"
+                            className={detailsStyles.buttonCancelar}
+                            onClick={handleRemoveFotoEdicao}
+                          >
+                            Remover foto
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className={detailsStyles.divider}></div>
                   <div className={detailsStyles.addressInfo}>
@@ -1072,42 +1153,6 @@ const Pacientes = () => {
                     />
                   </div>
                 </div>
-                <div>
-                  <input
-                    type="file"
-                    onChange={e =>
-                      setFile(e.target.files ? e.target.files[0] : null)
-                    }
-                  />
-                  {file && (
-                    <button
-                      className={detailsStyles.buttonEditar}
-                      onClick={() => handleFileUpload('arquivos')}
-                      disabled={uploading}
-                    >
-                      {uploading ? 'Enviando...' : 'Enviar arquivo'}
-                    </button>
-                  )}
-                </div>
-                {formData.arquivos && formData.arquivos.length > 0 && (
-                  <ul>
-                    {formData.arquivos.map(a => (
-                      <li key={a.path} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <a href={a.url} target="_blank" rel="noreferrer">
-                          {a.nome}
-                        </a>
-                        <button
-                          style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
-                          onClick={() => handleDeleteArquivo('arquivos', a)}
-                          title="Excluir arquivo"
-                          type="button"
-                        >
-                          Excluir
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
                 <div className={detailsStyles.buttons}>
                   <button
                     className={detailsStyles.buttonEditar}
@@ -1156,21 +1201,6 @@ const Pacientes = () => {
                           ))}
                         </ul>
                       )}
-                      <div style={{ marginTop: 8 }}>
-                        <input
-                          type="file"
-                          onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
-                        />
-                        {file && (
-                          <button
-                            className={detailsStyles.buttonEditar}
-                            onClick={() => handleFileUpload('infoArquivos')}
-                            disabled={uploading}
-                          >
-                            {uploading ? 'Enviando...' : 'Enviar arquivo'}
-                          </button>
-                        )}
-                      </div>
                     </div>
                     <div className={detailsStyles.divider}></div>
                     <div className={detailsStyles.addressInfo}>
