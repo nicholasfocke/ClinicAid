@@ -923,7 +923,7 @@ const Pacientes = () => {
             onClick={e => e.stopPropagation()}
           >
             {/* Mostrar tabBar apenas quando NÃO está editando */}
-            {!editing && (
+            {!editing && !confirmDelete && (
               <div className={detailsStyles.tabBar}>
                 <button
                   className={`${detailsStyles.tabButton} ${activeTab === 'info' ? detailsStyles.activeTab : ''}`}
@@ -1380,21 +1380,6 @@ const Pacientes = () => {
                         ))}
                       </ul>
                     )}
-                    <div style={{ marginTop: 8 }}>
-                      <input
-                        type="file"
-                        onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
-                      />
-                      {file && (
-                        <button
-                          className={detailsStyles.buttonEditar}
-                          onClick={() => handleFileUpload('profissionaisArquivos')}
-                          disabled={uploading}
-                        >
-                          {uploading ? 'Enviando...' : 'Enviar arquivo'}
-                        </button>
-                      )}
-                    </div>
                   </div>
                 )}
 
