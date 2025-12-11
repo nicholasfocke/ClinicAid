@@ -254,6 +254,65 @@
   line-height: 1.6;
 }
 
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldLabel {
+  font-weight: 700;
+  color: #111827;
+}
+
+.inlineFields {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 10px;
+}
+
+.textInput,
+.textArea,
+.selectInput {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #f9fafb;
+  color: #111827;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.textInput,
+.textArea {
+  min-height: 76px;
+  resize: vertical;
+}
+
+.textArea {
+  min-height: 120px;
+}
+
+.selectInput {
+  min-height: 46px;
+}
+
+.textInput:focus,
+.textArea:focus,
+.selectInput:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  outline: none;
+}
+
 @media (max-width: 1100px) {
   .headerCard {
     grid-template-columns: 1fr;
@@ -288,6 +347,28 @@
 .previewText {
   margin: 0;
   color: #4b5563;
+}
+
+.previewGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.previewItem {
+  padding: 10px 12px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.previewLabel {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 @media (max-width: 1024px) {

@@ -5,6 +5,16 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/prontuario/iniciarAtendimento.module.css';
 import { buscarPacientePorId } from '@/functions/pacientesFunctions';
 
+type SectionData = {
+  [key: string]: {
+    queixaPrincipal?: string;
+    duracao?: string;
+    historiaDoencaAtual?: string;
+    isda?: string;
+    texto?: string;
+  };
+};
+
 const formatElapsed = (totalSeconds: number) => {
   const hours = Math.floor(totalSeconds / 3600)
     .toString()
@@ -34,12 +44,39 @@ const sectionTitles = [
   { title: 'Lembretes', abbreviation: 'LB' },
 ];
 
+const durationOptions = [
+  'Até 24h',
+  'Até 72h',
+  'Menos de uma semana',
+  '1 - 3 semanas',
+  '1 - 3 meses',
+  '4 - 6 meses',
+  '7 - 12 meses',
+  'Mais de 12 meses',
+  'Crônica',
+];
+
+const createInitialSectionData = (): SectionData =>
+  sectionTitles.reduce((acc, section) => {
+    acc[section.title] =
+      section.title === 'História e Motivo do Atendimento'
+        ? {
+            queixaPrincipal: '',
+            duracao: '',
+            historiaDoencaAtual: '',
+            isda: '',
+          }
+        : { texto: '' };
+    return acc;
+  }, {} as SectionData);
+
 const IniciarAtendimento = () => {
   const router = useRouter();
   const { pacienteId } = router.query;
   const [paciente, setPaciente] = useState<any | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [selectedSection, setSelectedSection] = useState(sectionTitles[0]);
+  const [sectionData, setSectionData] = useState<SectionData>(createInitialSectionData);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -67,6 +104,27 @@ const IniciarAtendimento = () => {
     const convenio = paciente.convenio || 'Convênio não informado';
     return `${sexo} · ${idade} · ${convenio}`;
   }, [paciente]);
+
+  const handleHmaChange = (field: keyof SectionData[string], value: string) => {
+    const hmaTitle = 'História e Motivo do Atendimento';
+    setSectionData(prev => ({
+      ...prev,
+      [hmaTitle]: {
+        ...prev[hmaTitle],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleGenericTextChange = (sectionTitle: string, value: string) => {
+    setSectionData(prev => ({
+      ...prev,
+      [sectionTitle]: {
+        ...prev[sectionTitle],
+        texto: value,
+      },
+    }));
+  };
 
   return (
     <ProtectedRoute>
@@ -150,14 +208,116 @@ const IniciarAtendimento = () => {
                 Conduza o atendimento preenchendo os dados desta etapa. Os campos serão
                 exibidos aqui de forma centralizada para facilitar a digitação.
               </p>
+
+              {selectedSection.title === 'História e Motivo do Atendimento' ? (
+                <div className={styles.formSection}>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>
+                      Queixa principal e duração
+                    </label>
+                    <div className={styles.inlineFields}>
+                      <textarea
+                        className={styles.textInput}
+                        placeholder="Descreva a queixa principal"
+                        value={sectionData[selectedSection.title].queixaPrincipal}
+                        onChange={event =>
+                          handleHmaChange('queixaPrincipal', event.target.value)
+                        }
+                      />
+                      <select
+                        className={styles.selectInput}
+                        value={sectionData[selectedSection.title].duracao}
+                        onChange={event => handleHmaChange('duracao', event.target.value)}
+                      >
+                        <option value="">Selecione o tempo</option>
+                        {durationOptions.map(option => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>História da doença atual</label>
+                    <textarea
+                      className={styles.textArea}
+                      placeholder="Descreva a evolução e os detalhes da doença"
+                      value={sectionData[selectedSection.title].historiaDoencaAtual}
+                      onChange={event =>
+                        handleHmaChange('historiaDoencaAtual', event.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>ISDA</label>
+                    <textarea
+                      className={styles.textArea}
+                      placeholder="Insira o ISDA do paciente"
+                      value={sectionData[selectedSection.title].isda}
+                      onChange={event => handleHmaChange('isda', event.target.value)}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.formSection}>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>Conteúdo da seção</label>
+                    <textarea
+                      className={styles.textArea}
+                      placeholder="Digite as informações relevantes desta aba"
+                      value={sectionData[selectedSection.title].texto}
+                      onChange={event =>
+                        handleGenericTextChange(selectedSection.title, event.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           <div className={styles.previewColumn}>
             <h2 className={styles.previewTitle}>Pré-visualização</h2>
-            <p className={styles.previewText}>
-              O resumo das informações inseridas nesta seção aparecerá aqui.
-            </p>
+            {selectedSection.title === 'História e Motivo do Atendimento' ? (
+              <div className={styles.previewGroup}>
+                <div className={styles.previewItem}>
+                  <p className={styles.previewLabel}>Queixa principal</p>
+                  <p className={styles.previewText}>
+                    {sectionData[selectedSection.title].queixaPrincipal || 'Não preenchido'}
+                  </p>
+                </div>
+                <div className={styles.previewItem}>
+                  <p className={styles.previewLabel}>Duração</p>
+                  <p className={styles.previewText}>
+                    {sectionData[selectedSection.title].duracao || 'Não selecionado'}
+                  </p>
+                </div>
+                <div className={styles.previewItem}>
+                  <p className={styles.previewLabel}>História da doença atual</p>
+                  <p className={styles.previewText}>
+                    {sectionData[selectedSection.title].historiaDoencaAtual ||
+                      'Não preenchido'}
+                  </p>
+                </div>
+                <div className={styles.previewItem}>
+                  <p className={styles.previewLabel}>ISDA</p>
+                  <p className={styles.previewText}>
+                    {sectionData[selectedSection.title].isda || 'Não preenchido'}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className={styles.previewGroup}>
+                <p className={styles.previewLabel}>Conteúdo</p>
+                <p className={styles.previewText}>
+                  {sectionData[selectedSection.title].texto ||
+                    'Nenhum conteúdo informado nesta aba ainda.'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
