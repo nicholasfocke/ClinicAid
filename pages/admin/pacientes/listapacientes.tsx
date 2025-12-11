@@ -11,19 +11,10 @@ import detailsStyles from '@/styles/admin/pacientes/pacienteDetails.module.css';
 import modalStyles from '@/styles/admin/cadastros/modal.module.css';
 import { statusAgendamento } from '@/functions/agendamentosFunction';
 import { atualizarPaciente, excluirPaciente, uploadArquivoPaciente, uploadArquivoPacienteSecao, uploadArquivoTemp,
-    adicionarEvolucaoPaciente, criarPaciente, PacienteArquivo, } from '@/functions/pacientesFunctions';
+         criarPaciente, PacienteArquivo, PacienteDocumento } from '@/functions/pacientesFunctions';
 import { buscarConvenios } from '@/functions/conveniosFunctions';
 import { getStorage, ref as storageRef, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { format as formatDateFns, parse as parseDateFns } from 'date-fns';
-
-interface EvolucaoClinica {
-  data: string;
-  profissional: string;
-  diagnostico: string;
-  procedimentos: string;
-  prescricao?: string;
-  arquivos?: PacienteArquivo[];
-}
 
 interface ConversaIA {
   data: string;
@@ -73,12 +64,12 @@ interface Paciente {
   };
   arquivos?: PacienteArquivo[];
   infoArquivos?: PacienteArquivo[];
-  prontuarios?: EvolucaoClinica[];
   conversasIA?: ConversaIA[];
   conversasArquivos?: PacienteArquivo[];
   agendamentos?: HistoricoAgendamento[];
   profissionaisAtendimentos?: RelacaoProfissional[];
   profissionaisArquivos?: PacienteArquivo[];
+  documentos?: PacienteDocumento[];
   observacoes?: string;
   alertas?: string[];
   tags?: string[];
@@ -123,12 +114,12 @@ const Pacientes = () => {
     },
     arquivos: [],
     infoArquivos: [],
-    prontuarios: [],
     conversasIA: [],
     conversasArquivos: [],
     agendamentos: [],
     profissionaisAtendimentos: [],
     profissionaisArquivos: [],
+    documentos: [],
     observacoes: '',
     alertas: [],
     tags: [],
@@ -164,14 +155,6 @@ const Pacientes = () => {
   const [activeTab, setActiveTab] = useState<
     'info' | 'prontuarios' | 'conversas' | 'agendamentos' | 'documentos' | 'profissionais'
   >('info');
-  const [addingEvolucao, setAddingEvolucao] = useState(false);
-  const [novaEvolucao, setNovaEvolucao] = useState<EvolucaoClinica>({
-    data: '',
-    profissional: '',
-    diagnostico: '',
-    procedimentos: '',
-    prescricao: '',
-  });
 
   const statusClassMap: Record<string, string> = {
     [statusAgendamento.AGENDADO]: detailsStyles.statusAgendado,
@@ -223,12 +206,12 @@ const Pacientes = () => {
             },
             arquivos: data.arquivos || [],
             infoArquivos: data.infoArquivos || [],
-            prontuarios: data.prontuarios || [],
             conversasIA: data.conversasIA || [],
             conversasArquivos: data.conversasArquivos || [],
             agendamentos: data.agendamentos || [],
             profissionaisAtendimentos: data.profissionaisAtendimentos || [],
             profissionaisArquivos: data.profissionaisArquivos || [],
+            documentos: data.documentos || data.arquivos || [],
             observacoes: data.observacoes || '',
             alertas: data.alertas || [],
             tags: data.tags || [],
@@ -551,6 +534,7 @@ const Pacientes = () => {
 
   const handleFileUpload = async (campo: string) => {
     if (!selectedPaciente || !file) return;
+    if (campo === 'documentos') return;
     setUploading(true);
     try {
       const arq = await uploadArquivoPacienteSecao(
@@ -571,7 +555,7 @@ const Pacientes = () => {
     }
   };
 
-  const handleDeleteArquivo = async (campo: string, arquivo: PacienteArquivo) => {
+  const handleDeleteArquivo = async (campo: string, arquivo: PacienteArquivo | PacienteDocumento) => {
     if (!selectedPaciente) return;
     if (!confirm('Deseja excluir este arquivo?')) return;
     try {
@@ -583,7 +567,7 @@ const Pacientes = () => {
       }
       // Remove do Firestore (atualiza o array de arquivos)
       const novosArquivos = ((selectedPaciente as any)[campo] || []).filter(
-        (a: PacienteArquivo) => a.path !== arquivo.path
+        (a: PacienteArquivo | PacienteDocumento) => a.path !== arquivo.path
       );
       await atualizarPaciente(selectedPaciente.id, { [campo]: novosArquivos });
       setPacientes(prev =>
@@ -597,32 +581,6 @@ const Pacientes = () => {
       setFormData(prev => ({ ...prev, [campo]: novosArquivos }));
     } catch (err) {
       alert('Erro ao excluir arquivo.');
-    }
-  };
-
-  const handleAddEvolucao = async () => {
-    if (!selectedPaciente) return;
-    setUploading(true);
-    try {
-      let arquivos: PacienteArquivo[] = [];
-      if (file) {
-        const arq = await uploadArquivoTemp(selectedPaciente.id, file, 'prontuarios');
-        arquivos.push(arq);
-      }
-      const nova = { ...novaEvolucao, arquivos };
-      await adicionarEvolucaoPaciente(selectedPaciente.id, nova);
-      const updated = {
-        ...selectedPaciente,
-        prontuarios: [...(selectedPaciente.prontuarios || []), nova],
-      } as Paciente;
-      setPacientes(prev => prev.map(p => (p.id === updated.id ? updated : p)));
-      setSelectedPaciente(updated);
-      setPacienteInfo(updated);
-      setNovaEvolucao({ data: '', profissional: '', diagnostico: '', procedimentos: '', prescricao: '' });
-      setFile(null);
-      setAddingEvolucao(false);
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -964,44 +922,48 @@ const Pacientes = () => {
             className={detailsStyles.card}
             onClick={e => e.stopPropagation()}
           >
-            <div className={detailsStyles.tabBar}>
-              <button
-                className={`${detailsStyles.tabButton} ${activeTab === 'info' ? detailsStyles.activeTab : ''}`}
-                onClick={() => setActiveTab('info')}
-              >
-                Informações
-              </button>
-              <button
-                className={`${detailsStyles.tabButton} ${activeTab === 'prontuarios' ? detailsStyles.activeTab : ''}`}
-                onClick={() => setActiveTab('prontuarios')}
-              >
-                Prontuários
-              </button>
-              <button
-                className={`${detailsStyles.tabButton} ${activeTab === 'conversas' ? detailsStyles.activeTab : ''}`}
-                onClick={() => setActiveTab('conversas')}
-              >
-                Conversas IA
-              </button>
-              <button
-                className={`${detailsStyles.tabButton} ${activeTab === 'agendamentos' ? detailsStyles.activeTab : ''}`}
-                onClick={() => setActiveTab('agendamentos')}
-              >
-                Agendamentos
-              </button>
-              <button
-                className={`${detailsStyles.tabButton} ${activeTab === 'documentos' ? detailsStyles.activeTab : ''}`}
-                onClick={() => setActiveTab('documentos')}
-              >
-                Documentos
-              </button>
-              <button
-                className={`${detailsStyles.tabButton} ${activeTab === 'profissionais' ? detailsStyles.activeTab : ''}`}
-                onClick={() => setActiveTab('profissionais')}
-              >
-                Profissionais
-              </button>
-            </div>
+            {/* Mostrar tabBar apenas quando NÃO está editando */}
+            {!editing && !confirmDelete && (
+              <div className={detailsStyles.tabBar}>
+                <button
+                  className={`${detailsStyles.tabButton} ${activeTab === 'info' ? detailsStyles.activeTab : ''}`}
+                  onClick={() => setActiveTab('info')}
+                >
+                  Informações
+                </button>
+                <button
+                  className={`${detailsStyles.tabButton} ${activeTab === 'prontuarios' ? detailsStyles.activeTab : ''}`}
+                  onClick={() => setActiveTab('prontuarios')}
+                >
+                  Prontuários
+                </button>
+                <button
+                  className={`${detailsStyles.tabButton} ${activeTab === 'conversas' ? detailsStyles.activeTab : ''}`}
+                  onClick={() => setActiveTab('conversas')}
+                >
+                  Conversas IA
+                </button>
+                <button
+                  className={`${detailsStyles.tabButton} ${activeTab === 'agendamentos' ? detailsStyles.activeTab : ''}`}
+                  onClick={() => setActiveTab('agendamentos')}
+                >
+                  Agendamentos
+                </button>
+                <button
+                  className={`${detailsStyles.tabButton} ${activeTab === 'documentos' ? detailsStyles.activeTab : ''}`}
+                  onClick={() => setActiveTab('documentos')}
+                >
+                  Documentos
+                </button>
+                <button
+                  className={`${detailsStyles.tabButton} ${activeTab === 'profissionais' ? detailsStyles.activeTab : ''}`}
+                  onClick={() => setActiveTab('profissionais')}
+                >
+                  Profissionais
+                </button>
+              </div>
+            )}
+
             {confirmDelete ? (
               <>
                 <p>Confirmar exclusão?</p>
@@ -1020,6 +982,7 @@ const Pacientes = () => {
                   </button>
                 </div>
               </>
+
             ) : editing ? (
               <>
                 <div className={detailsStyles.infoLayout} style={{ marginBottom: 16 }}>
@@ -1044,6 +1007,8 @@ const Pacientes = () => {
                       onChange={handleChange}
                       className={detailsStyles.input}
                       placeholder="CPF"
+                      disabled
+                      style={{ opacity: 0.6, cursor: 'not-allowed' }}
                     />
                     <input
                       name="telefone"
@@ -1216,137 +1181,6 @@ const Pacientes = () => {
                   </div>
                 )}
 
-                {activeTab === 'prontuarios' && pacienteInfo && (
-                  <div style={{ marginBottom: 16 }}>
-                    {pacienteInfo.prontuarios && pacienteInfo.prontuarios.length > 0 ? (
-                      <ul className={detailsStyles.prontuarioList}>
-                        {pacienteInfo.prontuarios.map((ev, idx) => (
-                          <details
-                            key={idx}
-                            className={detailsStyles.prontuarioDetails}
-                          >
-                            <summary className={detailsStyles.prontuarioSummary}>
-                              {/* Título à esquerda, setinha preta à direita */}
-                              <span>
-                                {ev.data
-                                  ? (() => {
-                                      try {
-                                        let d = ev.data;
-                                        let parsed = d.includes('-')
-                                          ? parseDateFns(d, 'yyyy-MM-dd', new Date())
-                                          : parseDateFns(d, 'dd/MM/yyyy', new Date());
-                                        return `Prontuário: ${formatDateFns(parsed, 'dd-MM-yyyy')}`;
-                                      } catch {
-                                        return `Prontuário: ${ev.data}`;
-                                      }
-                                    })()
-                                  : `Prontuário`}
-                              </span>
-                              <span className={detailsStyles.detailsArrow}>›</span>
-                            </summary>
-                            <div className={detailsStyles.prontuarioContent}>
-                              <p>
-                                <strong>Profissional:</strong> {ev.profissional}
-                              </p>
-                              <p>
-                                <strong>Diagnóstico:</strong> {ev.diagnostico}
-                              </p>
-                              <p>
-                                <strong>Procedimentos:</strong> {ev.procedimentos}
-                              </p>
-                              {ev.prescricao && (
-                                <p>
-                                  <strong>Prescrição:</strong> {ev.prescricao}
-                                </p>
-                              )}
-                              {ev.arquivos && ev.arquivos.length > 0 && (
-                                <ul>
-                                  {ev.arquivos.map(a => (
-                                    <li key={a.path}>
-                                      <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </div>
-                          </details>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p>Nenhuma evolução cadastrada.</p>
-                    )}
-                    {addingEvolucao ? (
-                      <div style={{ marginTop: 8 }}>
-                        <input
-                          type="text"
-                          placeholder="Data"
-                          value={novaEvolucao.data}
-                          onChange={e => setNovaEvolucao({ ...novaEvolucao, data: e.target.value })}
-                          className={detailsStyles.input}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Profissional"
-                          value={novaEvolucao.profissional}
-                          onChange={e => setNovaEvolucao({ ...novaEvolucao, profissional: e.target.value })}
-                          className={detailsStyles.input}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Diagnóstico"
-                          value={novaEvolucao.diagnostico}
-                          onChange={e => setNovaEvolucao({ ...novaEvolucao, diagnostico: e.target.value })}
-                          className={detailsStyles.input}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Procedimentos"
-                          value={novaEvolucao.procedimentos}
-                          onChange={e => setNovaEvolucao({ ...novaEvolucao, procedimentos: e.target.value })}
-                          className={detailsStyles.input}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Prescrição"
-                          value={novaEvolucao.prescricao}
-                          onChange={e => setNovaEvolucao({ ...novaEvolucao, prescricao: e.target.value })}
-                          className={detailsStyles.input}
-                        />
-                        <div style={{ marginTop: 8 }}>
-                          <input
-                            type="file"
-                            onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
-                          />
-                          <button
-                            className={detailsStyles.buttonEditar}
-                            onClick={handleAddEvolucao}
-                            disabled={uploading}
-                          >
-                            {uploading ? 'Salvando...' : 'Salvar evolução'}
-                          </button>
-                          <button
-                            className={detailsStyles.buttonCancelar}
-                            onClick={() => {
-                              setAddingEvolucao(false);
-                              setNovaEvolucao({ data: '', profissional: '', diagnostico: '', procedimentos: '', prescricao: '' });
-                              setFile(null);
-                            }}
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        className={detailsStyles.buttonEditar}
-                        onClick={() => setAddingEvolucao(true)}
-                      >
-                        Adicionar nova evolução
-                      </button>
-                    )}
-                  </div>
-                )}
-
                 {activeTab === 'conversas' && pacienteInfo && (
                   <div style={{ marginBottom: 16 }}>
                     {pacienteInfo.conversasIA && pacienteInfo.conversasIA.length > 0 ? (
@@ -1494,14 +1328,14 @@ const Pacientes = () => {
 
                 {activeTab === 'documentos' && pacienteInfo && (
                   <div style={{ marginBottom: 16 }}>
-                    {pacienteInfo.arquivos && pacienteInfo.arquivos.length > 0 ? (
+                    {pacienteInfo.documentos && pacienteInfo.documentos.length > 0 ? (
                       <ul>
-                        {pacienteInfo.arquivos.map(a => (
+                        {pacienteInfo.documentos.map(a => (
                           <li key={a.path} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <a href={a.url} target="_blank" rel="noreferrer">{a.nome}</a>
+                            <a href={a.url} target="_blank" rel="noreferrer">{a.titulo || 'Documento'}</a>
                             <button
                               style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
-                              onClick={() => handleDeleteArquivo('arquivos', a)}
+                              onClick={() => handleDeleteArquivo('documentos', a)}
                               title="Excluir arquivo"
                               type="button"
                             >
@@ -1513,21 +1347,6 @@ const Pacientes = () => {
                     ) : (
                       <p>Nenhum documento enviado.</p>
                     )}
-                    <div style={{ marginTop: 8 }}>
-                      <input
-                        type="file"
-                        onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
-                      />
-                      {file && (
-                        <button
-                          className={detailsStyles.buttonEditar}
-                          onClick={() => handleFileUpload('arquivos')}
-                          disabled={uploading}
-                        >
-                          {uploading ? 'Enviando...' : 'Enviar arquivo'}
-                        </button>
-                      )}
-                    </div>
                   </div>
                 )}
 
@@ -1561,21 +1380,6 @@ const Pacientes = () => {
                         ))}
                       </ul>
                     )}
-                    <div style={{ marginTop: 8 }}>
-                      <input
-                        type="file"
-                        onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
-                      />
-                      {file && (
-                        <button
-                          className={detailsStyles.buttonEditar}
-                          onClick={() => handleFileUpload('profissionaisArquivos')}
-                          disabled={uploading}
-                        >
-                          {uploading ? 'Enviando...' : 'Enviar arquivo'}
-                        </button>
-                      )}
-                    </div>
                   </div>
                 )}
 

@@ -101,24 +101,6 @@ export const uploadDocumentoPaciente = async ( id: string, file: File, titulo: s
   return documento;
 };
 
-export interface EvolucaoClinica {
-  data: string;
-  profissional: string;
-  diagnostico: string;
-  procedimentos: string;
-  prescricao?: string;
-  arquivos?: PacienteArquivo[];
-}
-
-export const adicionarEvolucaoPaciente = async (
-  id: string,
-  evolucao: EvolucaoClinica
-) => {
-  await updateDoc(doc(firestore, 'pacientes', id), {
-    prontuarios: arrayUnion(evolucao),
-  });
-};
-
 export interface PacienteMin {
   id: string;
   nome: string;
