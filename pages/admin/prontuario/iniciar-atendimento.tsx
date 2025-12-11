@@ -5,14 +5,24 @@ import breadcrumbStyles from '@/styles/Breadcrumb.module.css';
 import styles from '@/styles/admin/prontuario/iniciarAtendimento.module.css';
 import { buscarPacientePorId } from '@/functions/pacientesFunctions';
 
+type QueixaItem = {
+  id: string;
+  queixaPrincipal: string;
+  duracao: string;
+};
+
+type HmaData = {
+  queixas: QueixaItem[];
+  historiaDoencaAtual: string;
+  isda: string;
+};
+
+type GenericSectionData = {
+  texto: string;
+};
+
 type SectionData = {
-  [key: string]: {
-    queixaPrincipal?: string;
-    duracao?: string;
-    historiaDoencaAtual?: string;
-    isda?: string;
-    texto?: string;
-  };
+  [key: string]: HmaData | GenericSectionData;
 };
 
 const formatElapsed = (totalSeconds: number) => {
@@ -61,8 +71,13 @@ const createInitialSectionData = (): SectionData =>
     acc[section.title] =
       section.title === 'História e Motivo do Atendimento'
         ? {
-            queixaPrincipal: '',
-            duracao: '',
+            queixas: [
+              {
+                id: crypto.randomUUID(),
+                queixaPrincipal: '',
+                duracao: '',
+              },
+            ],
             historiaDoencaAtual: '',
             isda: '',
           }
@@ -72,11 +87,13 @@ const createInitialSectionData = (): SectionData =>
 
 const IniciarAtendimento = () => {
   const router = useRouter();
+  const hmaTitle = 'História e Motivo do Atendimento';
   const { pacienteId } = router.query;
   const [paciente, setPaciente] = useState<any | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [selectedSection, setSelectedSection] = useState(sectionTitles[0]);
   const [sectionData, setSectionData] = useState<SectionData>(createInitialSectionData);
+  const hmaData = sectionData[hmaTitle] as HmaData;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -105,22 +122,75 @@ const IniciarAtendimento = () => {
     return `${sexo} · ${idade} · ${convenio}`;
   }, [paciente]);
 
-  const handleHmaChange = (field: keyof SectionData[string], value: string) => {
-    const hmaTitle = 'História e Motivo do Atendimento';
+  const handleHmaChange = (field: keyof HmaData, value: string) => {
     setSectionData(prev => ({
       ...prev,
       [hmaTitle]: {
-        ...prev[hmaTitle],
+        ...(prev[hmaTitle] as HmaData),
         [field]: value,
       },
     }));
+  };
+
+  const handleQueixaChange = (
+    id: string,
+    field: keyof QueixaItem,
+    value: string,
+  ) => {
+    setSectionData(prev => {
+      const current = prev[hmaTitle] as HmaData;
+      return {
+        ...prev,
+        [hmaTitle]: {
+          ...current,
+          queixas: current.queixas.map(item =>
+            item.id === id ? { ...item, [field]: value } : item,
+          ),
+        },
+      };
+    });
+  };
+
+  const handleAddQueixa = () => {
+    setSectionData(prev => {
+      const current = prev[hmaTitle] as HmaData;
+      return {
+        ...prev,
+        [hmaTitle]: {
+          ...current,
+          queixas: [
+            ...current.queixas,
+            {
+              id: crypto.randomUUID(),
+              queixaPrincipal: '',
+              duracao: '',
+            },
+          ],
+        },
+      };
+    });
+  };
+
+  const handleRemoveQueixa = (id: string) => {
+    setSectionData(prev => {
+      const current = prev[hmaTitle] as HmaData;
+      const filtered = current.queixas.filter(item => item.id !== id);
+
+      return {
+        ...prev,
+        [hmaTitle]: {
+          ...current,
+          queixas: filtered.length ? filtered : [{ id: crypto.randomUUID(), queixaPrincipal: '', duracao: '' }],
+        },
+      };
+    });
   };
 
   const handleGenericTextChange = (sectionTitle: string, value: string) => {
     setSectionData(prev => ({
       ...prev,
       [sectionTitle]: {
-        ...prev[sectionTitle],
+        ...(prev[sectionTitle] as GenericSectionData),
         texto: value,
       },
     }));
@@ -212,30 +282,59 @@ const IniciarAtendimento = () => {
               {selectedSection.title === 'História e Motivo do Atendimento' ? (
                 <div className={styles.formSection}>
                   <div className={styles.fieldGroup}>
-                    <label className={styles.fieldLabel}>
-                      Queixa principal e duração
-                    </label>
-                    <div className={styles.inlineFields}>
-                      <textarea
-                        className={styles.textInput}
-                        placeholder="Descreva a queixa principal"
-                        value={sectionData[selectedSection.title].queixaPrincipal}
-                        onChange={event =>
-                          handleHmaChange('queixaPrincipal', event.target.value)
-                        }
-                      />
-                      <select
-                        className={styles.selectInput}
-                        value={sectionData[selectedSection.title].duracao}
-                        onChange={event => handleHmaChange('duracao', event.target.value)}
+                    <div className={styles.queixaHeader}>
+                      <label className={styles.fieldLabel}>
+                        Queixa principal e duração
+                      </label>
+                      <button
+                        className={styles.addQueixaButton}
+                        onClick={handleAddQueixa}
+                        type="button"
                       >
-                        <option value="">Selecione o tempo</option>
-                        {durationOptions.map(option => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
+                        Adicionar
+                      </button>
+                    </div>
+                    <div className={styles.queixaList}>
+                      {(sectionData[selectedSection.title] as HmaData).queixas.map(queixa => (
+                        <div className={styles.queixaCard} key={queixa.id}>
+                          <button
+                            type="button"
+                            className={styles.removeQueixaButton}
+                            aria-label="Remover queixa"
+                            onClick={() => handleRemoveQueixa(queixa.id)}
+                          >
+                            ×
+                          </button>
+                          <div className={styles.inlineFieldsCustom}>
+                            <textarea
+                              className={`${styles.textInput} ${styles.queixaText}`}
+                              placeholder="Descreva a queixa principal"
+                              value={queixa.queixaPrincipal}
+                              onChange={event =>
+                                handleQueixaChange(
+                                  queixa.id,
+                                  'queixaPrincipal',
+                                  event.target.value,
+                                )
+                              }
+                            />
+                            <select
+                              className={`${styles.selectInput} ${styles.durationSelect}`}
+                              value={queixa.duracao}
+                              onChange={event =>
+                                handleQueixaChange(queixa.id, 'duracao', event.target.value)
+                              }
+                            >
+                              <option value="">Tempo</option>
+                              {durationOptions.map(option => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -244,7 +343,7 @@ const IniciarAtendimento = () => {
                     <textarea
                       className={styles.textArea}
                       placeholder="Descreva a evolução e os detalhes da doença"
-                      value={sectionData[selectedSection.title].historiaDoencaAtual}
+                      value={hmaData.historiaDoencaAtual}
                       onChange={event =>
                         handleHmaChange('historiaDoencaAtual', event.target.value)
                       }
@@ -256,7 +355,7 @@ const IniciarAtendimento = () => {
                     <textarea
                       className={styles.textArea}
                       placeholder="Insira o ISDA do paciente"
-                      value={sectionData[selectedSection.title].isda}
+                      value={hmaData.isda}
                       onChange={event => handleHmaChange('isda', event.target.value)}
                     />
                   </div>
@@ -268,7 +367,7 @@ const IniciarAtendimento = () => {
                     <textarea
                       className={styles.textArea}
                       placeholder="Digite as informações relevantes desta aba"
-                      value={sectionData[selectedSection.title].texto}
+                      value={(sectionData[selectedSection.title] as GenericSectionData).texto}
                       onChange={event =>
                         handleGenericTextChange(selectedSection.title, event.target.value)
                       }
@@ -283,29 +382,29 @@ const IniciarAtendimento = () => {
             <h2 className={styles.previewTitle}>Pré-visualização</h2>
             {selectedSection.title === 'História e Motivo do Atendimento' ? (
               <div className={styles.previewGroup}>
-                <div className={styles.previewItem}>
-                  <p className={styles.previewLabel}>Queixa principal</p>
-                  <p className={styles.previewText}>
-                    {sectionData[selectedSection.title].queixaPrincipal || 'Não preenchido'}
-                  </p>
-                </div>
-                <div className={styles.previewItem}>
-                  <p className={styles.previewLabel}>Duração</p>
-                  <p className={styles.previewText}>
-                    {sectionData[selectedSection.title].duracao || 'Não selecionado'}
-                  </p>
-                </div>
+                {(sectionData[selectedSection.title] as HmaData).queixas.map(queixa => (
+                  <div className={styles.previewItem} key={queixa.id}>
+                    <p className={styles.previewLabel}>Queixa principal</p>
+                    <p className={styles.previewText}>
+                      {queixa.queixaPrincipal || 'Não preenchido'}
+                    </p>
+                    <p className={styles.previewLabel}>Duração</p>
+                    <p className={styles.previewText}>
+                      {queixa.duracao || 'Não selecionado'}
+                    </p>
+                  </div>
+                ))}
                 <div className={styles.previewItem}>
                   <p className={styles.previewLabel}>História da doença atual</p>
                   <p className={styles.previewText}>
-                    {sectionData[selectedSection.title].historiaDoencaAtual ||
+                    {(sectionData[selectedSection.title] as HmaData).historiaDoencaAtual ||
                       'Não preenchido'}
                   </p>
                 </div>
                 <div className={styles.previewItem}>
                   <p className={styles.previewLabel}>ISDA</p>
                   <p className={styles.previewText}>
-                    {sectionData[selectedSection.title].isda || 'Não preenchido'}
+                    {(sectionData[selectedSection.title] as HmaData).isda || 'Não preenchido'}
                   </p>
                 </div>
               </div>
@@ -313,7 +412,7 @@ const IniciarAtendimento = () => {
               <div className={styles.previewGroup}>
                 <p className={styles.previewLabel}>Conteúdo</p>
                 <p className={styles.previewText}>
-                  {sectionData[selectedSection.title].texto ||
+                  {(sectionData[selectedSection.title] as GenericSectionData).texto ||
                     'Nenhum conteúdo informado nesta aba ainda.'}
                 </p>
               </div>

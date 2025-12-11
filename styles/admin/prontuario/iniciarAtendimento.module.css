@@ -272,10 +272,71 @@
   color: #111827;
 }
 
+.queixaHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.addQueixaButton {
+  border: 1px solid #3b82f6;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.12);
+}
+
+.addQueixaButton:hover {
+  background: #eff6ff;
+}
+
+.queixaList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.queixaCard {
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.03);
+}
+
+.removeQueixaButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.removeQueixaButton:hover {
+  color: #ef4444;
+}
+
 .inlineFields {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 10px;
+}
+
+.inlineFieldsCustom {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 30px;
+  align-items: flex-start;
 }
 
 .textInput,
@@ -297,12 +358,23 @@
   resize: vertical;
 }
 
+.queixaText {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
 .textArea {
   min-height: 120px;
 }
 
 .selectInput {
   min-height: 46px;
+}
+
+.durationSelect {
+  width: 140px;
+  padding: 8px 10px;
+  font-size: 13px;
 }
 
 .textInput:focus,
